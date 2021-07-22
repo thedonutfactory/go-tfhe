@@ -1,0 +1,239 @@
+package tfhe
+
+import (
+	"math"
+
+	"gonum.org/v1/gonum/stat/distuv"
+)
+
+type TLweParams struct {
+	N                  int32     ///< a power of 2: degree of the polynomials
+	k                  int32     ///< number of polynomials in the mask
+	alphaMin           double    ///< minimal noise s.t. the sample is secure
+	alphaMax           double    ///< maximal noise s.t. we can decrypt
+	extractedLweparams LweParams ///< lwe params if one extracts
+}
+
+type TLweKey struct {
+	params *TLweParams     ///< the parameters of the key
+	key    []IntPolynomial ///< the key (i.e k binary polynomials)
+}
+
+type TLweSample struct {
+	A               []TorusPolynomial ///< array of length k+1: mask + right term
+	B               *TorusPolynomial  ///< alias of a[k] to get the right term
+	CurrentVariance double            ///< avg variance of the sample
+	K               int32
+}
+
+func NewTLweParams(N, k int32, alphaMin, alphaMax double) *TLweParams {
+	return &TLweParams{
+		N:                  N,
+		k:                  k,
+		alphaMin:           alphaMin,
+		alphaMax:           alphaMax,
+		extractedLweparams: LweParams{N * k, alphaMin, alphaMax},
+	}
+}
+
+func NewTLweSample(params *TLweParams) *TLweSample {
+	avar := NewTorusPolynomialArray(int(params.k)+1, params.N)
+	return &TLweSample{
+		K:               params.k,
+		A:               avar,
+		B:               &avar[params.k],
+		CurrentVariance: 0.,
+	}
+}
+
+func NewTLweSampleArray(size int32, params *TLweParams) (arr []TLweSample) {
+	arr = make([]TLweSample, size)
+	for i := int32(0); i < size; i++ {
+		arr[i] = *NewTLweSample(params)
+	}
+	return
+}
+
+func NewTLweKey(params *TLweParams) *TLweKey {
+	return &TLweKey{params: params, key: NewIntPolynomialArray(int(params.k), params.N)}
+}
+
+func tLweKeyGen(result *TLweKey) {
+	N := result.params.N
+	k := result.params.k
+	dist := distuv.Uniform{
+		Min: 0,
+		Max: 1,
+	}
+	for i := int32(0); i < k; i++ {
+		for j := int32(0); j < N; j++ {
+			result.key[i].Coefs[j] = Torus32(math.Round(dist.Rand()))
+		}
+	}
+}
+
+/*create an homogeneous tlwe sample*/
+func tLweSymEncryptZero(result *TLweSample, alpha double, key *TLweKey) {
+	N := key.params.N
+	k := key.params.k
+
+	for j := int32(0); j < N; j++ {
+		result.B.CoefsT[j] = gaussian32(0, alpha)
+	}
+
+	for i := int32(0); i < k; i++ {
+		torusPolynomialUniform(&result.A[i])
+		TorusPolynomialAddMulR(result.B, &key.key[i], &result.A[i])
+	}
+
+	result.CurrentVariance = alpha * alpha
+}
+
+func TLweSymEncrypt(result *TLweSample, message *TorusPolynomial, alpha double, key *TLweKey) {
+	tLweSymEncryptZero(result, alpha, key)
+	for j := int32(0); j < key.params.N; j++ {
+		result.B.CoefsT[j] += message.CoefsT[j]
+	}
+}
+
+/**
+ * encrypts a constant message
+ */
+func tLweSymEncryptT(result *TLweSample, message Torus32, alpha double, key *TLweKey) {
+	tLweSymEncryptZero(result, alpha, key)
+	result.B.CoefsT[0] += message
+}
+
+/**
+ * This function computes the phase of sample by using key : phi = b - a.s
+ */
+func TLwePhase(phase *TorusPolynomial, sample *TLweSample, key *TLweKey) {
+	torusPolynomialCopy(phase, sample.B) // phi = b
+	for i := int32(0); i < key.params.k; i++ {
+		TorusPolynomialSubMulR(phase, &key.key[i], &sample.A[i])
+	}
+}
+
+/**
+ * This function computes the approximation of the phase
+ * à revoir, surtout le Msize
+ */
+func TLweApproxPhase(message *TorusPolynomial, phase *TorusPolynomial, Msize, N int32) {
+	for i := int32(0); i < N; i++ {
+		message.CoefsT[i] = approxPhase(phase.CoefsT[i], Msize)
+	}
+}
+
+func TLweSymDecrypt(result *TorusPolynomial, sample *TLweSample, key *TLweKey, Msize int32) {
+	TLwePhase(result, sample, key)
+	TLweApproxPhase(result, result, Msize, key.params.N)
+}
+
+func tLweSymDecryptT(sample *TLweSample, key *TLweKey, Msize int32) Torus32 {
+	phase := NewTorusPolynomial(key.params.N)
+	TLwePhase(phase, sample, key)
+	result := approxPhase(phase.CoefsT[0], Msize)
+	return result
+}
+
+//Arithmetic operations on TLwe samples
+/** result = (0,0) */
+func tLweClear(result *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialClear(&result.A[i])
+	}
+	torusPolynomialClear(result.B)
+	result.CurrentVariance = 0.
+}
+
+/** result = sample */
+func tLweCopy(result *TLweSample, sample *TLweSample, params *TLweParams) {
+	for i := int32(0); i <= params.k; i++ {
+		for j := int32(0); j < params.N; j++ {
+			result.A[i].CoefsT[j] = sample.A[i].CoefsT[j]
+		}
+	}
+	result.CurrentVariance = sample.CurrentVariance
+}
+
+/** result = (0,mu) */
+func tLweNoiselessTrivial(result *TLweSample, mu *TorusPolynomial, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialClear(&result.A[i])
+	}
+	torusPolynomialCopy(result.B, mu)
+	result.CurrentVariance = 0.
+}
+
+/** result = (0,mu) where mu is constant*/
+func tLweNoiselessTrivialT(result *TLweSample, mu Torus32, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialClear(&result.A[i])
+	}
+	torusPolynomialClear(result.B)
+	result.B.CoefsT[0] = mu
+	result.CurrentVariance = 0.
+}
+
+/** result = result + sample */
+func tLweAddTo(result *TLweSample, sample *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialAddTo(&result.A[i], &sample.A[i])
+	}
+	torusPolynomialAddTo(result.B, sample.B)
+	result.CurrentVariance += sample.CurrentVariance
+}
+
+/** result = result - sample */
+func tLweSubTo(result *TLweSample, sample *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialSubTo(&result.A[i], &sample.A[i])
+	}
+	torusPolynomialSubTo(result.B, sample.B)
+	result.CurrentVariance += sample.CurrentVariance
+}
+
+/** result = result + p.sample */
+func tLweAddMulTo(result *TLweSample, p int32, sample *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialAddMulZTo(&result.A[i], p, &sample.A[i])
+	}
+	torusPolynomialAddMulZTo(result.B, p, sample.B)
+	result.CurrentVariance += double(p*p) * sample.CurrentVariance
+}
+
+/** result = result - p.sample */
+func tLweSubMulTo(result *TLweSample, p int32, sample *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialSubMulZTo(&result.A[i], p, &sample.A[i])
+	}
+	torusPolynomialSubMulZTo(result.B, p, sample.B)
+	result.CurrentVariance += double(p*p) * sample.CurrentVariance
+}
+
+/** result = result + p.sample */
+func tLweAddMulRTo(result *TLweSample, p *IntPolynomial, sample *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		TorusPolynomialAddMulR(&result.A[i], p, &sample.A[i])
+	}
+	result.CurrentVariance += double(intPolynomialNormSq2(p)) * sample.CurrentVariance
+}
+
+//mult externe de X^ai-1 par bki
+func tLweMulByXaiMinusOne(result *TLweSample, ai int32, bk *TLweSample, params *TLweParams) {
+	for i := int32(0); i < params.k; i++ {
+		torusPolynomialMulByXaiMinusOne(&result.A[i], ai, &bk.A[i])
+	}
+}
+
+/** result += (0,x) */
+func tLweAddTTo(result *TLweSample, pos int32, x Torus32, params *TLweParams) {
+	result.A[pos].CoefsT[0] += x
+}
+
+/** result += p*(0,x) */
+func tLweAddRTTo(result *TLweSample, pos int32, p *IntPolynomial, x Torus32, params *TLweParams) {
+	for i := int32(0); i < params.N; i++ {
+		result.A[pos].CoefsT[i] += p.Coefs[i] * x
+	}
+}
