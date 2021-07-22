@@ -3,7 +3,6 @@ package tfhe
 import (
 	"math"
 
-	"github.com/takatoh/fft"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
@@ -89,10 +88,10 @@ func torusPolynomialAdd(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 
 // TorusPolynomial += TorusPolynomial
 func torusPolynomialAddTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
-	r := result.CoefsT
-	b := poly2.CoefsT
+	//r := result.CoefsT
+	//b := poly2.CoefsT
 	for i := int32(0); i < poly2.N; i++ {
-		r[i] += b[i]
+		result.CoefsT[i] += poly2.CoefsT[i]
 	}
 }
 
@@ -316,9 +315,21 @@ func intPolynomialNormInftyDist(poly1 *IntPolynomial, poly2 *IntPolynomial) doub
 	return norm
 }
 
+/*
+void FFT_Processor_fftw::execute_reverse_int(cplx* res, const int* a) {
+    cplx* rev_out_cplx = (cplx*) rev_out; //fftw_complex and cplx are layout-compatible
+    for (int32_t i=0; i<N; i++) rev_in[i]=a[i]/2.;
+    for (int32_t i=0; i<N; i++) rev_in[N+i]=-rev_in[i];
+    fftw_execute(rev_p);
+    for (int32_t i=0; i<Ns2; i++) res[i]=rev_out_cplx[2*i+1];
+    for (int32_t i=0; i<=Ns2; i++) assert(abs(rev_out_cplx[2*i])<1e-20);
+}
+*/
+
 /**
  * FFT functions
  */
+/*
 func IntPolynomial_ifft(p *IntPolynomial) []complex128 {
 	n := p.N
 	x := make([]complex128, n)
@@ -331,13 +342,7 @@ func IntPolynomial_ifft(p *IntPolynomial) []complex128 {
 
 	// IFFT
 	z := fft.IFFT(y, int(n))
-	/*
-		fmt.Println(" K   DATA  FOURIER TRANSFORM  INVERSE TRANSFORM")
-		for k := 0; k < n ; k++ {
-			fmt.Printf("%2d %6.1f  %8.3f%8.3f   %8.3f%8.3f\n",
-				k, x0[k], real(y[k]), imag(y[k]), real(z[k]), imag(z[k]))
-		}
-	*/
+
 	return z
 
 }
@@ -355,22 +360,6 @@ func TorusPolynomial_ifft(p *TorusPolynomial) []complex128 {
 	return z
 }
 
-/*
-
-void FFT_Processor_fftw::execute_direct_Torus32(Torus32* res, const cplx* a) {
-    static const double _2p32 = double(INT64_C(1)<<32);
-    static const double _1sN = double(1)/double(N);
-    cplx* in_cplx = (cplx*) in; //fftw_complex and cplx are layout-compatible
-    for (int32_t i=0; i<=Ns2; i++) in_cplx[2*i]=0;
-    for (int32_t i=0; i<Ns2; i++) in_cplx[2*i+1]=a[i];
-    fftw_execute(p);
-    for (int32_t i=0; i<N; i++) res[i]=Torus32(int64_t(out[i]*_1sN*_2p32));
-    //pas besoin du fmod... Torus32(int64_t(fmod(rev_out[i]*_1sN,1.)*_2p32));
-    for (int32_t i=0; i<N; i++) assert(fabs(out[N+i]+out[i])<1e-20);
-}
-
-*/
-
 func TorusPolynomial_fft(y []complex128) *TorusPolynomial {
 	n := len(y)
 	//n := p.N
@@ -385,24 +374,64 @@ func TorusPolynomial_fft(y []complex128) *TorusPolynomial {
 	}
 	return tp
 }
+*/
 
-func LagrangeHalfCPolynomialMul(a []complex128, b []complex128, Ns2 int) []complex128 {
+func LagrangeHalfCPolynomialMul(a []complex128, b []complex128, Ns2 int) (result *LagrangeHalfCPolynomial) {
 	//LagrangeHalfCPolynomial_IMPL* result1 = (LagrangeHalfCPolynomial_IMPL*) result;
 	//Ns2 := result1->proc->Ns2;
 	//cplx* aa = ((LagrangeHalfCPolynomial_IMPL*) a)->CoefsC;
 	//cplx* bb = ((LagrangeHalfCPolynomial_IMPL*) b)->CoefsC;
 	//cplx* rr = result1->CoefsC;
-	rr := make([]complex128, Ns2)
-	for i := 0; i < Ns2; i++ {
-		rr[i] = a[i] * b[i]
+	result = &LagrangeHalfCPolynomial{
+		coefsC: make([]complex128, Ns2),
 	}
-	return rr
+	//rr := make([]complex128, Ns2)
+	for i := 0; i < Ns2; i++ {
+		result.coefsC[i] = a[i] * b[i]
+	}
+	return
+}
+
+func IntPolynomial_ifft(n int32, p *IntPolynomial) (result *LagrangeHalfCPolynomial) {
+	result = NewLangrangeHalfCPolynomial(n)
+	fftProcessor.executeReverseInt(result.coefsC, p.Coefs)
+	return
+}
+
+func TorusPolynomial_ifft(n int32, p *TorusPolynomial) (result *LagrangeHalfCPolynomial) {
+	result = NewLangrangeHalfCPolynomial(n)
+	fftProcessor.executeReverseTorus32(result.coefsC, p.CoefsT)
+	return
+}
+
+func TorusPolynomial_fft(n int32, p *LagrangeHalfCPolynomial) (result *TorusPolynomial) {
+	result = NewTorusPolynomial(n)
+	fftProcessor.executeDirectTorus32(result.CoefsT, p.coefsC)
+	return
 }
 
 /*
-func execute_direct_Torus32(res []Torus32, cplx []complex128) {
-    _2p32 := double(int64(1)<<32)
-    _1sN := double(1)/double(N)
+void FFT_Processor_fftw::execute_reverse_int(cplx* res, const int* a) {
+    cplx* rev_out_cplx = (cplx*) rev_out; //fftw_complex and cplx are layout-compatible
+    for (int32_t i=0; i<N; i++) rev_in[i]=a[i]/2.;
+    for (int32_t i=0; i<N; i++) rev_in[N+i]=-rev_in[i];
+    fftw_execute(rev_p);
+    for (int32_t i=0; i<Ns2; i++) res[i]=rev_out_cplx[2*i+1];
+    for (int32_t i=0; i<=Ns2; i++) assert(abs(rev_out_cplx[2*i])<1e-20);
+}
+void FFT_Processor_fftw::execute_reverse_torus32(cplx* res, const Torus32* a) {
+    static const double _2pm33 = 1./double(INT64_C(1)<<33);
+    int32_t* aa = (int32_t*) a;
+    cplx* rev_out_cplx = (cplx*) rev_out; //fftw_complex and cplx are layout-compatible
+    for (int32_t i=0; i<N; i++) rev_in[i]=aa[i]*_2pm33;
+    for (int32_t i=0; i<N; i++) rev_in[N+i]=-rev_in[i];
+    fftw_execute(rev_p);
+    for (int32_t i=0; i<Ns2; i++) res[i]=rev_out_cplx[2*i+1];
+    for (int32_t i=0; i<=Ns2; i++) assert(abs(rev_out_cplx[2*i])<1e-20);
+}
+void FFT_Processor_fftw::execute_direct_Torus32(Torus32* res, const cplx* a) {
+    static const double _2p32 = double(INT64_C(1)<<32);
+    static const double _1sN = double(1)/double(N);
     cplx* in_cplx = (cplx*) in; //fftw_complex and cplx are layout-compatible
     for (int32_t i=0; i<=Ns2; i++) in_cplx[2*i]=0;
     for (int32_t i=0; i<Ns2; i++) in_cplx[2*i+1]=a[i];
@@ -463,26 +492,26 @@ EXPORT void torusPolynomialSubMulRFFT(TorusPolynomial* result, const IntPolynomi
 
 func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	t0 := IntPolynomial_ifft(poly1)
-	t1 := TorusPolynomial_ifft(poly2)
-	t2 := LagrangeHalfCPolynomialMul(t0, t1, int(N/2))
-	result = TorusPolynomial_fft(t2)
+	t0 := IntPolynomial_ifft(N, poly1)
+	t1 := TorusPolynomial_ifft(N, poly2)
+	t2 := LagrangeHalfCPolynomialMul(t0.coefsC, t1.coefsC, int(N/2))
+	result = TorusPolynomial_fft(N, t2)
 }
 
 func TorusPolynomialAddMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	t0 := IntPolynomial_ifft(poly1)
-	t1 := TorusPolynomial_ifft(poly2)
-	t2 := LagrangeHalfCPolynomialMul(t0, t1, int(N/2))
-	tmpr2 := TorusPolynomial_fft(t2)
+	t0 := IntPolynomial_ifft(N, poly1)
+	t1 := TorusPolynomial_ifft(N, poly2)
+	t2 := LagrangeHalfCPolynomialMul(t0.coefsC, t1.coefsC, int(N/2))
+	tmpr2 := TorusPolynomial_fft(N, t2)
 	torusPolynomialAddTo(result, tmpr2)
 }
 
 func TorusPolynomialSubMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	t0 := IntPolynomial_ifft(poly1)
-	t1 := TorusPolynomial_ifft(poly2)
-	t2 := LagrangeHalfCPolynomialMul(t0, t1, int(N/2))
-	tmpr2 := TorusPolynomial_fft(t2)
+	t0 := IntPolynomial_ifft(N, poly1)
+	t1 := TorusPolynomial_ifft(N, poly2)
+	t2 := LagrangeHalfCPolynomialMul(t0.coefsC, t1.coefsC, int(N/2))
+	tmpr2 := TorusPolynomial_fft(N, t2)
 	torusPolynomialSubTo(result, tmpr2)
 }
