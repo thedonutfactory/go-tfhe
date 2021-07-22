@@ -4,7 +4,7 @@ import (
 	"github.com/takatoh/fft"
 )
 
-var fftProcessor DefaultFFTProcessor = NewDefaultFFTProcessor(1024)
+var fftProcessor *DefaultFFTProcessor = NewDefaultFFTProcessor(1024)
 
 type FFTProcessor interface {
 	//FFT_Processor_fftw(const int32_t N);
@@ -24,9 +24,9 @@ type DefaultFFTProcessor struct {
 	//omegaxminus1 []complex128
 }
 
-func NewDefaultFFTProcessor(N int32) DefaultFFTProcessor {
+func NewDefaultFFTProcessor(N int32) *DefaultFFTProcessor {
 
-	return DefaultFFTProcessor{
+	return &DefaultFFTProcessor{
 		_2N:     2 * N,
 		N:       N,
 		Ns2:     N / 2,
@@ -122,7 +122,7 @@ func (p *DefaultFFTProcessor) executeDirectTorus32(res []Torus32, a []complex128
 	_1sN := double(1) / double(N)
 	//cplx* in_cplx = (cplx*) in; //fftw_complex and cplx are layout-compatible
 
-	in_cplx := make([]complex128, N)
+	in_cplx := make([]complex128, N+1)
 
 	for i := 0; i <= Ns2; i++ {
 		in_cplx[2*i] = 0
