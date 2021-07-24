@@ -1,4 +1,4 @@
-module example.com/examples
+module example.com/examples/lwe
 
 go 1.15
 

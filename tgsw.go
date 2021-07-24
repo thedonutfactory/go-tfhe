@@ -1,13 +1,15 @@
 package tfhe
 
+import "fmt"
+
 type TGswParams struct {
 	l          int32       ///< decomp length
 	Bgbit      int32       ///< log_2(Bg)
 	Bg         int32       ///< decomposition base (must be a power of 2)
 	halfBg     int32       ///< Bg/2
 	maskMod    uint32      ///< Bg-1
-	tlweParams *TLweParams ///< Params of each row
-	kpl        int32       ///< number of rows = (k+1)*l
+	TlweParams *TLweParams ///< Params of each row
+	Kpl        int32       ///< number of rows = (k+1)*l
 	H          []Torus32   ///< powers of Bgbit
 	offset     uint32      ///< offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
 }
@@ -20,8 +22,8 @@ type TGswKey struct {
 }
 
 type TGswSample struct {
-	AllSample  []TLweSample   ///< TLweSample* all_sample; (k+1)l TLwe Sample
-	BlocSample [][]TLweSample ///< optional access to the different size l blocks
+	AllSample  []TLweSample    ///< TLweSample* all_sample; (k+1)l TLwe Sample
+	BlocSample [][]*TLweSample ///< optional access to the different size l blocks
 	// double current_variance
 	k int32
 	l int32
@@ -51,22 +53,35 @@ func TGswAddH(result *TGswSample, params *TGswParams) {
 */
 
 func NewTGswSample(params *TGswParams) *TGswSample {
-	k := params.tlweParams.k
+	k := params.TlweParams.K
 	l := params.l
-	kpl := params.kpl
+	kpl := params.Kpl
 	//h := params.H
 
 	allSamples := make([]TLweSample, kpl)
 	for i := range allSamples {
-		allSamples[i] = *NewTLweSample(params.tlweParams)
+		allSamples[i] = *NewTLweSample(params.TlweParams)
 	}
-	blocSamples := make([][]TLweSample, k+1)
+
+	var c int = 0
+	blocSamples := make([][]*TLweSample, k+1)
 	for i := range blocSamples {
-		blocSamples[i] = make([]TLweSample, l)
+		blocSamples[i] = make([]*TLweSample, l)
 		for j := range blocSamples[i] {
-			blocSamples[i][j] = *NewTLweSample(params.tlweParams)
+			blocSamples[i][j] = &allSamples[c]
+			c++
 		}
 	}
+	/*
+		blocSamples := make([][]TLweSample, k+1)
+		for i := range blocSamples {
+			blocSamples[i] = make([]TLweSample, l)
+			for j := range blocSamples[i] {
+				blocSamples[i][j] = *NewTLweSample(params.tlweParams)
+			}
+		}
+	*/
+
 	return &TGswSample{
 		AllSample:  allSamples,
 		BlocSample: blocSamples,
@@ -75,11 +90,7 @@ func NewTGswSample(params *TGswParams) *TGswSample {
 	}
 }
 
-func NewTGswSample2(AllSample []TLweSample, BlocSample [][]TLweSample, k, l int32) *TGswSample {
-	return &TGswSample{AllSample, BlocSample, k, l}
-}
-
-func NewTGswParams(l, Bgbit int32, tlwe_params *TLweParams) *TGswParams {
+func NewTGswParams(l, Bgbit int32, tlweParams *TLweParams) *TGswParams {
 	var Bg int32 = 1 << Bgbit
 	var halfBg int32 = Bg / 2
 	h := make([]Torus32, l)
@@ -102,21 +113,47 @@ func NewTGswParams(l, Bgbit int32, tlwe_params *TLweParams) *TGswParams {
 		Bgbit:      Bgbit,
 		halfBg:     halfBg,
 		maskMod:    uint32(Bg - 1),
-		tlweParams: tlwe_params,
-		kpl:        int32((tlwe_params.k + 1) * l),
+		TlweParams: tlweParams,
+		Kpl:        int32((tlweParams.K + 1) * l),
 		H:          h,
 		offset:     uint32(offset),
 	}
 }
 
 func NewTGswKey(params *TGswParams) *TGswKey {
-	tlweKey := *NewTLweKey(params.tlweParams)
+	tlweKey := *NewTLweKey(params.TlweParams)
 	return &TGswKey{
 		params:     params,
-		tlweParams: params.tlweParams,
+		tlweParams: params.TlweParams,
 		TlweKey:    tlweKey,
 		key:        tlweKey.key,
 	}
+}
+
+func (s *TGswSample) DebugTGswSample(params *TGswParams) {
+	tabs(1, "TGswSample {")
+	kpl := params.Kpl
+	k := params.TlweParams.K
+	l := params.l
+
+	tabs(2, fmt.Sprintf("k: %d", k))
+	tabs(2, fmt.Sprintf("l: %d", l))
+	tabs(2, fmt.Sprintf("kpl: %d", kpl))
+
+	tabs(2, "AllSample {")
+	for i := int32(0); i < kpl; i++ {
+		s.AllSample[i].DebugTLweSample()
+	}
+	tabs(2, "}")
+
+	for bloc := int32(0); bloc <= k; bloc++ {
+		tabs(2, "BlockSample {")
+		for i := int32(0); i < l; i++ {
+			s.BlocSample[bloc][i].DebugTLweSample()
+		}
+		tabs(2, "}")
+	}
+	tabs(1, "}")
 }
 
 /*
@@ -144,15 +181,15 @@ func TGswKeyGen(result *TGswKey) {
 // support Functions for TGsw
 // Result = 0
 func TGswClear(result *TGswSample, params *TGswParams) {
-	kpl := params.kpl
+	kpl := params.Kpl
 	for p := int32(0); p < kpl; p++ {
-		tLweClear(&result.AllSample[p], params.tlweParams)
+		tLweClear(&result.AllSample[p], params.TlweParams)
 	}
 }
 
 // Result += H
 func TGswAddH(result *TGswSample, params *TGswParams) {
-	k := params.tlweParams.k
+	k := params.TlweParams.K
 	l := params.l
 	h := params.H
 	// compute result += H
@@ -165,8 +202,8 @@ func TGswAddH(result *TGswSample, params *TGswParams) {
 
 // Result += mu*H
 func TGswAddMuH(result *TGswSample, message *IntPolynomial, params *TGswParams) {
-	k := params.tlweParams.k
-	N := params.tlweParams.N
+	k := params.TlweParams.K
+	N := params.TlweParams.N
 	l := params.l
 	h := params.H
 	mu := message.Coefs
@@ -185,7 +222,7 @@ func TGswAddMuH(result *TGswSample, message *IntPolynomial, params *TGswParams) 
 
 // Result += mu*H, mu integer
 func TGswAddMuIntH(result *TGswSample, message int32, params *TGswParams) {
-	k := params.tlweParams.k
+	k := params.TlweParams.K
 	l := params.l
 	h := params.H
 
@@ -200,7 +237,7 @@ func TGswAddMuIntH(result *TGswSample, message int32, params *TGswParams) {
 // Result = tGsw(0)
 func TGswEncryptZero(result *TGswSample, alpha double, key *TGswKey) {
 	rlkey := &key.TlweKey
-	kpl := key.params.kpl
+	kpl := key.params.Kpl
 	for p := int32(0); p < kpl; p++ {
 		tLweSymEncryptZero(&result.AllSample[p], alpha, rlkey)
 	}
@@ -208,8 +245,8 @@ func TGswEncryptZero(result *TGswSample, alpha double, key *TGswKey) {
 
 //mult externe de X^{a_i} par bki
 func TGswMulByXaiMinusOne(result *TGswSample, ai int32, bk *TGswSample, params *TGswParams) {
-	par := params.tlweParams
-	kpl := params.kpl
+	par := params.TlweParams
+	kpl := params.Kpl
 	for i := int32(0); i < kpl; i++ {
 		tLweMulByXaiMinusOne(&result.AllSample[i], ai, &bk.AllSample[i], par)
 	}
@@ -219,9 +256,9 @@ func TGswMulByXaiMinusOne(result *TGswSample, ai int32, bk *TGswSample, params *
 //void tGswTLweDecompH(IntPolynomial* result, const TLweSample* sample,const TGswParams* params)
 //accum *= sample
 func TGswExternMulToTLwe(accum *TLweSample, sample *TGswSample, params *TGswParams) {
-	par := params.tlweParams
+	par := params.TlweParams
 	N := par.N
-	kpl := int(params.kpl)
+	kpl := int(params.Kpl)
 	//TODO: improve this new/delete
 	dec := NewIntPolynomialArray(kpl, N)
 
@@ -261,10 +298,10 @@ func TGswEncryptB(result *TGswSample, message int32, alpha double, key *TGswKey)
 // à revoir
 func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msize int) {
 	params := key.params
-	rlwe_params := params.tlweParams
-	N := rlwe_params.N
+	rlweParams := params.TlweParams
+	N := rlweParams.N
 	l := params.l
-	k := rlwe_params.k
+	k := rlweParams.K
 	testvec := NewTorusPolynomial(N)
 	tmp := NewTorusPolynomial(N)
 	decomp := NewIntPolynomialArray(int(l), N)
@@ -279,7 +316,7 @@ func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msi
 		for j := int32(1); j < N; j++ {
 			Assert(decomp[i].Coefs[j] == 0)
 		}
-		TLwePhase(tmp, &sample.BlocSample[k][i], &key.TlweKey)
+		TLwePhase(tmp, sample.BlocSample[k][i], &key.TlweKey)
 		TorusPolynomialAddMulR(testvec, &decomp[i], tmp)
 	}
 	for i := int32(0); i < N; i++ {
@@ -305,7 +342,7 @@ EXPORT int32_t tGswSymDecryptInt(const TGswSample* sample, const TGswKey* key){
 
 //fonction de decomposition
 func TGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswParams) {
-	k := params.tlweParams.k
+	k := params.TlweParams.K
 	l := params.l
 	/*
 		for i := int32(0); i < k; i++ { // b=a[k]
@@ -341,7 +378,7 @@ func TGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswPar
 }
 
 func Torus32PolynomialDecompH_old(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
-	N := params.tlweParams.N
+	N := params.TlweParams.N
 	l := params.l
 	Bgbit := params.Bgbit
 	maskMod := params.maskMod
@@ -358,7 +395,7 @@ func Torus32PolynomialDecompH_old(result []IntPolynomial, sample *TorusPolynomia
 }
 
 func TGswTorus32PolynomialDecompH(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
-	N := params.tlweParams.N
+	N := params.TlweParams.N
 	l := params.l
 	Bgbit := params.Bgbit
 	buf := []uint32{}
@@ -393,9 +430,9 @@ func TGswTorus32PolynomialDecompH(result []IntPolynomial, sample *TorusPolynomia
 
 //result = a*b
 func TGswExternProduct(result *TLweSample, a *TGswSample, b *TLweSample, params *TGswParams) {
-	parlwe := params.tlweParams
+	parlwe := params.TlweParams
 	N := parlwe.N
-	kpl := params.kpl
+	kpl := params.Kpl
 	dec := NewIntPolynomialArray(int(kpl), N)
 	TGswTLweDecompH(dec, b, params)
 	tLweClear(result, parlwe)

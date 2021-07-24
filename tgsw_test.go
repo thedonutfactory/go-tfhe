@@ -69,7 +69,7 @@ func NewFakeTGsw(sample *TGswSample, params *TGswParams) *FakeTGsw {
 	var alpha double = 4.2 // valeur pseudo aleatoire fixé
 	return &FakeTGsw{
 		fakeUid:         FAKE_TGSW_UID,
-		message:         NewIntPolynomial(params.tlweParams.N),
+		message:         NewIntPolynomial(params.TlweParams.N),
 		currentVariance: alpha * alpha,
 	}
 }
@@ -83,8 +83,8 @@ func (fake *FakeTGsw) setMessageVariance(mess int32, variance double) {
 //this function creates a fixed (random-looking) result,
 //whose seed is the sample
 func FakeTGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswParams) {
-	kpl := params.kpl
-	N := params.tlweParams.N
+	kpl := params.Kpl
+	N := params.TlweParams.N
 	//const FakeTLwe *seed = fake(sample);
 	seed := NewFakeTLweFromTLweSample(sample)
 	for i := int32(0); i < kpl; i++ {
@@ -97,8 +97,8 @@ func FakeTGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGs
 // we use the function rand because in the "const static" context the uniformly random generator doesn't work!
 func newRandomTGswKey(params *TGswParams) *TGswKey {
 	key := NewTGswKey(params)
-	N := params.tlweParams.N
-	k := params.tlweParams.k
+	N := params.TlweParams.N
+	k := params.TlweParams.K
 	for i := int32(0); i < k; i++ {
 		for j := int32(0); j < N; j++ {
 			key.key[i].Coefs[j] = rand.Int31() % 2
@@ -156,8 +156,8 @@ func TestTGswKeyGen(t *testing.T) {
 	assert := assert.New(t)
 	for _, param := range allTGswParams {
 		key := NewTGswKey(param)
-		k := param.tlweParams.k
-		N := param.tlweParams.N
+		k := param.TlweParams.K
+		N := param.TlweParams.N
 
 		TGswKeyGen(key)
 		for i := int32(0); i < k; i++ {
@@ -173,7 +173,7 @@ func TestTGswKeyGen(t *testing.T) {
 func TestTGswSymEncrypt(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allTGswKeys {
-		N := key.params.tlweParams.N
+		N := key.params.TlweParams.N
 		s := NewTGswSample(key.params)
 		mess := newRandomIntPolynomial(N)
 		var alpha double = 4.2 // valeur pseudo aleatoire fixé
@@ -194,11 +194,11 @@ func TestTGswSymEncrypt(t *testing.T) {
 func TestTGswTLweDecompH(t *testing.T) {
 	assert := assert.New(t)
 	for _, param := range allTGswParams {
-		N := param.tlweParams.N
-		k := param.tlweParams.k
+		N := param.TlweParams.N
+		k := param.TlweParams.K
 		Bgbit := param.Bgbit
 		l := param.l
-		kpl := param.kpl
+		kpl := param.Kpl
 		h := param.H
 
 		//compute the tolerance
@@ -209,7 +209,7 @@ func TestTGswTLweDecompH(t *testing.T) {
 		//printf("%d,%d,%d\n",Bgbit,l,toler)
 
 		result := NewIntPolynomialArray(int(kpl), N)
-		sample := NewTLweSample(param.tlweParams)
+		sample := NewTLweSample(param.TlweParams)
 
 		// sample randomly generated
 		for bloc := int32(0); bloc <= k; bloc++ {

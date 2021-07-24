@@ -20,12 +20,28 @@ func approxPhase(phase Torus32, Msize int32) Torus32 {
 	return Torus32(phase64 >> 32)
 }
 
+func UniformFloat64Dist(min, max int32) float64 {
+	dist := distuv.Uniform{
+		Min: float64(min),
+		Max: float64(max),
+	}
+	return dist.Rand()
+}
+
 func UniformTorus32Dist() Torus32 {
 	dist := distuv.Uniform{
-		Min: INT32_MIN,
-		Max: INT32_MAX,
+		Min: math.MinInt32,
+		Max: math.MaxInt32,
 	}
 	return Torus32(dist.Rand())
+}
+
+func UniformUintDist() uint32 {
+	dist := distuv.Uniform{
+		Min: 0,
+		Max: math.MaxUint32,
+	}
+	return uint32(dist.Rand())
 }
 
 func UniformInt32Dist(min, max int32) int32 {
@@ -52,15 +68,12 @@ var _two32_double double = math.Pow(2, 32)
 
 // from double to Torus32 - float64 to int32 conversion
 func Dtot32(d double) Torus32 {
-	//return Torus32(d)
-	//return int32(int64((d - int64(d)) * _two32))
 	return Torus32(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
 }
 
 // from Torus32 to double
 func T32tod(x Torus32) double {
 	return double(x) / _two32_double
-	// return double(x) / _two32_double
 }
 
 // Gaussian sample centered in message, with standard deviation sigma
