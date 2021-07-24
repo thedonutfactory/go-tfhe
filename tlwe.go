@@ -1,6 +1,7 @@
 package tfhe
 
 import (
+	"fmt"
 	"math"
 
 	"gonum.org/v1/gonum/stat/distuv"
@@ -8,7 +9,7 @@ import (
 
 type TLweParams struct {
 	N                  int32     ///< a power of 2: degree of the polynomials
-	k                  int32     ///< number of polynomials in the mask
+	K                  int32     ///< number of polynomials in the mask
 	alphaMin           double    ///< minimal noise s.t. the sample is secure
 	alphaMax           double    ///< maximal noise s.t. we can decrypt
 	extractedLweparams LweParams ///< lwe params if one extracts
@@ -29,7 +30,7 @@ type TLweSample struct {
 func NewTLweParams(N, k int32, alphaMin, alphaMax double) *TLweParams {
 	return &TLweParams{
 		N:                  N,
-		k:                  k,
+		K:                  k,
 		alphaMin:           alphaMin,
 		alphaMax:           alphaMax,
 		extractedLweparams: LweParams{N * k, alphaMin, alphaMax},
@@ -37,11 +38,11 @@ func NewTLweParams(N, k int32, alphaMin, alphaMax double) *TLweParams {
 }
 
 func NewTLweSample(params *TLweParams) *TLweSample {
-	avar := NewTorusPolynomialArray(int(params.k)+1, params.N)
+	avar := NewTorusPolynomialArray(int(params.K)+1, params.N)
 	return &TLweSample{
-		K:               params.k,
+		K:               params.K,
 		A:               avar,
-		B:               &avar[params.k],
+		B:               &avar[params.K],
 		CurrentVariance: 0.,
 	}
 }
@@ -55,12 +56,39 @@ func NewTLweSampleArray(size int32, params *TLweParams) (arr []TLweSample) {
 }
 
 func NewTLweKey(params *TLweParams) *TLweKey {
-	return &TLweKey{params: params, key: NewIntPolynomialArray(int(params.k), params.N)}
+	return &TLweKey{params: params, key: NewIntPolynomialArray(int(params.K), params.N)}
+}
+
+func (s *TLweSample) DebugTLweSample() {
+	tabs(3, "TLweSample {")
+	for i := 0; i < len(s.A); i++ {
+		tabs(4, fmt.Sprintf("a.coefs [%d] [", i))
+		// for j := 0; j < len(s.A[i].CoefsT); j++ {
+		for j := 0; j < 5; j++ {
+			v := s.A[i].CoefsT[j]
+			if v != 0 {
+				tabsi(5, v)
+			}
+		}
+		tabs(4, "]")
+	}
+
+	tabs(4, "b.coefs [")
+	// for i := 0; i < len(s.B.CoefsT); i++ {
+	for i := 0; i < 5; i++ {
+		v := s.B.CoefsT[i]
+		if v != 0 {
+			tabsi(5, v)
+		}
+
+	}
+	tabs(4, "]")
+	tabs(3, "}")
 }
 
 func tLweKeyGen(result *TLweKey) {
 	N := result.params.N
-	k := result.params.k
+	k := result.params.K
 	dist := distuv.Uniform{
 		Min: 0,
 		Max: 1,
@@ -75,7 +103,7 @@ func tLweKeyGen(result *TLweKey) {
 /*create an homogeneous tlwe sample*/
 func tLweSymEncryptZero(result *TLweSample, alpha double, key *TLweKey) {
 	N := key.params.N
-	k := key.params.k
+	k := key.params.K
 
 	for j := int32(0); j < N; j++ {
 		result.B.CoefsT[j] = gaussian32(0, alpha)
@@ -109,7 +137,7 @@ func tLweSymEncryptT(result *TLweSample, message Torus32, alpha double, key *TLw
  */
 func TLwePhase(phase *TorusPolynomial, sample *TLweSample, key *TLweKey) {
 	torusPolynomialCopy(phase, sample.B) // phi = b
-	for i := int32(0); i < key.params.k; i++ {
+	for i := int32(0); i < key.params.K; i++ {
 		TorusPolynomialSubMulR(phase, &key.key[i], &sample.A[i])
 	}
 }
@@ -139,7 +167,7 @@ func tLweSymDecryptT(sample *TLweSample, key *TLweKey, Msize int32) Torus32 {
 //Arithmetic operations on TLwe samples
 /** result = (0,0) */
 func tLweClear(result *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i < params.K; i++ {
 		torusPolynomialClear(&result.A[i])
 	}
 	torusPolynomialClear(result.B)
@@ -148,7 +176,7 @@ func tLweClear(result *TLweSample, params *TLweParams) {
 
 /** result = sample */
 func tLweCopy(result *TLweSample, sample *TLweSample, params *TLweParams) {
-	for i := int32(0); i <= params.k; i++ {
+	for i := int32(0); i <= params.K; i++ {
 		for j := int32(0); j < params.N; j++ {
 			result.A[i].CoefsT[j] = sample.A[i].CoefsT[j]
 		}
@@ -158,7 +186,7 @@ func tLweCopy(result *TLweSample, sample *TLweSample, params *TLweParams) {
 
 /** result = (0,mu) */
 func tLweNoiselessTrivial(result *TLweSample, mu *TorusPolynomial, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i < params.K; i++ {
 		torusPolynomialClear(&result.A[i])
 	}
 	torusPolynomialCopy(result.B, mu)
@@ -167,7 +195,7 @@ func tLweNoiselessTrivial(result *TLweSample, mu *TorusPolynomial, params *TLweP
 
 /** result = (0,mu) where mu is constant*/
 func tLweNoiselessTrivialT(result *TLweSample, mu Torus32, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i < params.K; i++ {
 		torusPolynomialClear(&result.A[i])
 	}
 	torusPolynomialClear(result.B)
@@ -177,7 +205,7 @@ func tLweNoiselessTrivialT(result *TLweSample, mu Torus32, params *TLweParams) {
 
 /** result = result + sample */
 func tLweAddTo(result *TLweSample, sample *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i < params.K; i++ {
 		torusPolynomialAddTo(&result.A[i], &sample.A[i])
 	}
 	torusPolynomialAddTo(result.B, sample.B)
@@ -186,7 +214,7 @@ func tLweAddTo(result *TLweSample, sample *TLweSample, params *TLweParams) {
 
 /** result = result - sample */
 func tLweSubTo(result *TLweSample, sample *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i < params.K; i++ {
 		torusPolynomialSubTo(&result.A[i], &sample.A[i])
 	}
 	torusPolynomialSubTo(result.B, sample.B)
@@ -195,7 +223,7 @@ func tLweSubTo(result *TLweSample, sample *TLweSample, params *TLweParams) {
 
 /** result = result + p.sample */
 func tLweAddMulTo(result *TLweSample, p int32, sample *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i <= params.K; i++ {
 		torusPolynomialAddMulZTo(&result.A[i], p, &sample.A[i])
 	}
 	torusPolynomialAddMulZTo(result.B, p, sample.B)
@@ -204,7 +232,7 @@ func tLweAddMulTo(result *TLweSample, p int32, sample *TLweSample, params *TLweP
 
 /** result = result - p.sample */
 func tLweSubMulTo(result *TLweSample, p int32, sample *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i < params.K; i++ {
 		torusPolynomialSubMulZTo(&result.A[i], p, &sample.A[i])
 	}
 	torusPolynomialSubMulZTo(result.B, p, sample.B)
@@ -213,7 +241,7 @@ func tLweSubMulTo(result *TLweSample, p int32, sample *TLweSample, params *TLweP
 
 /** result = result + p.sample */
 func tLweAddMulRTo(result *TLweSample, p *IntPolynomial, sample *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i <= params.K; i++ {
 		TorusPolynomialAddMulR(&result.A[i], p, &sample.A[i])
 	}
 	result.CurrentVariance += double(intPolynomialNormSq2(p)) * sample.CurrentVariance
@@ -221,7 +249,7 @@ func tLweAddMulRTo(result *TLweSample, p *IntPolynomial, sample *TLweSample, par
 
 //mult externe de X^ai-1 par bki
 func tLweMulByXaiMinusOne(result *TLweSample, ai int32, bk *TLweSample, params *TLweParams) {
-	for i := int32(0); i < params.k; i++ {
+	for i := int32(0); i <= params.K; i++ {
 		torusPolynomialMulByXaiMinusOne(&result.A[i], ai, &bk.A[i])
 	}
 }

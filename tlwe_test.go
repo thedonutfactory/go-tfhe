@@ -33,7 +33,7 @@ const toler double = 1e-8
 func newRandomKey(params *TLweParams) *TLweKey {
 	key := NewTLweKey(params)
 	N := params.N
-	k := params.k
+	k := params.K
 
 	for i := int32(0); i < k; i++ {
 		for j := int32(0); j < N; j++ {
@@ -48,7 +48,7 @@ func newRandomKey(params *TLweParams) *TLweKey {
 * Fills a TLweSample with random Torus32 values (uniform distribution)
  */
 func fillTLweRandom(result *TLweSample, params *TLweParams) {
-	k := params.k
+	k := params.K
 	N := params.N
 	for i := int32(0); i <= k; i++ {
 		for j := int32(0); j < N; j++ {
@@ -63,7 +63,7 @@ func fillTLweRandom(result *TLweSample, params *TLweParams) {
 * Copies a TLweSample
  */
 func copyTLweSample(result *TLweSample, sample *TLweSample, params *TLweParams) {
-	k := params.k
+	k := params.K
 	N := params.N
 
 	for i := int32(0); i <= k; i++ {
@@ -92,7 +92,7 @@ func TestTLweKeyGen(t *testing.T) {
 		assert.EqualValues(params, key.params)
 
 		N := key.params.N
-		k := key.params.k
+		k := key.params.K
 		s := key.key
 
 		//verify that the key is binary and kind-of random
@@ -131,7 +131,7 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 	for _, key := range all_keys1024 {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		samples := NewTLweSampleArray(NB_SAMPLES, params)
 		phase := NewTorusPolynomial(N)
 		var decrypt Torus32
@@ -196,7 +196,7 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 	for _, key := range all_keys1024 {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 
 		samples := NewTLweSampleArray(NB_SAMPLES, params)
 		message := NewTorusPolynomial(N)
@@ -263,7 +263,7 @@ func TestTLweClear(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		sample := NewTLweSample(params)
 
 		// Generate a random TLweSample and then set it to (0,0)
@@ -291,7 +291,7 @@ func TestTLweCopy(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		sample := NewTLweSample(params)
 		result := NewTLweSample(params)
 
@@ -321,7 +321,7 @@ func TestTLweNoiselessTrivial(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		message := NewTorusPolynomial(N)
 		for j := int32(0); j < N; j++ {
 			message.CoefsT[j] = UniformTorus32Dist()
@@ -356,7 +356,7 @@ func TestTLweAddTo(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		sample1 := NewTLweSample(params)
 		sample2 := NewTLweSample(params)
 		sample1copy := NewTLweSample(params)
@@ -390,7 +390,7 @@ func TestTLweSubTo(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		sample1 := NewTLweSample(params)
 		sample2 := NewTLweSample(params)
 		sample1copy := NewTLweSample(params)
@@ -423,7 +423,7 @@ func TestTLweAddMulTo(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		sample1 := NewTLweSample(params)
 		sample2 := NewTLweSample(params)
 		sample1copy := NewTLweSample(params)
@@ -457,7 +457,7 @@ func TestTLweSubMulTo(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
+		k := params.K
 		sample1 := NewTLweSample(params)
 		sample2 := NewTLweSample(params)
 		sample1copy := NewTLweSample(params)
@@ -486,8 +486,8 @@ func TestTLweAddTTo(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
-		pos := rand.Int31() % params.k
+		k := params.K
+		pos := rand.Int31() % params.K
 		sample1 := NewTLweSample(params)
 		sample1copy := NewTLweSample(params)
 		fillTLweRandom(sample1, params)
@@ -515,8 +515,8 @@ func TestTLweAddRTTo(t *testing.T) {
 	for _, key := range allRandomKeys {
 		params := key.params
 		N := params.N
-		k := params.k
-		pos := rand.Int31() % params.k
+		k := params.K
+		pos := rand.Int31() % params.K
 		sample1 := NewTLweSample(params)
 		sample1copy := NewTLweSample(params)
 		p := NewIntPolynomial(N)
