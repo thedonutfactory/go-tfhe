@@ -331,6 +331,7 @@ func intPolynomialNormInftyDist(poly1 *IntPolynomial, poly2 *IntPolynomial) doub
 	return norm
 }
 
+/*
 func LagrangeHalfCPolynomialMul(a []complex128, b []complex128, Ns2 int) (result *LagrangeHalfCPolynomial) {
 	result = &LagrangeHalfCPolynomial{
 		coefsC: make([]complex128, Ns2),
@@ -341,6 +342,7 @@ func LagrangeHalfCPolynomialMul(a []complex128, b []complex128, Ns2 int) (result
 	}
 	return
 }
+*/
 
 func IntPolynomial_ifft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
 	result.coefsC = fftProcessor.executeReverseInt(p.Coefs)
@@ -373,7 +375,7 @@ func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *T
 	}
 	IntPolynomial_ifft(tmp[0], poly1)
 	TorusPolynomial_ifft(tmp[1], poly2)
-	tmp[2] = LagrangeHalfCPolynomialMul(tmp[0].coefsC, tmp[1].coefsC, int(N/2))
+	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
 	TorusPolynomial_fft(result, tmp[2])
 }
 
@@ -387,7 +389,7 @@ func TorusPolynomialAddMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2
 	tmpr := NewTorusPolynomial(N)
 	IntPolynomial_ifft(tmp[0], poly1)
 	TorusPolynomial_ifft(tmp[1], poly2)
-	tmp[2] = LagrangeHalfCPolynomialMul(tmp[0].coefsC, tmp[1].coefsC, int(N/2))
+	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
 	TorusPolynomial_fft(tmpr, tmp[2])
 	torusPolynomialAddTo(result, tmpr)
 }
@@ -402,7 +404,7 @@ func TorusPolynomialSubMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2
 	tmpr := NewTorusPolynomial(N)
 	IntPolynomial_ifft(tmp[0], poly1)
 	TorusPolynomial_ifft(tmp[1], poly2)
-	tmp[2] = LagrangeHalfCPolynomialMul(tmp[0].coefsC, tmp[1].coefsC, int(N/2))
+	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
 	TorusPolynomial_fft(tmpr, tmp[2])
 	torusPolynomialSubTo(result, tmpr)
 }
