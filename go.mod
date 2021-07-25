@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/badgerodon/collections v0.0.0-20130729185459-604e922904d3
-	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12 // indirect
+	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/stretchr/testify v1.7.0
 	github.com/takatoh/fft v0.0.0-20200830032019-365ed17d0c00
 	golang.org/x/exp v0.0.0-20210625193404-fa9d1d177d71
