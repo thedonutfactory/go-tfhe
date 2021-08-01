@@ -73,7 +73,7 @@ func Dtot32(d double) Torus32 {
 
 // from Torus32 to double
 func T32tod(x Torus32) double {
-	return double(x) / _two32_double
+	return double(x) / math.Pow(2, 32)
 }
 
 // Gaussian sample centered in message, with standard deviation sigma
