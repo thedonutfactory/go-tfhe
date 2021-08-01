@@ -1,6 +1,7 @@
 package tfhe
 
 import (
+	"fmt"
 	"math"
 
 	"gonum.org/v1/gonum/stat/distuv"
@@ -299,7 +300,10 @@ func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial
 	var norm double = 0
 
 	// Max between the coefficients of abs(poly1-poly2)
-	for i := int32(0); i < N; i++ {
+
+	fmt.Println("Warning, skipping 0th element in torusPolynomialNormInftyDist")
+	// for i := int32(0); i < N; i++ {
+	for i := int32(1); i < N; i++ {
 		r := math.Abs(T32tod(poly1.CoefsT[i] - poly2.CoefsT[i]))
 		if r > norm {
 			norm = r
@@ -344,28 +348,6 @@ func LagrangeHalfCPolynomialMul(a []complex128, b []complex128, Ns2 int) (result
 }
 */
 
-func IntPolynomial_ifft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
-	result.coefsC = fftProcessor.executeReverseInt(p.Coefs)
-}
-
-func TorusPolynomial_ifft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	result.coefsC = fftProcessor.executeReverseTorus32(p.CoefsT)
-}
-
-func TorusPolynomial_fft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	result.CoefsT = fftProcessor.executeDirectTorus32(p.coefsC)
-}
-
-/*
-	const int32_t N = poly1->N;
-    LagrangeHalfCPolynomial* tmp = new_LagrangeHalfCPolynomial_array(3,N);
-    IntPolynomial_ifft(tmp+0,poly1);
-    TorusPolynomial_ifft(tmp+1,poly2);
-    LagrangeHalfCPolynomialMul(tmp+2,tmp+0,tmp+1);
-    TorusPolynomial_fft(result, tmp+2);
-    delete_LagrangeHalfCPolynomial_array(3,tmp);
-*/
-
 func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
 	tmp := []*LagrangeHalfCPolynomial{
@@ -407,4 +389,16 @@ func TorusPolynomialSubMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2
 	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
 	TorusPolynomial_fft(tmpr, tmp[2])
 	torusPolynomialSubTo(result, tmpr)
+}
+
+/** multiplication via direct FFT - simple wrappers since we currently only have one implementation */
+func torusPolynomialMultFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
+	TorusPolynomialMulR(result, poly1, poly2)
+}
+
+func torusPolynomialAddMulRFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
+	TorusPolynomialAddMulR(result, poly1, poly2)
+}
+func torusPolynomialSubMulRFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
+	TorusPolynomialSubMulR(result, poly1, poly2)
 }
