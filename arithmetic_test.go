@@ -56,7 +56,7 @@ func TestModSwitchFromTorus32(t *testing.T) {
 
 	for i := 2; i < 200; i++ {
 		v := UniformTorus32Dist()
-		w := ModSwitchFromTorus32(v, i)
+		w := ModSwitchFromTorus32(v, int32(i))
 		dv := T32tod(v)
 		dw := double(w) / double(i)
 		assert.LessOrEqual(absfrac(dv-dw), 1./(2.*float64(i))+1e-40)

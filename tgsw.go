@@ -175,7 +175,7 @@ func init_TGswSample(obj *TGswSample, params *TGswParams) {
 // TGsw
 /** generate a tgsw key (in fact, a tlwe key) */
 func TGswKeyGen(result *TGswKey) {
-	tLweKeyGen(&result.TlweKey)
+	TLweKeyGen(&result.TlweKey)
 }
 
 // support Functions for TGsw
@@ -183,7 +183,7 @@ func TGswKeyGen(result *TGswKey) {
 func TGswClear(result *TGswSample, params *TGswParams) {
 	kpl := params.Kpl
 	for p := int32(0); p < kpl; p++ {
-		tLweClear(&result.AllSample[p], params.TlweParams)
+		TLweClear(&result.AllSample[p], params.TlweParams)
 	}
 }
 
@@ -248,7 +248,7 @@ func TGswMulByXaiMinusOne(result *TGswSample, ai int32, bk *TGswSample, params *
 	par := params.TlweParams
 	kpl := params.Kpl
 	for i := int32(0); i < kpl; i++ {
-		tLweMulByXaiMinusOne(&result.AllSample[i], ai, &bk.AllSample[i], par)
+		TLweMulByXaiMinusOne(&result.AllSample[i], ai, &bk.AllSample[i], par)
 	}
 }
 
@@ -263,9 +263,9 @@ func TGswExternMulToTLwe(accum *TLweSample, sample *TGswSample, params *TGswPara
 	dec := NewIntPolynomialArray(kpl, N)
 
 	TGswTLweDecompH(dec, accum, params)
-	tLweClear(accum, par)
+	TLweClear(accum, par)
 	for i := 0; i < kpl; i++ {
-		tLweAddMulRTo(accum, &dec[i], &sample.AllSample[i], par)
+		TLweAddMulRTo(accum, &dec[i], &sample.AllSample[i], par)
 	}
 }
 
@@ -320,7 +320,7 @@ func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msi
 		TorusPolynomialAddMulR(testvec, &decomp[i], tmp)
 	}
 	for i := int32(0); i < N; i++ {
-		result.Coefs[i] = ModSwitchFromTorus32(testvec.CoefsT[i], Msize)
+		result.Coefs[i] = ModSwitchFromTorus32(testvec.CoefsT[i], int32(Msize))
 	}
 }
 
@@ -435,9 +435,9 @@ func TGswExternProduct(result *TLweSample, a *TGswSample, b *TLweSample, params 
 	kpl := params.Kpl
 	dec := NewIntPolynomialArray(int(kpl), N)
 	TGswTLweDecompH(dec, b, params)
-	tLweClear(result, parlwe)
+	TLweClear(result, parlwe)
 	for i := int32(0); i < kpl; i++ {
-		tLweAddMulRTo(result, &dec[i], &a.AllSample[i], parlwe)
+		TLweAddMulRTo(result, &dec[i], &a.AllSample[i], parlwe)
 	}
 	result.CurrentVariance += b.CurrentVariance //todo + the error term?
 }
