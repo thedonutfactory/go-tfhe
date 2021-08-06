@@ -1,5 +1,9 @@
 package tfhe
 
+import (
+	"math/big"
+)
+
 func torusPolynomialMultNaive_plain_aux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
 	_2Nm1 := 2*N - 1
 	var ri Torus32
@@ -54,8 +58,8 @@ func torusPolynomialMultNaive(result *TorusPolynomial, poly1 *IntPolynomial, pol
 
 // A and B of size = size
 // R of size = 2*size-1
-/*
-func Karatsuba_aux(R []Torus32, A []int32, B []Torus32, size int32, buf []byte) {
+
+func Karatsuba_aux(R []Torus32, A []int32, B []Torus32, size int32) {
 	h := size / 2
 	sm1 := size - 1
 
@@ -88,9 +92,10 @@ func Karatsuba_aux(R []Torus32, A []int32, B []Torus32, size int32, buf []byte) 
 	}
 
 	// Karatsuba recursivly
-	Karatsuba_aux(R, A, B, h, buf)          // (R[0],R[2*h-2]), (A[0],A[h-1]), (B[0],B[h-1])
-	Karatsuba_aux(R+size, A+h, B+h, h, buf) // (R[2*h],R[4*h-2]), (A[h],A[2*h-1]), (B[h],B[2*h-1])
-	Karatsuba_aux(Rtemp, Atemp, Btemp, h, buf)
+	Karatsuba_aux(R, A, B, h) // (R[0],R[2*h-2]), (A[0],A[h-1]), (B[0],B[h-1])
+	// Karatsuba_aux(R+size, A+h, B+h, h, buf) // (R[2*h],R[4*h-2]), (A[h],A[2*h-1]), (B[h],B[2*h-1])
+	Karatsuba_aux(R[size:], A[h:], B[h:], h)
+	Karatsuba_aux(Rtemp, Atemp, Btemp, h)
 	R[sm1] = 0 //this one needs to be set manually
 	for i := int32(0); i < sm1; i++ {
 		Rtemp[i] -= R[i] + R[size+i]
@@ -99,71 +104,24 @@ func Karatsuba_aux(R []Torus32, A []int32, B []Torus32, size int32, buf []byte) 
 		R[h+i] += Rtemp[i]
 	}
 }
-*/
 
-func Karatsuba_aux(multiplicand []int32, multiplier []Torus32) []Torus32 {
-
-	// new double[2 * multiplicand.length];
-	product := make([]Torus32, 2*len(multiplicand))
-	//product := make([]Torus32, 2*len(multiplicand)-1)
-
-	//Handle the base case where the polynomial has only one coefficient
-	if len(multiplicand) == 1 {
-		product[0] = multiplicand[0] * multiplier[0]
-		return product
+func Mul(x, y []*big.Int) (res []*big.Int) {
+	res = make([]*big.Int, len(x))
+	for i, _ := range x {
+		res[i] = big.NewInt(0).Mul(x[i], y[i])
 	}
-
-	halfArraySize := len(multiplicand) / 2
-
-	//Declare arrays to hold halved factors
-	multiplicandLow := make([]int32, halfArraySize) //new double[halfArraySize];
-	multiplicandHigh := make([]int32, halfArraySize)
-	multipliplierLow := make([]Torus32, halfArraySize)
-	multipliierHigh := make([]Torus32, halfArraySize)
-
-	multiplicandLowHigh := make([]int32, halfArraySize)
-	multipliplierLowHigh := make([]Torus32, halfArraySize)
-
-	//Fill in the low and high arrays
-	for halfSizeIndex := 0; halfSizeIndex < halfArraySize; halfSizeIndex++ {
-		multiplicandLow[halfSizeIndex] = multiplicand[halfSizeIndex]
-		multiplicandHigh[halfSizeIndex] = multiplicand[halfSizeIndex+halfArraySize]
-		multiplicandLowHigh[halfSizeIndex] = multiplicandLow[halfSizeIndex] + multiplicandHigh[halfSizeIndex]
-
-		multipliplierLow[halfSizeIndex] = multiplier[halfSizeIndex]
-		multipliierHigh[halfSizeIndex] = multiplier[halfSizeIndex+halfArraySize]
-		multipliplierLowHigh[halfSizeIndex] = multipliplierLow[halfSizeIndex] + multipliierHigh[halfSizeIndex]
-	}
-
-	//Recursively call method on smaller arrays and construct the low and high parts of the product
-	productLow := Karatsuba_aux(multiplicandLow, multipliplierLow)
-	productHigh := Karatsuba_aux(multiplicandHigh, multipliierHigh)
-	productLowHigh := Karatsuba_aux(multiplicandLowHigh, multipliplierLowHigh)
-
-	//Construct the middle portion of the product
-	productMiddle := make([]int32, len(multiplicand)) //new double[multiplicand.length];
-	for halfSizeIndex := 0; halfSizeIndex < len(multiplicand); halfSizeIndex++ {
-		productMiddle[halfSizeIndex] = productLowHigh[halfSizeIndex] - productLow[halfSizeIndex] - productHigh[halfSizeIndex]
-	}
-
-	//Assemble the product from the low, middle and high parts. Start with the low and high parts of the product.
-	middleOffset := len(multiplicand) / 2
-	for halfSizeIndex := 0; halfSizeIndex < len(multiplicand); halfSizeIndex++ {
-		product[halfSizeIndex] += productLow[halfSizeIndex]
-		product[halfSizeIndex+len(multiplicand)] += productHigh[halfSizeIndex]
-		product[halfSizeIndex+middleOffset] += productMiddle[halfSizeIndex]
-	}
-	return product
+	return
 }
 
 // poly1, poly2 and result are polynomials mod X^N+1
 func torusPolynomialMultKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	//R := make([]Torus32, 2*N-1)
+	R := make([]Torus32, 2*N-1)
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	R := Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
+	//result.CoefsT = Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
+	Karatsuba_aux(R, poly1.Coefs, poly2.CoefsT, N)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
@@ -175,12 +133,12 @@ func torusPolynomialMultKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial,
 // poly1, poly2 and result are polynomials mod X^N+1
 func torusPolynomialAddMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	//R := make([]Torus32, 2*N-1)
+	R := make([]Torus32, 2*N-1)
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	//Karatsuba_aux(R, poly1.coefs, poly2.coefsT, N, buf)
-	R := Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
+	Karatsuba_aux(R, poly1.Coefs, poly2.CoefsT, N)
+	//R := Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
@@ -196,8 +154,8 @@ func torusPolynomialSubMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomi
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	//Karatsuba_aux(R, poly1.coefs, poly2.coefsT, N, buf)
-	R = Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
+	Karatsuba_aux(R, poly1.Coefs, poly2.CoefsT, N)
+	//R = Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
