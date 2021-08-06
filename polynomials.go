@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/mjibson/go-dsp/fft"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
@@ -295,16 +296,30 @@ func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial
 }
 */
 
+func torusPolynomialNormInftyDistSkipFirst(poly1 *TorusPolynomial, poly2 *TorusPolynomial) double {
+	N := poly1.N
+	var norm double = 0
+
+	// Max between the coefficients of abs(poly1-poly2)
+	fmt.Println("Warning, skipping 0th element in torusPolynomialNormInftyDist")
+	for i := int32(1); i < N; i++ {
+		r := math.Abs(T32tod(poly1.CoefsT[i] - poly2.CoefsT[i]))
+		fmt.Printf("%d, %d => %f \n", poly1.CoefsT[i], poly2.CoefsT[i], r)
+		if r > norm {
+			norm = r
+		}
+	}
+	return norm
+}
+
 func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial) double {
 	N := poly1.N
 	var norm double = 0
 
 	// Max between the coefficients of abs(poly1-poly2)
-
-	fmt.Println("Warning, skipping 0th element in torusPolynomialNormInftyDist")
-	// for i := int32(0); i < N; i++ {
-	for i := int32(1); i < N; i++ {
+	for i := int32(0); i < N; i++ {
 		r := math.Abs(T32tod(poly1.CoefsT[i] - poly2.CoefsT[i]))
+		fmt.Printf("%d, %d => %f \n", poly1.CoefsT[i], poly2.CoefsT[i], r)
 		if r > norm {
 			norm = r
 		}
@@ -346,19 +361,136 @@ func LagrangeHalfCPolynomialMul(a []complex128, b []complex128, Ns2 int) (result
 	}
 	return
 }
+
+EXPORT void torusPolynomialMultFFT(TorusPolynomial* result, const IntPolynomial* poly1, const TorusPolynomial* poly2) {
+    const int32_t N = poly1->N;
+    LagrangeHalfCPolynomial* tmp = new_LagrangeHalfCPolynomial_array(3,N);
+    IntPolynomial_ifft(tmp+0,poly1);
+    TorusPolynomial_ifft(tmp+1,poly2);
+    LagrangeHalfCPolynomialMul(tmp+2,tmp+0,tmp+1);
+    TorusPolynomial_fft(result, tmp+2);
+    delete_LagrangeHalfCPolynomial_array(3,tmp);
+}
 */
 
-func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
-	N := poly1.N
-	tmp := []*LagrangeHalfCPolynomial{
-		NewLagrangeHalfCPolynomial(N),
-		NewLagrangeHalfCPolynomial(N),
-		NewLagrangeHalfCPolynomial(N),
+func mulfft(a []complex128) []complex128 {
+	n := len(a)
+	for i := 0; i < n; i++ {
+		a = append(a, 0)
 	}
-	IntPolynomial_ifft(tmp[0], poly1)
-	TorusPolynomial_ifft(tmp[1], poly2)
-	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
-	TorusPolynomial_fft(result, tmp[2])
+	return fft.FFT(a)
+}
+
+func invfft(a []complex128) []complex128 {
+	return fft.IFFT(a)
+}
+
+func mult(a, b []complex128) []complex128 {
+	n := Max(len(a), len(b))
+	c := make([]complex128, n)
+	for i := 0; i < n; i++ {
+		c[i] = a[i] * b[i]
+	}
+	return c
+}
+
+func multiply(a, b []int32) []int32 {
+	/*
+		x := mulfft(castComplex(a))
+		y := mulfft(castComplex(b))
+		c := mult(x, y)
+		return castTorus(invfft(c))
+	*/
+	x := revInt(a)
+	y := revTorus(b)
+	c := mult(x, y)
+	return dirTorus(c)
+}
+
+func revTorus(a []Torus32) []complex128 {
+	N := len(a)
+	Ns2 := len(a) / 2
+	_2pm33 := 1. / double(int64(1)<<33)
+	rev_in := make([]complex128, len(a)*2)
+
+	for i := 0; i < N; i++ {
+		rev_in[i] = complex(float64(a[i])*_2pm33, 0.)
+	}
+	for i := 0; i < N; i++ {
+		rev_in[N+i] = -rev_in[i]
+	}
+
+	rev_out_cplx := fft.FFT(rev_in)
+
+	res := make([]complex128, len(a))
+	for i := 0; i < Ns2; i++ {
+		res[i] = rev_out_cplx[2*i+1]
+	}
+
+	return res
+}
+
+func revInt(a []int32) []complex128 {
+	N := len(a)
+	Ns2 := len(a) / 2
+	rev_in := make([]complex128, len(a)*2)
+
+	for i := 0; i < N; i++ {
+		rev_in[i] = complex(float64(a[i])/2., 0.)
+	}
+	for i := 0; i < N; i++ {
+		rev_in[N+i] = -rev_in[i]
+	}
+
+	rev_out_cplx := fft.FFT(rev_in)
+
+	res := make([]complex128, len(a))
+	for i := 0; i < Ns2; i++ {
+		res[i] = rev_out_cplx[2*i+1]
+	}
+
+	return res
+}
+
+func dirTorus(a []complex128) []Torus32 {
+	N := len(a)
+	Ns2 := len(a) / 2
+	_2p32 := double(int64(1) << 32)
+	_1sN := double(1) / double(N)
+
+	in_cplx := make([]complex128, len(a)+1)
+	for i := 0; i <= Ns2; i++ {
+		in_cplx[2*i] = 0
+	}
+	for i := 0; i < Ns2; i++ {
+		in_cplx[2*i+1] = a[i]
+	}
+
+	out := fft.FFT(in_cplx)
+
+	res := make([]Torus32, N)
+	for i := 0; i < N; i++ {
+		res[i] = Torus32(real(out[i]) * _1sN * _2p32)
+	}
+	return res
+}
+
+func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
+	/*
+		N := poly1.N
+		tmp := []*LagrangeHalfCPolynomial{
+			NewLagrangeHalfCPolynomial(N),
+			NewLagrangeHalfCPolynomial(N),
+			NewLagrangeHalfCPolynomial(N),
+		}
+		IntPolynomial_ifft(tmp[0], poly1)
+		TorusPolynomial_ifft(tmp[1], poly2)
+		LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
+		TorusPolynomial_fft(result, tmp[2])
+	*/
+	//result.CoefsT = castTorus(fft.Convolve(castComplex(poly1.Coefs), castComplex(poly2.CoefsT)))
+	result.CoefsT = multiply(poly1.Coefs, poly2.CoefsT)
+	//result.CoefsT = castTorus(r)
 }
 
 func TorusPolynomialAddMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
@@ -391,14 +523,20 @@ func TorusPolynomialSubMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2
 	torusPolynomialSubTo(result, tmpr)
 }
 
-/** multiplication via direct FFT - simple wrappers since we currently only have one implementation */
+/** multiplication via direct FFT - simple wrappers since we currently only have one implementation
+TODO - implement FFT - currently placing Karatsuba implementation instead
+*/
 func torusPolynomialMultFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
+	//torusPolynomialMultKaratsuba(result, poly1, poly2)
 	TorusPolynomialMulR(result, poly1, poly2)
 }
 
 func torusPolynomialAddMulRFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	TorusPolynomialAddMulR(result, poly1, poly2)
+	//torusPolynomialAddMulRKaratsuba(result, poly1, poly2)
 }
+
 func torusPolynomialSubMulRFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	TorusPolynomialSubMulR(result, poly1, poly2)
+	//torusPolynomialSubMulRKaratsuba(result, poly1, poly2)
 }

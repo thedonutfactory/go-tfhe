@@ -116,7 +116,7 @@ func TestLagrangeHalfCPolynomialSetTorusConstant(t *testing.T) {
 //EXPORT void LagrangeHalfCPolynomialAddTorusConstant(LagrangeHalfCPolynomial* result, const Torus32 cst);
 func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 	assert := assert.New(t)
-	NBTRIALS := 10
+	NBTRIALS := 1
 	var N int32 = 1024
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
@@ -135,11 +135,49 @@ func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 		torusPolynomialCopy(aPlusCste, a)
 		aPlusCste.CoefsT[0] += mu
 
-		assert.LessOrEqual(torusPolynomialNormInftyDist(aPlusCste, b), toler)
+		assert.LessOrEqual(torusPolynomialNormInftyDistSkipFirst(aPlusCste, b), toler)
 	}
 }
 
+func MockIntPolynomial() *IntPolynomial {
+	//return &IntPolynomial{N: 4, Coefs: []int32{-1865008400, 470211269, -689632771, 1115438162}}
+	return &IntPolynomial{N: 4, Coefs: []int32{9, -10, 7, 6}}
+}
+
+func MockTorusPolynomial() *TorusPolynomial {
+	// return &TorusPolynomial{N: 4, CoefsT: []int32{156091742, 1899894088, -1210297292, -1557125705}}
+	return &TorusPolynomial{N: 4, CoefsT: []int32{-5, 4, 0, -2}}
+}
+
 func TestTorusPolynomialMultFFT(t *testing.T) {
+	assert := assert.New(t)
+	NBTRIALS := 1
+	var N int32 = 1024
+	toler := 1e-9
+	for trials := 0; trials < NBTRIALS; trials++ {
+		a := NewIntPolynomial(N)
+		b := NewTorusPolynomial(N)
+		//b := createTestTorusPolynomial()
+		//a := MockIntPolynomial()
+		//b := MockTorusPolynomial()
+		aB := NewTorusPolynomial(N)
+		aBref := NewTorusPolynomial(N)
+
+		for i := int32(0); i < N; i++ {
+			a.Coefs[i] = UniformTorus32Dist()%1000 - 500
+		}
+		torusPolynomialUniform(b)
+
+		//torusPolynomialMultKaratsuba(aBref, a, b)
+		torusPolynomialMultNaive(aBref, a, b)
+
+		//torusPolynomialMultNaive(aB, a, b)
+		torusPolynomialMultFFT(aB, a, b)
+		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
+	}
+}
+
+func TestTorusPolynomialAddMulRFFT(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
 	var N int32 = 1024
@@ -153,8 +191,57 @@ func TestTorusPolynomialMultFFT(t *testing.T) {
 			a.Coefs[i] = UniformTorus32Dist()%1000 - 500
 		}
 		torusPolynomialUniform(b)
-		torusPolynomialMultKaratsuba(aBref, a, b)
-		torusPolynomialMultFFT(aB, a, b)
+		torusPolynomialUniform(aB)
+		torusPolynomialCopy(aBref, aB)
+		torusPolynomialAddMulRKaratsuba(aBref, a, b)
+		torusPolynomialAddMulRFFT(aB, a, b)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
+	}
+}
+
+func TestTorusPolynomialSubMulRFFT(t *testing.T) {
+	assert := assert.New(t)
+	NBTRIALS := 1
+	var N int32 = 1024
+	toler := 1e-9
+	for trials := 0; trials < NBTRIALS; trials++ {
+		a := NewIntPolynomial(N)
+		b := NewTorusPolynomial(N)
+		aB := NewTorusPolynomial(N)
+		aBref := NewTorusPolynomial(N)
+
+		for i := int32(0); i < N; i++ {
+			a.Coefs[i] = UniformTorus32Dist()%1000 - 500
+		}
+		torusPolynomialUniform(b)
+		torusPolynomialUniform(aB)
+		torusPolynomialCopy(aBref, aB)
+		torusPolynomialSubMulRKaratsuba(aBref, a, b)
+		torusPolynomialSubMulRFFT(aB, a, b)
+		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
+	}
+}
+
+//TEST(LagrangeHalfcTest, LagrangeHalfCPolynomialAddTo) {
+func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
+	assert := assert.New(t)
+	NBTRIALS := 1
+	var N int32 = 1024
+	toler := 1e-9
+	for trials := 0; trials < NBTRIALS; trials++ {
+		a := NewTorusPolynomial(N)
+		b := NewTorusPolynomial(N)
+		aPlusB := NewTorusPolynomial(N)
+		aPlusBbis := NewTorusPolynomial(N)
+		afft := NewLagrangeHalfCPolynomial(N)
+		bfft := NewLagrangeHalfCPolynomial(N)
+		torusPolynomialUniform(a)
+		TorusPolynomial_ifft(afft, a)
+		torusPolynomialUniform(b)
+		TorusPolynomial_ifft(bfft, b)
+		LagrangeHalfCPolynomialAddTo(afft, bfft)
+		TorusPolynomial_fft(aPlusBbis, afft)
+		torusPolynomialAdd(aPlusB, b, a)
+		assert.LessOrEqual(torusPolynomialNormInftyDist(aPlusBbis, aPlusB), toler)
 	}
 }

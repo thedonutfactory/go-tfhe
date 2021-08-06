@@ -9,6 +9,8 @@ import (
 
 var fp1024_nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(1024)
 
+//var fp1024_nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(4)
+
 type FFTProcessor interface {
 	executeReverseTorus32(a []Torus32) (res []complex128)
 	executeReverseInt(a []int32) (res []complex128)
@@ -85,33 +87,6 @@ func (p *NayukiFFTProcessor) check_conjugate_cplx() {
 
 func (p *NayukiFFTProcessor) executeReverseTorus32(a []Torus32) (res []complex128) {
 	res = fft.IFFT(castComplex(a))
-	/*
-		_2pm33 := 1. / double(int64(1)<<33)
-		inp := make([]complex128, p._2N)
-
-		for i := 0; i < int(p.N); i++ {
-			inp[i] = complex(float64(a[i])*_2pm33, 0.)
-		}
-		for i := 0; i < int(p.N); i++ {
-			inp[p.N+1] = complex(real(inp[i]), 0.)
-			//real_inout[N+i]=-real_inout[i]
-		}
-
-		//check_alternate_real()
-		//fft_transform_reverse(tables_reverse, real_inout, imag_inout)
-
-		//for (int32_t i=0; i<Ns2; i++) res[i]=cplx(real_inout[2*i+1],imag_inout[2*i+1]);
-
-		temp := fft.IFFT(inp)
-		//res = fft.IFFT(y)
-
-		res = make([]complex128, p._2N)
-		for i := 0; i < int(p.Ns2); i++ {
-			fmt.Println(2*i + 1)
-			res[i] = temp[2*i+1] //cplx(real_inout[2*i+1], imag_inout[2*i+1])
-		}
-	*/
-
 	return
 }
 
@@ -122,13 +97,26 @@ func (p *NayukiFFTProcessor) executeReverseInt(a []int32) (res []complex128) {
 
 func (p *NayukiFFTProcessor) executeDirectTorus32(a []complex128) (res []Torus32) {
 	res = castTorus(fft.FFT(a))
-
 	for i := 0; i < int(p.Ns2); i++ {
 		res = append(res, 0)
 	}
-
 	return
+
 }
+
+/*
+void FFT_Processor_fftw::execute_direct_Torus32(Torus32* res, const cplx* a) {
+    static const double _2p32 = double(INT64_C(1)<<32);
+    static const double _1sN = double(1)/double(N);
+    cplx* in_cplx = (cplx*) in; //fftw_complex and cplx are layout-compatible
+    for (int32_t i=0; i<=Ns2; i++) in_cplx[2*i]=0;
+    for (int32_t i=0; i<Ns2; i++) in_cplx[2*i+1]=a[i];
+    fftw_execute(p);
+    for (int32_t i=0; i<N; i++) res[i]=Torus32(int64_t(out[i]*_1sN*_2p32));
+    //pas besoin du fmod... Torus32(int64_t(fmod(rev_out[i]*_1sN,1.)*_2p32));
+    for (int32_t i=0; i<N; i++) assert(fabs(out[N+i]+out[i])<1e-20);
+}
+*/
 
 //////////
 /*
