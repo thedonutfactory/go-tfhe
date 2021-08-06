@@ -1,6 +1,9 @@
 package tfhe
 
-import "fmt"
+import (
+	"fmt"
+	"math/big"
+)
 
 func Assert(condition bool) {
 	if condition == false {
@@ -47,10 +50,60 @@ func castComplex(arr []int32) (res []complex128) {
 	return
 }
 
-func castTorus(arr []complex128) (res []int32) {
+func castInt(arr []complex128) (res []int32) {
 	res = make([]int32, len(arr))
 	for i, v := range arr {
-		res[i] = int32(real(v)) // Dtot32(real(v)) // int32(real(v))
+		res[i] = int32(int(real(v)))
+		//res[i] = int32(int(math.Round(real(v))))
+		//res[i] = int32(real(v)) // Dtot32(real(v)) // int32(real(v))
 	}
 	return
+}
+
+func castTorus2(arr []complex128) (res []int32) {
+	_2p32 := double(int(1) << 32)
+	_1sN := double(1) / double(4)
+	//res[i]=Torus32(int64_t(out[i]*_1sN*_2p32))
+	res = make([]int32, len(arr))
+	for i, v := range arr {
+		t := real(v) * _2p32 * _1sN
+		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus32(int((t))))
+		res[i] = int32(int64((real(v)) * _2p32 * _1sN)) //int32(int(real(v))) // Dtot32(real(v)) // int32(real(v))
+	}
+	return
+}
+
+func castTorus(arr []complex128) (res []Torus32) {
+	res = make([]int32, len(arr))
+	for i, v := range arr {
+
+		//res[i] = int32(real(v))
+		//res[i] = Torus32(int(real(v)))
+		//res[i] = int32(int(math.Round(real(v))))
+		res[i] = Dtot32(real(v)) // int32(real(v))
+	}
+	return
+}
+
+func toBig(a []int32) (res []*big.Int) {
+	res = make([]*big.Int, len(a))
+	for i, v := range a {
+		res[i] = big.NewInt(int64(v))
+	}
+	return
+}
+
+func fromBig(a []*big.Int) (res []int32) {
+	res = make([]int32, len(a))
+	for i, v := range a {
+		res[i] = int32(v.Int64())
+	}
+	return
+}
+
+func Max(x, y int) int {
+	if x < y {
+		return y
+	}
+	return x
 }
