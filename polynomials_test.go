@@ -55,7 +55,7 @@ func TestTorusPolynomialCopy(t *testing.T) {
 		torusPolynomialUniform(polc)
 		pol0 := pol.CoefsT[0]
 		pol1 := pol.CoefsT[1]
-		torusPolynomialCopy(polc, pol)
+		TorusPolynomialCopy(polc, pol)
 		//check that the copy is in the right direction
 		assert.EqualValues(pol0, polc.CoefsT[0])
 		assert.EqualValues(pol1, polc.CoefsT[1])
@@ -78,9 +78,9 @@ func TestTorusPolynomialAdd(t *testing.T) {
 		polc := &pols[4]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialAdd(polc, pola, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialAdd(polc, pola, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polacopy.CoefsT[j], pola.CoefsT[j])
@@ -101,9 +101,9 @@ func TestTorusPolynomialAddTo(t *testing.T) {
 		polbcopy := &pols[3]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialAddTo(pola, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialAddTo(pola, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polbcopy.CoefsT[j], polb.CoefsT[j])
@@ -124,9 +124,9 @@ func TestTorusPolynomialSub(t *testing.T) {
 		polc := &pols[4]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialSub(polc, pola, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialSub(polc, pola, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polacopy.CoefsT[j], pola.CoefsT[j])
@@ -148,9 +148,9 @@ func TestTorusPolynomialSubTo(t *testing.T) {
 		polbcopy := &pols[3]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialSubTo(pola, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialSubTo(pola, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polbcopy.CoefsT[j], polb.CoefsT[j])
@@ -172,9 +172,9 @@ func TestTorusPolynomialAddMulZ(t *testing.T) {
 		polc := &pols[4]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialAddMulZ(polc, pola, p, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialAddMulZ(polc, pola, p, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polacopy.CoefsT[j], pola.CoefsT[j])
@@ -197,9 +197,9 @@ func TestTorusPolynomialAddMulZTo(t *testing.T) {
 		polbcopy := &pols[3]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialAddMulZTo(pola, p, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialAddMulZTo(pola, p, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polbcopy.CoefsT[j], polb.CoefsT[j])
@@ -222,9 +222,9 @@ func TestTorusPolynomialSubMulZ(t *testing.T) {
 		polc := &pols[4]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialSubMulZ(polc, pola, p, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialSubMulZ(polc, pola, p, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polacopy.CoefsT[j], pola.CoefsT[j])
@@ -247,9 +247,9 @@ func TestTorusPolynomialSubMulZTo(t *testing.T) {
 		polbcopy := &pols[3]
 		torusPolynomialUniform(pola)
 		torusPolynomialUniform(polb)
-		torusPolynomialCopy(polacopy, pola)
-		torusPolynomialCopy(polbcopy, polb)
-		torusPolynomialSubMulZTo(pola, p, polb)
+		TorusPolynomialCopy(polacopy, pola)
+		TorusPolynomialCopy(polbcopy, polb)
+		TorusPolynomialSubMulZTo(pola, p, polb)
 		//check equality
 		for j := 0; j < N; j++ {
 			assert.EqualValues(polbcopy.CoefsT[j], polb.CoefsT[j])
@@ -296,8 +296,8 @@ func TestTorusPolynomialMulByXai(t *testing.T) {
 			polb := &pols[2]
 			torusPolynomialUniform(pola)
 			torusPolynomialUniform(polb)
-			torusPolynomialCopy(polacopy, pola)
-			torusPolynomialMulByXai(polb, ai, pola)
+			TorusPolynomialCopy(polacopy, pola)
+			TorusPolynomialMulByXai(polb, ai, pola)
 			//check equality
 			for j := int32(0); j < int32(N); j++ {
 				assert.EqualValues(polacopy.CoefsT[j], pola.CoefsT[j])
@@ -357,8 +357,8 @@ func TestTorusPolynomialMulByXaiMinusOne(t *testing.T) {
 			//fill the polynomial with random Coefs
 			torusPolynomialUniform(pola)
 			torusPolynomialUniform(polb)
-			torusPolynomialCopy(polacopy, pola)
-			torusPolynomialMulByXaiMinusOne(polb, ai, pola)
+			TorusPolynomialCopy(polacopy, pola)
+			TorusPolynomialMulByXaiMinusOne(polb, ai, pola)
 			//check equality
 			for j := int32(0); j < int32(N); j++ {
 				assert.EqualValues(polacopy.CoefsT[j], pola.CoefsT[j])
@@ -415,7 +415,7 @@ func TestPolynomialMultNaive(t *testing.T) {
 		for trial := 0; trial < NB_TRIALS; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
-			torusPolynomialCopy(bcopy, b)
+			TorusPolynomialCopy(bcopy, b)
 			randomSmallInts(a.Coefs, 100000, int32(N))
 			intTabCopy(acopy.Coefs, a.Coefs, int32(N))
 			torusPolynomialMultNaive(c, a, b)
@@ -451,7 +451,7 @@ func TestTorusPolynomialMultKaratsuba(t *testing.T) {
 		for trial := 0; trial < NB_TRIALS; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
-			torusPolynomialCopy(bcopy, b)
+			TorusPolynomialCopy(bcopy, b)
 			randomSmallInts(a.Coefs, 100000, int32(N))
 			intTabCopy(acopy.Coefs, a.Coefs, int32(N))
 			torusPolynomialMultKaratsuba(c, a, b)
@@ -488,8 +488,8 @@ func TestTorusPolynomialAddMulRKaratsuba(t *testing.T) {
 		for trial := 0; trial < NB_TRIALS; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
-			torusPolynomialCopy(bcopy, b)
-			torusPolynomialCopy(ccopy, c)
+			TorusPolynomialCopy(bcopy, b)
+			TorusPolynomialCopy(ccopy, c)
 			randomSmallInts(a.Coefs, 100000, int32(N))
 			intTabCopy(acopy.Coefs, a.Coefs, int32(N))
 			torusPolynomialAddMulRKaratsuba(c, a, b)
@@ -526,8 +526,8 @@ func TestTorusPolynomialSubMulRKaratsuba(t *testing.T) {
 		for trial := 0; trial < NB_TRIALS; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
-			torusPolynomialCopy(bcopy, b)
-			torusPolynomialCopy(ccopy, c)
+			TorusPolynomialCopy(bcopy, b)
+			TorusPolynomialCopy(ccopy, c)
 			randomSmallInts(a.Coefs, 100000, int32(N))
 			intTabCopy(acopy.Coefs, a.Coefs, int32(N))
 			torusPolynomialSubMulRKaratsuba(c, a, b)
