@@ -88,7 +88,7 @@ func TestTLweKeyGen(t *testing.T) {
 	for _, params := range allParameters {
 		// Generating the key
 		key := NewTLweKey(params)
-		tLweKeyGen(key)
+		TLweKeyGen(key)
 		assert.EqualValues(params, key.params)
 
 		N := key.params.N
@@ -142,8 +142,8 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 			message := ModSwitchToTorus32(rand.Int31()%M, M)
 
 			// Encrypt and decrypt
-			tLweSymEncryptT(&samples[trial], message, alpha, key)
-			decrypt = tLweSymDecryptT(&samples[trial], key, M)
+			TLweSymEncryptT(&samples[trial], message, alpha, key)
+			decrypt = TLweSymDecryptT(&samples[trial], key, M)
 			//ILA: Testing APPROX correct decryption
 			//the absolute value of the difference between message and decrypt is <= than toler
 			assert.LessOrEqual(math.Abs(T32tod(message-decrypt)), toler)
@@ -268,7 +268,7 @@ func TestTLweClear(t *testing.T) {
 
 		// Generate a random TLweSample and then set it to (0,0)
 		fillTLweRandom(sample, params)
-		tLweClear(sample, params)
+		TLweClear(sample, params)
 
 		// Verify that the sample as been correctly set to (0,0)
 		for i := int32(0); i <= k; i++ {
@@ -297,7 +297,7 @@ func TestTLweCopy(t *testing.T) {
 
 		// Generate a random TLweSample and copy it
 		fillTLweRandom(sample, params)
-		tLweCopy(result, sample, params)
+		TLweCopy(result, sample, params)
 
 		// Verify that the sample as been correctly copied
 		for i := int32(0); i <= k; i++ {
@@ -330,7 +330,7 @@ func TestTLweNoiselessTrivial(t *testing.T) {
 
 		// Generate a random TLweSample and set it to (0,mu)
 		fillTLweRandom(sample, params)
-		tLweNoiselessTrivial(sample, message, params)
+		TLweNoiselessTrivial(sample, message, params)
 
 		// Verify that the sample as been correctly set
 		for i := int32(0); i < k; i++ {
@@ -339,7 +339,7 @@ func TestTLweNoiselessTrivial(t *testing.T) {
 			}
 		}
 		for j := int32(0); j < N; j++ {
-			assert.EqualValues(message.CoefsT[j], sample.B.CoefsT[j])
+			assert.EqualValues(message.CoefsT[j], sample.B().CoefsT[j])
 		}
 		assert.EqualValues(0., sample.CurrentVariance)
 	}
@@ -365,7 +365,7 @@ func TestTLweAddTo(t *testing.T) {
 		fillTLweRandom(sample1, params)
 		fillTLweRandom(sample2, params)
 		copyTLweSample(sample1copy, sample1, params)
-		tLweAddTo(sample1, sample2, params)
+		TLweAddTo(sample1, sample2, params)
 
 		// Verify if the operation was correctly executed
 		for i := int32(0); i < k; i++ {
@@ -399,7 +399,7 @@ func TestTLweSubTo(t *testing.T) {
 		fillTLweRandom(sample1, params)
 		fillTLweRandom(sample2, params)
 		copyTLweSample(sample1copy, sample1, params)
-		tLweSubTo(sample1, sample2, params)
+		TLweSubTo(sample1, sample2, params)
 
 		// Verify if the operation was correctly executed
 		for i := int32(0); i < k; i++ {
@@ -432,7 +432,7 @@ func TestTLweAddMulTo(t *testing.T) {
 		fillTLweRandom(sample1, params)
 		fillTLweRandom(sample2, params)
 		copyTLweSample(sample1copy, sample1, params)
-		tLweAddMulTo(sample1, p, sample2, params)
+		TLweAddMulTo(sample1, p, sample2, params)
 
 		// Verify if the operation was correctly executed
 		for i := int32(0); i < k; i++ {
@@ -466,7 +466,7 @@ func TestTLweSubMulTo(t *testing.T) {
 		fillTLweRandom(sample1, params)
 		fillTLweRandom(sample2, params)
 		copyTLweSample(sample1copy, sample1, params)
-		tLweSubMulTo(sample1, p, sample2, params)
+		TLweSubMulTo(sample1, p, sample2, params)
 
 		// Verify if the operation was correctly executed
 		for i := int32(0); i < k; i++ {

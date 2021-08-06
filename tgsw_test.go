@@ -13,25 +13,27 @@ const FAKE_TGSW_UID int64 = 123444802642375465 // precaution: do not confuse fak
 // Fake TLWE structure
 type FakeTLwe struct {
 	fake_uid        int32
-	message         TorusPolynomial
+	message         []TorusPolynomial
 	currentVariance double
 	//this padding is here to make sure that FakeTLwe and TLweSample have the same size
 	//char unused_padding[sizeof(TLweSample) - sizeof(int64_t) - sizeof(TorusPolynomial *) - sizeof(double)];
 }
 
 // construct
+/*
 func NewFakeTLwe(N int32) *FakeTLwe {
 	return &FakeTLwe{
 		fake_uid:        FAKE_TLWE_UID,
-		message:         *NewTorusPolynomial(N),
+		message:         NewTorusPolynomialArray(N),
 		currentVariance: 0.,
 	}
 }
+*/
 
 func NewFakeTLweFromTLweSample(sample *TLweSample) *FakeTLwe {
 	return &FakeTLwe{
 		fake_uid:        FAKE_TLWE_UID,
-		message:         *sample.B, //NewTorusPolynomial(N),
+		message:         sample.A, //NewTorusPolynomial(N),
 		currentVariance: 0.,
 	}
 }
@@ -59,7 +61,7 @@ func NewFakeTGsw(N int32) *FakeTGsw {
 
 
 inline void fake_init_TGswSample(TGswSample *ptr, const TGswParams *params) {
-        int32_t N = params->tlwe_params->N;
+        int32_t N = params.tlwe_params.N;
         FakeTGsw *arr = (FakeTGsw *) ptr;
         new(arr) FakeTGsw(N);
     }
@@ -89,7 +91,7 @@ func FakeTGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGs
 	seed := NewFakeTLweFromTLweSample(sample)
 	for i := int32(0); i < kpl; i++ {
 		for j := int32(0); j < N; j++ {
-			result[i].Coefs[j] = (i+3*j+seed.message.CoefsT[j])%25 - 12
+			result[i].Coefs[j] = (i+3*j+seed.message[0].CoefsT[j])%25 - 12
 		}
 	}
 }
@@ -187,6 +189,43 @@ func TestTGswSymEncrypt(t *testing.T) {
 	}
 }
 
+func TestTGswSymEncryptInt(t *testing.T) {
+	assert := assert.New(t)
+	for _, key := range allTGswKeys {
+		N := key.params.TlweParams.N
+		s := NewTGswSample(key.params)
+
+		mess := rand.Int31()%1000 - 500
+		var alpha double = 3.14 // valeur pseudo aleatoire fixé
+
+		TGswSymEncryptInt(s, mess, alpha, key)
+
+		fs := NewFakeTGsw(s, key.params)
+		assert.EqualValues(fs.message.Coefs[0], mess)
+		for j := int32(1); j < N; j++ {
+			assert.EqualValues(fs.message.Coefs[j], 0)
+		}
+		assert.EqualValues(fs.currentVariance, alpha*alpha)
+	}
+}
+
+//TEST_F(TGswTest, tGswClear) {
+func TestTGswClear(t *testing.T) {
+	assert := assert.New(t)
+	for _, param := range allTGswParams {
+		s := NewTGswSample(param)
+		kpl := param.Kpl
+		zeroPol := NewTorusPolynomial(param.TlweParams.N)
+
+		torusPolynomialClear(zeroPol)
+		TGswClear(s, param)
+		for i := int32(0); i < kpl; i++ {
+			si := NewFakeTLweFromTLweSample(&s.AllSample[i])
+			assert.EqualValues(torusPolynomialNormInftyDist(&si.message[0], zeroPol), 0)
+		}
+	}
+}
+
 //EXPORT void tGswTLweDecompH(IntPolynomial* result, const TLweSample* sample,const TGswParams* params);
 // Test direct Result*H donne le bon resultat
 // sample: TLweSample composed by k+1 torus polynomials, each with N coefficients
@@ -225,9 +264,316 @@ func TestTGswTLweDecompH(t *testing.T) {
 					test += result[bloc*l+j].Coefs[i] * h[j]
 				}
 				assert.LessOrEqual(Abs(test-sample.A[bloc].CoefsT[i]), toler)
-				//ASSERT_LE(abs(test-sample.a[bloc].coefsT[i]), toler) //exact or approx decomposition
+			}
+		}
+	}
+}
+
+//this function will create a fixed (random-looking) TGsw sample
+func fullyRandomTGsw(result *TGswSample, alpha double, params *TGswParams) {
+	for _, v := range result.AllSample {
+		for _, vv := range v.A {
+			torusPolynomialUniform(&vv)
+		}
+	}
+}
+
+func TestTGswAddH(t *testing.T) {
+	assert := assert.New(t)
+	for _, params := range allTGswParams {
+		s := NewTGswSample(params)
+		stemp := NewTGswSample(params)
+		kpl := params.Kpl
+		l := params.l
+		k := params.TlweParams.K
+		N := params.TlweParams.N
+		h := params.H
+		alpha := 4.2 // valeur pseudo aleatoire fixé
+
+		// make a full random TGSW
+		fullyRandomTGsw(s, alpha, params)
+
+		// copy s to stemp
+		for i := int32(0); i < kpl; i++ {
+			TLweCopy(&stemp.AllSample[i], &s.AllSample[i], params.TlweParams)
+		}
+
+		TGswAddH(s, params)
+
+		//verify all coefficients
+		for bloc := int32(0); bloc <= k; bloc++ {
+			for i := int32(0); i < l; i++ {
+				assert.EqualValues(s.BlocSample[bloc][i].CurrentVariance, stemp.BlocSample[bloc][i].CurrentVariance)
+				for u := int32(0); u <= k; u++ {
+					//verify that pol[bloc][i][u]=initial[bloc][i][u]+(bloc==u?hi:0)
+					newpol := &s.BlocSample[bloc][i].A[u]
+					oldpol := &stemp.BlocSample[bloc][i].A[u]
+					var check int32 = 0
+					if bloc == u {
+						check = h[i]
+					}
+					assert.EqualValues(newpol.CoefsT[0], oldpol.CoefsT[0]+check)
+					for j := int32(1); j < N; j++ {
+						assert.EqualValues(newpol.CoefsT[j], oldpol.CoefsT[j])
+					}
+				}
+			}
+		}
+	}
+}
+
+//TEST_F(TGswDirectTest, tGswAddMuH) {
+func TestTGswAddMuH(t *testing.T) {
+	assert := assert.New(t)
+	for _, params := range allTGswParams {
+		s := NewTGswSample(params)
+		stemp := NewTGswSample(params)
+		kpl := params.Kpl
+		l := params.l
+		k := params.TlweParams.K
+		N := params.TlweParams.N
+		h := params.H
+		alpha := 4.2                      // valeur pseudo aleatoire fixé
+		mess := newRandomIntPolynomial(N) // new_random_IntPolynomial(N);
+
+		// make a full random TGSW
+		fullyRandomTGsw(s, alpha, params)
+
+		// copy s to stemp
+		for i := int32(0); i < kpl; i++ {
+			TLweCopy(&stemp.AllSample[i], &s.AllSample[i], params.TlweParams)
+		}
+
+		TGswAddMuH(s, mess, params)
+
+		//verify all coefficients
+		for bloc := int32(0); bloc <= k; bloc++ {
+			for i := int32(0); i < l; i++ {
+				assert.EqualValues(s.BlocSample[bloc][i].CurrentVariance, stemp.BlocSample[bloc][i].CurrentVariance)
+				for u := int32(0); u <= k; u++ {
+					//verify that pol[bloc][i][u]=initial[bloc][i][u]+(bloc==u?hi*mess:0)
+					newpol := &s.BlocSample[bloc][i].A[u]
+					oldpol := &stemp.BlocSample[bloc][i].A[u]
+					if bloc == u {
+						for j := int32(0); j < N; j++ {
+							assert.EqualValues(newpol.CoefsT[j], oldpol.CoefsT[j]+h[i]*mess.Coefs[j])
+						}
+					} else {
+						for j := int32(0); j < N; j++ {
+							assert.EqualValues(newpol.CoefsT[j], oldpol.CoefsT[j])
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestAddMuIntH(t *testing.T) {
+	assert := assert.New(t)
+	for _, params := range allTGswParams {
+		s := NewTGswSample(params)
+		stemp := NewTGswSample(params)
+		kpl := params.Kpl
+		l := params.l
+		k := params.TlweParams.K
+		N := params.TlweParams.N
+		h := params.H
+		alpha := 4.2 // valeur pseudo aleatoire fixé
+		mess := rand.Int31()*2345 - 1234
+
+		// make a full random TGSW
+		fullyRandomTGsw(s, alpha, params)
+
+		// copy s to stemp
+		for i := int32(0); i < kpl; i++ {
+			TLweCopy(&stemp.AllSample[i], &s.AllSample[i], params.TlweParams)
+		}
+
+		TGswAddMuIntH(s, mess, params)
+
+		//verify all coefficients
+		for bloc := int32(0); bloc <= k; bloc++ {
+			for i := int32(0); i < l; i++ {
+				assert.EqualValues(s.BlocSample[bloc][i].CurrentVariance, stemp.BlocSample[bloc][i].CurrentVariance)
+				for u := int32(0); u <= k; u++ {
+					//verify that pol[bloc][i][u]=initial[bloc][i][u]+(bloc==u?hi*mess:0)
+					newpol := &s.BlocSample[bloc][i].A[u]
+					oldpol := &stemp.BlocSample[bloc][i].A[u]
+					var check int32 = 0
+					if bloc == u {
+						check = h[i] * mess
+					}
+					assert.EqualValues(newpol.CoefsT[0], oldpol.CoefsT[0]+check)
+					for j := int32(1); j < N; j++ {
+						assert.EqualValues(newpol.CoefsT[j], oldpol.CoefsT[j])
+					}
+				}
 			}
 		}
 
+	}
+}
+
+func TestTGswEncryptZero(t *testing.T) {
+	assert := assert.New(t)
+	for _, key := range allTGswKeys {
+		kpl := key.params.Kpl
+		s := NewTGswSample(key.params)
+		alpha := 4.2 // valeur pseudo aleatoire fixé
+
+		// Zero polynomial
+		zeroPol := NewTorusPolynomial(key.params.TlweParams.N)
+		torusPolynomialClear(zeroPol)
+
+		TGswEncryptZero(s, alpha, key)
+		for i := int32(0); i < kpl; i++ {
+			//FakeTLwe * si = fake(&s.AllSample[i])
+			assert.EqualValues(torusPolynomialNormInftyDist(s.AllSample[i].B(), zeroPol), 0)
+			assert.EqualValues(s.AllSample[i].CurrentVariance, alpha*alpha)
+		}
+	}
+}
+
+func TestTGswTorus32PolynomialDecompH(t *testing.T) {
+	assert := assert.New(t)
+	for _, param := range allTGswParams {
+		N := param.TlweParams.N
+		l := param.l
+		Bgbit := param.Bgbit
+		h := param.H
+
+		// compute the tolerance
+		var toler int32 = 0
+		if Bgbit*l < 32 {
+			toler = 1 << (32 - Bgbit*l)
+		}
+		// fmt.Printf("%d,%d,%d\n", Bgbit, l, toler)
+
+		result := NewIntPolynomialArray(int(l), N)
+		sample := NewTorusPolynomial(N)
+		torusPolynomialUniform(sample)
+
+		TGswTorus32PolynomialDecompH(result, sample, param)
+
+		for i := int32(0); i < N; i++ {
+			// recomposition
+			var test Torus32 = 0
+			for j := int32(0); j < l; j++ {
+				test += result[j].Coefs[i] * h[j]
+			}
+			assert.LessOrEqual(Abs(test-sample.CoefsT[i]), toler)
+		}
+	}
+}
+
+func TestTGswExternProduct(t *testing.T) {
+	assert := assert.New(t)
+	for _, params := range allTGswParams {
+		N := params.TlweParams.N
+		kpl := params.Kpl
+
+		sample := NewTGswSample(params)
+
+		result := NewTLweSample(params.TlweParams)
+		b := NewTLweSample(params.TlweParams)
+
+		fresult := NewFakeTLweFromTLweSample(result) //fake(result);
+		fb := NewFakeTLweFromTLweSample(b)
+		fsamplerows := sample.AllSample //NewFakeTLweFromTLweSample(sample.AllSample) //fake(sample.all_sample);
+		alpha := 4.2                    // valeur pseudo aleatoire fixé
+
+		fullyRandomTGsw(sample, alpha, params)
+		torusPolynomialUniform(&fb.message[0])
+
+		decomp := NewIntPolynomialArray(int(kpl), N)
+		TGswTLweDecompH(decomp, b, params)
+		expectedRes := NewTorusPolynomial(N)
+		tmp := NewTorusPolynomial(N)
+
+		torusPolynomialClear(expectedRes)
+		for i := int32(0); i < kpl; i++ {
+			torusPolynomialMultKaratsuba(tmp, &decomp[i], fsamplerows[i].B())
+			TorusPolynomialAddTo(expectedRes, tmp)
+		}
+		TGswExternProduct(result, sample, b, params)
+		assert.EqualValues(torusPolynomialNormInftyDist(&fresult.message[0], expectedRes), 0)
+	}
+}
+
+func TestTGswMulByXaiMinusOne(t *testing.T) {
+	assert := assert.New(t)
+	for _, key := range allTGswKeys {
+		kpl := key.params.Kpl
+		N := key.params.TlweParams.N
+		for ai := int32(0); ai < 2*N; ai += 235 {
+			res := NewTGswSample(key.params)
+			bk := NewTGswSample(key.params)
+			alpha := 4.2 // valeur pseudo aleatoire fixé
+			poly := NewTorusPolynomial(N)
+
+			//generate all rows at random
+			fresrows := res.AllSample
+			fbkrows := bk.AllSample
+			fullyRandomTGsw(bk, alpha, key.params)
+			TGswMulByXaiMinusOne(res, ai, bk, key.params)
+			for i := int32(0); i < kpl; i++ {
+				TorusPolynomialMulByXaiMinusOne(poly, ai, fbkrows[i].B())
+				assert.EqualValues(torusPolynomialNormInftyDist(fresrows[i].B(), poly), 0)
+				var check float64 = 2
+				if ai == 0 {
+					check = 1
+				}
+				assert.EqualValues(fresrows[i].CurrentVariance, check*fbkrows[i].CurrentVariance)
+			}
+		}
+	}
+}
+
+//TEST_F(TGswTest, tGswExternMulToTLwe) {
+func TestTGswExternMulToTLwe(t *testing.T) {
+	assert := assert.New(t)
+	for _, key := range allTGswKeys {
+		params := key.params
+		N := params.TlweParams.N
+		kpl := params.Kpl
+
+		sample := NewTGswSample(params)
+		accum := NewTLweSample(params.TlweParams)
+		faccum := NewFakeTLweFromTLweSample(accum)
+		fsamplerows := sample.AllSample
+		alpha := 4.2 // valeur pseudo aleatoire fixé
+
+		fullyRandomTGsw(sample, alpha, params)
+		torusPolynomialUniform(&faccum.message[0])
+
+		decomp := NewIntPolynomialArray(int(kpl), N)
+		TGswTLweDecompH(decomp, accum, params)
+		expectedRes := NewTorusPolynomial(N)
+		//tmp := NewTorusPolynomial(N)
+
+		torusPolynomialClear(expectedRes)
+		for i := int32(0); i < kpl; i++ {
+			torusPolynomialAddMulRKaratsuba(expectedRes, &decomp[i], fsamplerows[i].B())
+		}
+		TGswExternMulToTLwe(accum, sample, params)
+		assert.EqualValues(torusPolynomialNormInftyDist(&faccum.message[0], expectedRes), 0)
+	}
+}
+
+func TestTGswNoiselessTrivial(t *testing.T) {
+	assert := assert.New(t)
+	for _, param := range allTGswParams {
+		N := param.TlweParams.N
+		res := NewTGswSample(param)
+		mu := newRandomIntPolynomial(N)
+		fres := NewFakeTGsw(res, param)
+
+		TGswNoiselessTrivial(res, mu, param)
+
+		for j := int32(0); j < N; j++ {
+			assert.EqualValues(fres.message.Coefs[j], mu.Coefs[j])
+		}
+		assert.EqualValues(fres.currentVariance, 0.)
 	}
 }

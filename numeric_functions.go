@@ -98,7 +98,7 @@ func gaussian32(message Torus32, sigma double) Torus32 {
 // The constant Msize will indicate on which message space we are working (how many messages possible)
 //
 // "travailler sur 63 bits au lieu de 64, car dans nos cas pratiques, c'est plus précis"
-func ModSwitchFromTorus32(phase Torus32, Msize int) int32 {
+func ModSwitchFromTorus32(phase Torus32, Msize int32) int32 {
 	interv := ((uint64(1) << 63) / uint64(Msize)) * 2 // width of each intervall
 	half_interval := interv / 2                       // begin of the first intervall
 	phase64 := (uint64(phase) << 32) + half_interval

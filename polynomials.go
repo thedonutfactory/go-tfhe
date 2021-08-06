@@ -64,7 +64,7 @@ func torusPolynomialUniform(result *TorusPolynomial) {
 }
 
 // TorusPolynomial = TorusPolynomial
-func torusPolynomialCopy(result *TorusPolynomial, sample *TorusPolynomial) {
+func TorusPolynomialCopy(result *TorusPolynomial, sample *TorusPolynomial) {
 	//assert(result != sample)
 	if result == sample {
 		panic("result == sample")
@@ -77,7 +77,7 @@ func torusPolynomialCopy(result *TorusPolynomial, sample *TorusPolynomial) {
 }
 
 // TorusPolynomial + TorusPolynomial
-func torusPolynomialAdd(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *TorusPolynomial) {
+func TorusPolynomialAdd(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *TorusPolynomial) {
 	Assert(result != poly1) //if it fails here, please use addTo
 	Assert(result != poly2) //if it fails here, please use addTo
 	r := result.CoefsT
@@ -89,7 +89,7 @@ func torusPolynomialAdd(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 }
 
 // TorusPolynomial += TorusPolynomial
-func torusPolynomialAddTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
+func TorusPolynomialAddTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
 	//r := result.CoefsT
 	//b := poly2.CoefsT
 	for i := int32(0); i < poly2.N; i++ {
@@ -98,7 +98,7 @@ func torusPolynomialAddTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
 }
 
 // TorusPolynomial - TorusPolynomial
-func torusPolynomialSub(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *TorusPolynomial) {
+func TorusPolynomialSub(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *TorusPolynomial) {
 	//assert(result != poly1); //if it fails here, please use subTo
 	//assert(result != poly2); //if it fails here, please use subTo
 	if result == poly1 || result == poly2 {
@@ -113,7 +113,7 @@ func torusPolynomialSub(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 }
 
 // TorusPolynomial -= TorusPolynomial
-func torusPolynomialSubTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
+func TorusPolynomialSubTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	b := poly2.CoefsT
 	for i := int32(0); i < poly2.N; i++ {
@@ -122,7 +122,7 @@ func torusPolynomialSubTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
 }
 
 // TorusPolynomial + p*TorusPolynomial
-func torusPolynomialAddMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialAddMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	a := poly1.CoefsT
 	b := poly2.CoefsT
@@ -132,7 +132,7 @@ func torusPolynomialAddMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p i
 }
 
 // TorusPolynomial += p*TorusPolynomial
-func torusPolynomialAddMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialAddMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	b := poly2.CoefsT
 	for i := int32(0); i < poly2.N; i++ {
@@ -141,7 +141,7 @@ func torusPolynomialAddMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPoly
 }
 
 // TorusPolynomial - p*TorusPolynomial
-func torusPolynomialSubMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialSubMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	a := poly1.CoefsT
 	b := poly2.CoefsT
@@ -151,7 +151,7 @@ func torusPolynomialSubMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p i
 }
 
 //result= (X^{a}-1)*source
-func torusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *TorusPolynomial) {
+func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *TorusPolynomial) {
 	N := source.N
 	out := result.CoefsT
 	in := source.CoefsT
@@ -180,7 +180,7 @@ func torusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *T
 }
 
 //result= X^{a}*source
-func torusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPolynomial) {
+func TorusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPolynomial) {
 	N := source.N
 	out := result.CoefsT
 	in := source.CoefsT
@@ -213,7 +213,7 @@ func torusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPoly
 }
 
 // TorusPolynomial -= p*TorusPolynomial
-func torusPolynomialSubMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialSubMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	b := poly2.CoefsT
 	for i := int32(0); i < poly2.N; i++ {
@@ -476,6 +476,7 @@ func dirTorus(a []complex128) []Torus32 {
 }
 
 func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
+	torusPolynomialMultKaratsuba(result, poly1, poly2)
 	/*
 		N := poly1.N
 		tmp := []*LagrangeHalfCPolynomial{
@@ -489,54 +490,58 @@ func TorusPolynomialMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *T
 		TorusPolynomial_fft(result, tmp[2])
 	*/
 	//result.CoefsT = castTorus(fft.Convolve(castComplex(poly1.Coefs), castComplex(poly2.CoefsT)))
-	result.CoefsT = multiply(poly1.Coefs, poly2.CoefsT)
+	//result.CoefsT = multiply(poly1.Coefs, poly2.CoefsT)
 	//result.CoefsT = castTorus(r)
 }
 
 func TorusPolynomialAddMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
-	N := poly1.N
-	tmp := []*LagrangeHalfCPolynomial{
-		NewLagrangeHalfCPolynomial(N),
-		NewLagrangeHalfCPolynomial(N),
-		NewLagrangeHalfCPolynomial(N),
-	}
-	tmpr := NewTorusPolynomial(N)
-	IntPolynomial_ifft(tmp[0], poly1)
-	TorusPolynomial_ifft(tmp[1], poly2)
-	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
-	TorusPolynomial_fft(tmpr, tmp[2])
-	torusPolynomialAddTo(result, tmpr)
+	torusPolynomialAddMulRKaratsuba(result, poly1, poly2)
+	/*
+		N := poly1.N
+		tmp := []*LagrangeHalfCPolynomial{
+			NewLagrangeHalfCPolynomial(N),
+			NewLagrangeHalfCPolynomial(N),
+			NewLagrangeHalfCPolynomial(N),
+		}
+		tmpr := NewTorusPolynomial(N)
+		IntPolynomial_ifft(tmp[0], poly1)
+		TorusPolynomial_ifft(tmp[1], poly2)
+		LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
+		TorusPolynomial_fft(tmpr, tmp[2])
+		torusPolynomialAddTo(result, tmpr)
+	*/
 }
 
 func TorusPolynomialSubMulR(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
-	N := poly1.N
-	tmp := []*LagrangeHalfCPolynomial{
-		NewLagrangeHalfCPolynomial(N),
-		NewLagrangeHalfCPolynomial(N),
-		NewLagrangeHalfCPolynomial(N),
-	}
-	tmpr := NewTorusPolynomial(N)
-	IntPolynomial_ifft(tmp[0], poly1)
-	TorusPolynomial_ifft(tmp[1], poly2)
-	LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
-	TorusPolynomial_fft(tmpr, tmp[2])
-	torusPolynomialSubTo(result, tmpr)
+	torusPolynomialSubMulRKaratsuba(result, poly1, poly2)
+
+	/*
+		N := poly1.N
+		tmp := []*LagrangeHalfCPolynomial{
+			NewLagrangeHalfCPolynomial(N),
+			NewLagrangeHalfCPolynomial(N),
+			NewLagrangeHalfCPolynomial(N),
+		}
+		tmpr := NewTorusPolynomial(N)
+		IntPolynomial_ifft(tmp[0], poly1)
+		TorusPolynomial_ifft(tmp[1], poly2)
+		LagrangeHalfCPolynomialMul(tmp[2], tmp[0], tmp[1])
+		TorusPolynomial_fft(tmpr, tmp[2])
+		torusPolynomialSubTo(result, tmpr)
+	*/
 }
 
 /** multiplication via direct FFT - simple wrappers since we currently only have one implementation
 TODO - implement FFT - currently placing Karatsuba implementation instead
 */
 func torusPolynomialMultFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
-	//torusPolynomialMultKaratsuba(result, poly1, poly2)
 	TorusPolynomialMulR(result, poly1, poly2)
 }
 
 func torusPolynomialAddMulRFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	TorusPolynomialAddMulR(result, poly1, poly2)
-	//torusPolynomialAddMulRKaratsuba(result, poly1, poly2)
 }
 
 func torusPolynomialSubMulRFFT(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	TorusPolynomialSubMulR(result, poly1, poly2)
-	//torusPolynomialSubMulRKaratsuba(result, poly1, poly2)
 }

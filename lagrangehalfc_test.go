@@ -48,7 +48,7 @@ func TestFftIsBijective(t *testing.T) {
 		fmt.Printf("torusPolynomialUniform(a):")
 		printTorusPolynomial(a)
 
-		torusPolynomialCopy(acopy, a)
+		TorusPolynomialCopy(acopy, a)
 		fmt.Printf("torusPolynomialCopy(acopy, a):")
 		printTorusPolynomial(acopy)
 
@@ -132,7 +132,7 @@ func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 		LagrangeHalfCPolynomialAddTorusConstant(afft, mu)
 		TorusPolynomial_fft(b, afft)
 
-		torusPolynomialCopy(aPlusCste, a)
+		TorusPolynomialCopy(aPlusCste, a)
 		aPlusCste.CoefsT[0] += mu
 
 		assert.LessOrEqual(torusPolynomialNormInftyDistSkipFirst(aPlusCste, b), toler)
@@ -192,7 +192,7 @@ func TestTorusPolynomialAddMulRFFT(t *testing.T) {
 		}
 		torusPolynomialUniform(b)
 		torusPolynomialUniform(aB)
-		torusPolynomialCopy(aBref, aB)
+		TorusPolynomialCopy(aBref, aB)
 		torusPolynomialAddMulRKaratsuba(aBref, a, b)
 		torusPolynomialAddMulRFFT(aB, a, b)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
@@ -215,7 +215,7 @@ func TestTorusPolynomialSubMulRFFT(t *testing.T) {
 		}
 		torusPolynomialUniform(b)
 		torusPolynomialUniform(aB)
-		torusPolynomialCopy(aBref, aB)
+		TorusPolynomialCopy(aBref, aB)
 		torusPolynomialSubMulRKaratsuba(aBref, a, b)
 		torusPolynomialSubMulRFFT(aB, a, b)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
@@ -241,7 +241,7 @@ func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
 		TorusPolynomial_ifft(bfft, b)
 		LagrangeHalfCPolynomialAddTo(afft, bfft)
 		TorusPolynomial_fft(aPlusBbis, afft)
-		torusPolynomialAdd(aPlusB, b, a)
+		TorusPolynomialAdd(aPlusB, b, a)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aPlusBbis, aPlusB), toler)
 	}
 }
