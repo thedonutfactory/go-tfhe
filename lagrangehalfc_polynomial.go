@@ -37,17 +37,6 @@ func LagrangeHalfCPolynomialAddTorusConstant(result *LagrangeHalfCPolynomial, mu
 	}
 }
 
-/*
-EXPORT void LagrangeHalfCPolynomialSetXaiMinusOne(LagrangeHalfCPolynomial* result, const int32_t ai) {
-    LagrangeHalfCPolynomial_IMPL* result1 = (LagrangeHalfCPolynomial_IMPL*) result;
-    const int32_t Ns2 = result1->proc->Ns2;
-    const int32_t _2N = result1->proc->_2N;
-    const cplx* omegaxminus1 = result1->proc->omegaxminus1;
-    for (int32_t i=0; i<Ns2; i++)
-	result1->coefsC[i]=omegaxminus1[((2*i+1)*ai)%_2N];
-}
-*/
-
 /** termwise multiplication in Lagrange space */
 func LagrangeHalfCPolynomialMul(result *LagrangeHalfCPolynomial, a *LagrangeHalfCPolynomial, b *LagrangeHalfCPolynomial) {
 	for j := 0; j < len(result.coefsC); j++ {

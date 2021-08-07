@@ -3,8 +3,8 @@ package tfhe
 import "math"
 
 type TFheGateBootstrappingParameterSet struct {
-	ks_t        int32
-	ks_basebit  int32
+	ksT         int32
+	ksBasebit   int32
 	InOutParams *LweParams
 	tgswParams  *TGswParams
 }
@@ -22,12 +22,12 @@ type TFheGateBootstrappingSecretKeySet struct {
 	Cloud   *TFheGateBootstrappingCloudKeySet
 }
 
-func NewTFheGateBootstrappingParameterSet(ks_t, ks_basebit int32, in_out_params *LweParams, tgsw_params *TGswParams) *TFheGateBootstrappingParameterSet {
+func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *LweParams, tgswParams *TGswParams) *TFheGateBootstrappingParameterSet {
 	return &TFheGateBootstrappingParameterSet{
-		ks_t:        ks_t,
-		ks_basebit:  ks_basebit,
-		InOutParams: in_out_params,
-		tgswParams:  tgsw_params,
+		ksT:         ksT,
+		ksBasebit:   ksBasebit,
+		InOutParams: inOutParams,
+		tgswParams:  tgswParams,
 	}
 }
 
@@ -38,11 +38,11 @@ func NewTFheGateBootstrappingCloudKeySet(params *TFheGateBootstrappingParameterS
 	}
 }
 
-func NewTFheGateBootstrappingSecretKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey, lwe_key *LweKey, tgsw_key *TGswKey) *TFheGateBootstrappingSecretKeySet {
+func NewTFheGateBootstrappingSecretKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey, lweKey *LweKey, tgswKey *TGswKey) *TFheGateBootstrappingSecretKeySet {
 	return &TFheGateBootstrappingSecretKeySet{
 		Params:  params,
-		LweKey:  lwe_key,
-		tgswKey: tgsw_key,
+		LweKey:  lweKey,
+		tgswKey: tgswKey,
 		Cloud:   NewTFheGateBootstrappingCloudKeySet(params, bk),
 	}
 }
@@ -53,23 +53,23 @@ func Default80bitGateBootstrappingParameters() *TFheGateBootstrappingParameterSe
 	// Currently (in 2020), the security of these parameters is estimated to lambda = **80-bit security**
 	// (w.r.t bkz-sieve model, + hybrid attack model)
 	const (
-		N          = 1024
-		k          = 1
-		n          = 500
-		bk_l       = 2
-		bk_Bgbit   = 10
-		ks_basebit = 2
-		ks_length  = 8
-		ks_stdev   = 2.44e-5  //standard deviation
-		bk_stdev   = 7.18e-9  //standard deviation
-		max_stdev  = 0.012467 //max standard deviation for a 1/4 msg space
+		N         = 1024
+		k         = 1
+		n         = 500
+		bkL       = 2
+		bkBgbit   = 10
+		ksBasebit = 2
+		ksLength  = 8
+		ksStdev   = 2.44e-5  //standard deviation
+		bkStdev   = 7.18e-9  //standard deviation
+		maxStdev  = 0.012467 //max standard deviation for a 1/4 msg space
 	)
 
-	params_in := NewLweParams(n, ks_stdev, max_stdev)
-	params_accum := NewTLweParams(N, k, bk_stdev, max_stdev)
-	params_bk := NewTGswParams(bk_l, bk_Bgbit, params_accum)
+	paramsIn := NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := NewTGswParams(bkL, bkBgbit, paramsAccum)
 
-	return NewTFheGateBootstrappingParameterSet(ks_length, ks_basebit, params_in, params_bk)
+	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
 
 // this is the default and recommended parameter set
@@ -78,36 +78,36 @@ func Default128bitGateBootstrappingParameters() *TFheGateBootstrappingParameterS
 	// Currently (in 2020), the security of these parameters is estimated to lambda = 129-bit security
 	// (w.r.t bkz-sieve model, + additional hybrid attack models)
 	const (
-		N          = 1024
-		k          = 1
-		n          = 630
-		bk_l       = 3
-		bk_Bgbit   = 7
-		ks_basebit = 2
-		ks_length  = 8
-		max_stdev  = 0.012467 //max standard deviation for a 1/4 msg space
+		N         = 1024
+		k         = 1
+		n         = 630
+		bkL       = 3
+		bkBgbit   = 7
+		ksBasebit = 2
+		ksLength  = 8
+		maxStdev  = 0.012467 //max standard deviation for a 1/4 msg space
 	)
 
-	ks_stdev := math.Pow(2, -15) //standard deviation
-	bk_stdev := math.Pow(2, -25) //standard deviation
+	ksStdev := math.Pow(2, -15) //standard deviation
+	bkStdev := math.Pow(2, -25) //standard deviation
 
-	params_in := NewLweParams(n, ks_stdev, max_stdev)
-	params_accum := NewTLweParams(N, k, bk_stdev, max_stdev)
-	params_bk := NewTGswParams(bk_l, bk_Bgbit, params_accum)
+	paramsIn := NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := NewTGswParams(bkL, bkBgbit, paramsAccum)
 
-	return NewTFheGateBootstrappingParameterSet(ks_length, ks_basebit, params_in, params_bk)
+	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
 
-func NewDefaultGateBootstrappingParameters(minimum_lambda int32) *TFheGateBootstrappingParameterSet {
-	if minimum_lambda > 128 {
+func NewDefaultGateBootstrappingParameters(minimumLambda int32) *TFheGateBootstrappingParameterSet {
+	if minimumLambda > 128 {
 		panic("Sorry, for now, the parameters are only implemented for 80bit and 128bit of security!")
 	}
 
-	if minimum_lambda > 80 && minimum_lambda <= 128 {
+	if minimumLambda > 80 && minimumLambda <= 128 {
 		return Default128bitGateBootstrappingParameters()
 	}
 
-	if minimum_lambda > 0 && minimum_lambda <= 80 {
+	if minimumLambda > 0 && minimumLambda <= 80 {
 		return Default80bitGateBootstrappingParameters()
 	}
 
@@ -115,14 +115,14 @@ func NewDefaultGateBootstrappingParameters(minimum_lambda int32) *TFheGateBootst
 }
 
 func NewRandomGateBootstrappingSecretKeyset(params *TFheGateBootstrappingParameterSet) *TFheGateBootstrappingSecretKeySet {
-	lwe_key := NewLweKey(params.InOutParams)
-	LweKeyGen(lwe_key)
-	tgsw_key := NewTGswKey(params.tgswParams)
-	TGswKeyGen(tgsw_key)
-	bk := NewLweBootstrappingKey(params.ks_t, params.ks_basebit, params.InOutParams,
+	lweKey := NewLweKey(params.InOutParams)
+	LweKeyGen(lweKey)
+	tgswKey := NewTGswKey(params.tgswParams)
+	TGswKeyGen(tgswKey)
+	bk := NewLweBootstrappingKey(params.ksT, params.ksBasebit, params.InOutParams,
 		params.tgswParams)
-	tfhe_createLweBootstrappingKey(bk, lwe_key, tgsw_key)
-	return NewTFheGateBootstrappingSecretKeySet(params, bk, lwe_key, tgsw_key)
+	tfheCreateLweBootstrappingKey(bk, lweKey, tgswKey)
+	return NewTFheGateBootstrappingSecretKeySet(params, bk, lweKey, tgswKey)
 }
 
 /** encrypts a boolean */

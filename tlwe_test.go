@@ -82,7 +82,6 @@ Testing the function tLweKeyGen
 * The TLwe key for the result must be allocated and initialized
 * (this means that the parameters are already in the result)
 */
-//TEST_F(TLweTest, tLweKeyGen) {
 func TestTLweKeyGen(t *testing.T) {
 	assert := assert.New(t)
 	for _, params := range allParameters {
@@ -109,35 +108,30 @@ func TestTLweKeyGen(t *testing.T) {
 }
 
 /*
-	Testing the functions tLweSymEncryptT, tLwePhase, tLweSymDecryptT
-	* EXPORT void tLweSymEncryptT(TLweSample* result, Torus32 message, double alpha, const TLweKey* key)
-	* EXPORT void tLwePhase(TorusPolynomial* phase, const TLweSample* sample, const TLweKey* key)
-	* EXPORT Torus32 tLweSymDecryptT(const TLweSample* sample, const TLweKey* key, int32_t Msize)
-	*
-	* This functions encrypt and decrypt a random Torus32 message by using the given key
-*/
-//TEST_F (TLweTest, tLweSymEncryptPhaseDecryptT) {
+ * Testing the functions tLweSymEncryptT, tLwePhase, tLweSymDecryptT
+ * This functions encrypt and decrypt a random Torus32 message by using the given key
+ */
 func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 	assert := assert.New(t)
 
 	//TODO: parallelization
 	const (
-		NB_SAMPLES = 10
-		M          = 8
-		alpha      = 1. / (10. * M)
+		nbSamples = 10
+		M         = 8
+		alpha     = 1. / (10. * M)
 	)
-	all_keys1024 := []*TLweKey{key1024_1, key1024_2}
+	allKeys1024 := []*TLweKey{key1024_1, key1024_2}
 
-	for _, key := range all_keys1024 {
+	for _, key := range allKeys1024 {
 		params := key.params
 		N := params.N
 		k := params.K
-		samples := NewTLweSampleArray(NB_SAMPLES, params)
+		samples := NewTLweSampleArray(nbSamples, params)
 		phase := NewTorusPolynomial(N)
 		var decrypt Torus32
 
 		//verify correctness of the decryption
-		for trial := 0; trial < NB_SAMPLES; trial++ {
+		for trial := 0; trial < nbSamples; trial++ {
 			// The message is a Torus32
 			message := ModSwitchToTorus32(rand.Int31()%M, M)
 
@@ -164,48 +158,43 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 			for j := int32(0); j < N; j++ {
 				testset := make(map[Torus32]bool)
 				//set<Torus32> testset
-				for trial := 0; trial < NB_SAMPLES; trial++ {
+				for trial := 0; trial < nbSamples; trial++ {
 					//testset.insert(samples[trial].a[i].CoefsT[j])
 					testset[samples[trial].A[i].CoefsT[j]] = true
 				}
-				assert.GreaterOrEqual(double(len(testset)), 0.9*NB_SAMPLES) // >=
+				assert.GreaterOrEqual(double(len(testset)), 0.9*nbSamples) // >=
 			}
 		}
 	}
 }
 
 /*
-Testing the functions tLweSymEncrypt, tLwePhase, tLweApproxPhase, tLweSymDecrypt
-* EXPORT void tLweSymEncrypt(TLweSample* result, TorusPolynomial* message, double alpha, const TLweKey* key)
-* EXPORT void tLwePhase(TorusPolynomial* phase, const TLweSample* sample, const TLweKey* key)
-* EXPORT void tLweApproxPhase(TorusPolynomial* message, const TorusPolynomial* phase, int32_t Msize, int32_t N)
-* EXPORT void tLweSymDecrypt(TorusPolynomial* result, const TLweSample* sample, const TLweKey* key, int32_t Msize)
+* Testing the functions tLweSymEncrypt, tLwePhase, tLweApproxPhase, tLweSymDecrypt
 *
 * This functions encrypt and decrypt a random TorusPolynomial message by using the given key
-*/
-//TEST_F (TLweTest, tLweSymEncryptPhaseDecrypt) {
+ */
 func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 	assert := assert.New(t)
 	const (
-		NB_SAMPLES = 10
-		M          = 8
-		alpha      = 1. / (10. * M)
+		nbSamples = 10
+		M         = 8
+		alpha     = 1. / (10. * M)
 	)
-	all_keys1024 := []*TLweKey{key1024_1, key1024_2}
+	allKeys1024 := []*TLweKey{key1024_1, key1024_2}
 
-	for _, key := range all_keys1024 {
+	for _, key := range allKeys1024 {
 		params := key.params
 		N := params.N
 		k := params.K
 
-		samples := NewTLweSampleArray(NB_SAMPLES, params)
+		samples := NewTLweSampleArray(nbSamples, params)
 		message := NewTorusPolynomial(N)
 		phase := NewTorusPolynomial(N)
 		approxphase := NewTorusPolynomial(N)
 		decrypt := NewTorusPolynomial(N)
 
 		//verify correctness of the decryption
-		for trial := 0; trial < NB_SAMPLES; trial++ {
+		for trial := 0; trial < nbSamples; trial++ {
 			for j := int32(0); j < N; j++ {
 				message.CoefsT[j] = ModSwitchToTorus32(rand.Int31()%M, M)
 			}
@@ -215,7 +204,6 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 			TLweSymDecrypt(decrypt, samples[trial], key, M)
 			//ILA: Testing APPROX correct decryption
 			assert.LessOrEqual(torusPolynomialNormInftyDist(message, decrypt), toler)
-			// for (int32_t j = 0; j < N; ++j) ASSERT_EQ(message.CoefsT[j],decrypt.CoefsT[j])
 
 			// ILA: It is really necessary? phase and ApproxPhase used in decrypt!!!
 			// Phase and ApproxPhase
@@ -229,19 +217,17 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 				assert.LessOrEqual(absfrac(dmessage-dphase), 10.*alpha)   // ILA: why absfrac?
 				assert.LessOrEqual(absfrac(dmessage-dapproxphase), alpha) // ILA verify
 			}
-
-			//assert.EqualValues(alpha*alpha, samples[trial].CurrentVariance)
 		}
 
 		// Verify that samples are random enough (all coordinates different)
 		for i := int32(0); i < k; i++ {
 			for j := int32(0); j < N; j++ {
 				testset := make(map[Torus32]bool)
-				for trial := 0; trial < NB_SAMPLES; trial++ {
+				for trial := 0; trial < nbSamples; trial++ {
 					fmt.Println(samples[trial].A[i].CoefsT[j])
 					testset[samples[trial].A[i].CoefsT[j]] = true
 				}
-				assert.GreaterOrEqual(double(len(testset)), 0.9*NB_SAMPLES) // >=
+				assert.GreaterOrEqual(double(len(testset)), 0.9*nbSamples) // >=
 			}
 		}
 	}
@@ -257,7 +243,6 @@ Testing the function tLweClear
 *
 * tLweClear sets the TLweSample to (0,0)
 */
-//TEST_F(TLweTest, tLweClear) {
 func TestTLweClear(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allRandomKeys {
@@ -315,7 +300,6 @@ Testing the function tLweNoiselessTrivial
 *
 * tLweNoiselessTrivial sets the TLweSample to (0,mu)
 */
-//TEST_F(TLweTest, tLweNoiselessTrivial) {
 func TestTLweNoiselessTrivial(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allRandomKeys {
@@ -412,11 +396,9 @@ func TestTLweSubTo(t *testing.T) {
 }
 
 /*
-Testing the function tLweAddMulTo
-* EXPORT void tLweAddMulTo(TLweSample* result, int32_t p, const TLweSample* sample, const TLweParams* params)
-*
+* Testing the function tLweAddMulTo
 * tLweAddMulTo computes result = result + p.sample
-*/
+ */
 func TestTLweAddMulTo(t *testing.T) {
 	assert := assert.New(t)
 	const p int32 = 3
@@ -446,11 +428,9 @@ func TestTLweAddMulTo(t *testing.T) {
 }
 
 /*
-Testing the function tLweSubMulTo
-* EXPORT void tLweSubMulTo(TLweSample* result, int32_t p, const TLweSample* sample, const TLweParams* params)
-*
+* Testing the function tLweSubMulTo
 * tLweSubMulTo computes result = result - p.sample
-*/
+ */
 func TestTLweSubMulTo(t *testing.T) {
 	assert := assert.New(t)
 	const p int32 = 3
@@ -479,7 +459,6 @@ func TestTLweSubMulTo(t *testing.T) {
 }
 
 /** result += (0,x) */
-//EXPORT void tLweAddTTo(TLweSample* result, const Torus32 x, const TLweParams* params)
 func TestTLweAddTTo(t *testing.T) {
 	assert := assert.New(t)
 	x := UniformTorus32Dist()
@@ -508,7 +487,6 @@ func TestTLweAddTTo(t *testing.T) {
 }
 
 /** result += p*(0,x) */
-//EXPORT void tLweAddRTTo(TLweSample* result, const IntPolynomial* p, const Torus32 x, const TLweParams* params)
 func TestTLweAddRTTo(t *testing.T) {
 	assert := assert.New(t)
 	x := UniformTorus32Dist()
