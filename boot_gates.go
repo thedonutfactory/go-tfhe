@@ -309,7 +309,7 @@ func Mux(a, b, c *LweSample, bk *PublicKey) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsOR(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -331,7 +331,7 @@ func bootsOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootst
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsAND(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsAND(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -353,7 +353,7 @@ func bootsAND(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBoots
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsXOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsXOR(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -375,7 +375,7 @@ func bootsXOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBoots
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsXNOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsXNOR(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -397,7 +397,7 @@ func bootsXNOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBoot
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsNOT(result *LweSample, ca *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsNOT(result, ca *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	in_out_params := bk.params.InOutParams
 	LweNegate(result, ca, in_out_params)
 }
@@ -407,7 +407,7 @@ func bootsNOT(result *LweSample, ca *LweSample, bk *TFheGateBootstrappingCloudKe
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsCOPY(result *LweSample, ca *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsCOPY(result, ca *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	in_out_params := bk.params.InOutParams
 	LweCopy(result, ca, in_out_params)
 }
@@ -417,7 +417,7 @@ func bootsCOPY(result *LweSample, ca *LweSample, bk *TFheGateBootstrappingCloudK
  * Takes a boolean value)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsCONSTANT(result *LweSample, value int32, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsCONSTANT(result *LweSample, value int32, bk *TFheGateBootstrappingCloudKeySet) {
 	in_out_params := bk.params.InOutParams
 	MU := ModSwitchToTorus32(1, 8)
 	var muValue = -MU
@@ -432,7 +432,7 @@ func bootsCONSTANT(result *LweSample, value int32, bk *TFheGateBootstrappingClou
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsNOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsNOR(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -454,7 +454,7 @@ func bootsNOR(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBoots
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsANDNY(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsANDNY(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -476,7 +476,7 @@ func bootsANDNY(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBoo
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsANDYN(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsANDYN(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -498,7 +498,7 @@ func bootsANDYN(result *LweSample, ca *LweSample, cb *LweSample, bk *TFheGateBoo
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsORNY(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsORNY(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -520,7 +520,7 @@ func bootsORNY(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) 
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsORYN(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsORYN(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	temp_result := NewLweSample(in_out_params)
@@ -542,7 +542,7 @@ func bootsORYN(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) 
  * Takes in input 3 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func bootsMUX(result, a, b, c *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
+func BootsMUX(result, a, b, c *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	in_out_params := bk.params.InOutParams
 	extracted_params := &bk.params.tgswParams.TlweParams.extractedLweparams
@@ -553,7 +553,7 @@ func bootsMUX(result, a, b, c *LweSample, bk *TFheGateBootstrappingCloudKeySet) 
 	u2 := NewLweSample(extracted_params)
 
 	//compute "AND(a,b)": (0,-1/8) + a + b
-	AndConst := ModSwitchToTorus32(1, 8)
+	AndConst := ModSwitchToTorus32(-1, 8)
 	LweNoiselessTrivial(temp_result, AndConst, in_out_params)
 	LweAddTo(temp_result, a, in_out_params)
 	LweAddTo(temp_result, b, in_out_params)
