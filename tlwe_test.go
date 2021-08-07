@@ -142,8 +142,8 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 			message := ModSwitchToTorus32(rand.Int31()%M, M)
 
 			// Encrypt and decrypt
-			TLweSymEncryptT(&samples[trial], message, alpha, key)
-			decrypt = TLweSymDecryptT(&samples[trial], key, M)
+			TLweSymEncryptT(samples[trial], message, alpha, key)
+			decrypt = TLweSymDecryptT(samples[trial], key, M)
 			//ILA: Testing APPROX correct decryption
 			//the absolute value of the difference between message and decrypt is <= than toler
 			assert.LessOrEqual(math.Abs(T32tod(message-decrypt)), toler)
@@ -151,7 +151,7 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 
 			// ILA: It is really necessary? phase used in decrypt!!!
 			// Phase
-			TLwePhase(phase, &samples[trial], key)
+			TLwePhase(phase, samples[trial], key)
 			// Testing phase
 			dmessage := T32tod(message)
 			dphase := T32tod(phase.CoefsT[0])
@@ -211,15 +211,15 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 			}
 
 			// Encrypt and Decrypt
-			TLweSymEncrypt(&samples[trial], message, alpha, key)
-			TLweSymDecrypt(decrypt, &samples[trial], key, M)
+			TLweSymEncrypt(samples[trial], message, alpha, key)
+			TLweSymDecrypt(decrypt, samples[trial], key, M)
 			//ILA: Testing APPROX correct decryption
 			assert.LessOrEqual(torusPolynomialNormInftyDist(message, decrypt), toler)
 			// for (int32_t j = 0; j < N; ++j) ASSERT_EQ(message.CoefsT[j],decrypt.CoefsT[j])
 
 			// ILA: It is really necessary? phase and ApproxPhase used in decrypt!!!
 			// Phase and ApproxPhase
-			TLwePhase(phase, &samples[trial], key)
+			TLwePhase(phase, samples[trial], key)
 			TLweApproxPhase(approxphase, phase, M, N)
 			// Testing Phase and ApproxPhase
 			for j := int32(0); j < N; j++ {

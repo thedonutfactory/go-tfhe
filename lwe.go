@@ -43,10 +43,10 @@ func NewLweSample(params *LweParams) *LweSample {
 	return &LweSample{A: make([]Torus32, params.N), B: 0, CurrentVariance: 0}
 }
 
-func NewLweSampleArray(size int32, params *LweParams) (arr []LweSample) {
-	arr = make([]LweSample, size)
+func NewLweSampleArray(size int32, params *LweParams) (arr []*LweSample) {
+	arr = make([]*LweSample, size)
 	for i := int32(0); i < size; i++ {
-		arr[i] = *NewLweSample(params)
+		arr[i] = NewLweSample(params)
 	}
 	return
 }
@@ -191,4 +191,35 @@ func LweSubMulTo(result *LweSample, p int32, sample *LweSample, params *LweParam
 	}
 	result.B -= p * sample.B
 	result.CurrentVariance += float64(p*p) * sample.CurrentVariance
+}
+
+func tLweExtractLweSampleIndex(result *LweSample, x *TLweSample, index int32, params *LweParams, rparams *TLweParams) {
+	N := rparams.N
+	k := rparams.K
+	Assert(params.N == k*N)
+
+	for i := int32(0); i < k; i++ {
+		for j := int32(0); j <= index; j++ {
+			result.A[i*N+j] = x.A[i].CoefsT[index-j]
+		}
+		for j := index + 1; j < N; j++ {
+			result.A[i*N+j] = -x.A[i].CoefsT[N+index-j]
+		}
+	}
+	result.B = x.B().CoefsT[index]
+}
+
+func tLweExtractLweSample(result *LweSample, x *TLweSample, params *LweParams, rparams *TLweParams) {
+	tLweExtractLweSampleIndex(result, x, 0, params, rparams)
+}
+
+func tLweExtractKey(result *LweKey, key *TLweKey) {
+	N := key.params.N
+	k := key.params.K
+	Assert(result.params.N == k*N)
+	for i := int32(0); i < k; i++ {
+		for j := int32(0); j < N; j++ {
+			result.key[i*N+j] = key.key[i].Coefs[j]
+		}
+	}
 }

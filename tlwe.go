@@ -52,10 +52,10 @@ func NewTLweSample(params *TLweParams) *TLweSample {
 	}
 }
 
-func NewTLweSampleArray(size int32, params *TLweParams) (arr []TLweSample) {
-	arr = make([]TLweSample, size)
+func NewTLweSampleArray(size int32, params *TLweParams) (arr []*TLweSample) {
+	arr = make([]*TLweSample, size)
 	for i := int32(0); i < size; i++ {
-		arr[i] = *NewTLweSample(params)
+		arr[i] = NewTLweSample(params)
 	}
 	return
 }
