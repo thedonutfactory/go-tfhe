@@ -16,7 +16,7 @@ type TFheGateBootstrappingCloudKeySet struct {
 }
 
 type TFheGateBootstrappingSecretKeySet struct {
-	params  *TFheGateBootstrappingParameterSet
+	Params  *TFheGateBootstrappingParameterSet
 	LweKey  *LweKey
 	tgswKey *TGswKey
 	Cloud   *TFheGateBootstrappingCloudKeySet
@@ -40,7 +40,7 @@ func NewTFheGateBootstrappingCloudKeySet(params *TFheGateBootstrappingParameterS
 
 func NewTFheGateBootstrappingSecretKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey, lwe_key *LweKey, tgsw_key *TGswKey) *TFheGateBootstrappingSecretKeySet {
 	return &TFheGateBootstrappingSecretKeySet{
-		params:  params,
+		Params:  params,
 		LweKey:  lwe_key,
 		tgswKey: tgsw_key,
 		Cloud:   NewTFheGateBootstrappingCloudKeySet(params, bk),
@@ -133,17 +133,26 @@ func BootsSymEncrypt(result *LweSample, message int32, key *TFheGateBootstrappin
 		mu = _1s8
 	}
 	//Torus32 mu = message ? _1s8 : -_1s8;
-	alpha := key.params.InOutParams.alphaMin //TODO: specify noise
+	alpha := key.Params.InOutParams.alphaMin //TODO: specify noise
 	LweSymEncrypt(result, mu, alpha, key.LweKey)
 }
 
 /** decrypts a boolean */
 func BootsSymDecrypt(sample *LweSample, key *TFheGateBootstrappingSecretKeySet) int32 {
 	mu := LwePhase(sample, key.LweKey)
+	/*
+		if mu != 0 {
+			return 1
+		} else {
+			return 0
+		}
+	*/
+
 	if mu > 0 {
 		return 1
 	} else {
 		return 0
 	}
+
 	//return (mu > 0 ? 1 : 0); //we have to do that because of the C binding
 }
