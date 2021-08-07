@@ -40,7 +40,6 @@ func TestConversion(t *testing.T) {
 func TestApproxPhase(t *testing.T) {
 	assert := assert.New(t)
 	for i := int32(2); i < 200; i++ {
-		// Torus32 v = uniformTorus32_distrib(generator);
 		v := UniformTorus32Dist()
 		w := approxPhase(v, i)
 		dv := T32tod(v)

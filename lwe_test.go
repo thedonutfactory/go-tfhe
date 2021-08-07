@@ -25,12 +25,9 @@ var (
 //a deadlock mode on static const initializers
 func newRandomLweKey(params *LweParams) *LweKey {
 
-	key := &LweKey{params: params, key: make([]int32, params.N)} // new_LweKey(params);
+	key := &LweKey{params: params, key: make([]int32, params.N)}
 	for i := int32(0); i < params.N; i++ {
-		//v := rand.Int31() % 2
-		//fmt.Println(v)
-		//key.key = append(key.key, rand.Int31()%2)
-		key.key[i] = rand.Int31() % 2 //rand() % 2
+		key.key[i] = rand.Int31() % 2
 	}
 	return key
 }
@@ -58,17 +55,17 @@ func TestLweKeyGen(t *testing.T) {
 func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 	assert := assert.New(t)
 
-	var NB_SAMPLES int32 = 10
+	var nbSamples int32 = 10
 	var M int32 = 8
 	alpha := 1.0 / (10.0 * double(M))
 
 	for _, key := range allKeys {
 		params := key.params
-		samples := NewLweSampleArray(NB_SAMPLES, params)
+		samples := NewLweSampleArray(nbSamples, params)
 		// fmt.Println(samples)
 
 		//verify correctness of the decryption
-		for trial := int32(0); trial < NB_SAMPLES; trial++ {
+		for trial := int32(0); trial < nbSamples; trial++ {
 			message := ModSwitchToTorus32(trial, M)
 			LweSymEncrypt(samples[trial], message, alpha, key)
 			phase := LwePhase(samples[trial], key)
@@ -84,11 +81,11 @@ func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 		for i := int32(0); i < n; i++ {
 			testset := make(map[Torus32]bool)
 			//set < Torus32 > testset
-			for trial := int32(0); trial < NB_SAMPLES; trial++ {
+			for trial := int32(0); trial < nbSamples; trial++ {
 				testset[samples[trial].A[i]] = true
 				//testset.insert(samples[trial].A[i])
 			}
-			assert.GreaterOrEqual(float32(len(testset)), 0.9*float32(NB_SAMPLES))
+			assert.GreaterOrEqual(float32(len(testset)), 0.9*float32(nbSamples))
 		}
 	}
 

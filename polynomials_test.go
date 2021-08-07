@@ -8,25 +8,25 @@ import (
 )
 
 var (
-	dimensions               = [...]int{500, 750, 1024, 2000}
-	powers_of_two_dimensions = [...]int{512, 1024, 2048}
+	dimensions            = [...]int{500, 750, 1024, 2000}
+	powersOfTwoDimensions = [...]int{512, 1024, 2048}
 )
 
 func TestTorusPolynomialUniform(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	const NB_TRIALS int = 10
+	const nbTrials int = 10
 	for _, N := range dimensions {
-		pols := NewTorusPolynomialArray(NB_TRIALS, int32(N))
-		for i := 0; i < NB_TRIALS; i++ {
+		pols := NewTorusPolynomialArray(nbTrials, int32(N))
+		for i := 0; i < nbTrials; i++ {
 			torusPolynomialUniform(&pols[i])
 		}
 		for j := 0; j < N; j++ {
 			testset := set.New()
-			for i := 0; i < NB_TRIALS; i++ {
+			for i := 0; i < nbTrials; i++ {
 				testset.Insert(pols[i].CoefsT[j])
 			}
-			assert.GreaterOrEqual(float64(testset.Len()), 0.9*float64(NB_TRIALS))
+			assert.GreaterOrEqual(float64(testset.Len()), 0.9*float64(nbTrials))
 		}
 	}
 }
@@ -185,7 +185,6 @@ func TestTorusPolynomialAddMulZ(t *testing.T) {
 }
 
 //  TorusPolynomial += p*TorusPolynomial
-//EXPORT void torusPolynomialAddMulZTo(TorusPolynomial* result, const int32_t p, const TorusPolynomial* poly2)
 func TestTorusPolynomialAddMulZTo(t *testing.T) {
 	assert := assert.New(t)
 	p := UniformTorus32Dist()
@@ -209,7 +208,6 @@ func TestTorusPolynomialAddMulZTo(t *testing.T) {
 }
 
 //  TorusPolynomial - p*TorusPolynomial
-//EXPORT void torusPolynomialSubMulZ(TorusPolynomial* result, const TorusPolynomial* poly1, int32_t p, const TorusPolynomial* poly2)
 func TestTorusPolynomialSubMulZ(t *testing.T) {
 	assert := assert.New(t)
 	p := UniformTorus32Dist()
@@ -235,7 +233,6 @@ func TestTorusPolynomialSubMulZ(t *testing.T) {
 }
 
 //  TorusPolynomial -= p*TorusPolynomial
-//EXPORT void torusPolynomialSubMulZTo(TorusPolynomial* result, const int32_t p, const TorusPolynomial* poly2)
 func TestTorusPolynomialSubMulZTo(t *testing.T) {
 	assert := assert.New(t)
 	p := UniformTorus32Dist()
@@ -280,13 +277,12 @@ func intTabCopy(dest, tab []int32, N int32) {
 }
 
 //  TorusPolynomial = X^a * TorusPolynomial
-//EXPORT void torusPolynomialMulByXai(TorusPolynomial* result, int32_t a, const TorusPolynomial* bk)
 func TestTorusPolynomialMulByXai(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 50
+	nbTrials := 50
 	for _, N := range dimensions {
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			//TODO: parallelization
 			a := (UniformTorus32Dist() % 1000000) - 500000
 			ai := ((a % int32(2*N)) + int32(2*N)) % int32(2*N)
@@ -308,13 +304,12 @@ func TestTorusPolynomialMulByXai(t *testing.T) {
 }
 
 //  intPolynomial = (X^ai-1) * intPolynomial
-//EXPORT void intPolynomialMulByXaiMinusOne(IntPolynomial* result, int32_t a, const IntPolynomial* bk)
 func TestIntPolynomialMulByXaiMinusOne(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 50
+	nbTrials := 50
 	for _, N := range dimensions {
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			//TODO: parallelization
 			a := (UniformTorus32Dist() % 1000000) - 500000
 			ai := ((a % int32(2*N)) + int32(2*N)) % int32(2*N)
@@ -340,13 +335,12 @@ func TestIntPolynomialMulByXaiMinusOne(t *testing.T) {
 }
 
 //  TorusPolynomial = (X^ai-1) * TorusPolynomial
-//EXPORT void torusPolynomialMulByXaiMinusOne(TorusPolynomial* result, int32_t a, const TorusPolynomial* bk)
 func TestTorusPolynomialMulByXaiMinusOne(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 50
+	nbTrials := 50
 	for _, N := range dimensions {
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			//TODO: parallelization
 			a := (UniformTorus32Dist() % 1000000) - 500000
 			ai := ((a % int32(2*N)) + int32(2*N)) % int32(2*N)
@@ -370,16 +364,15 @@ func TestTorusPolynomialMulByXaiMinusOne(t *testing.T) {
 }
 
 //  Norme Euclidienne d'un IntPolynomial
-//EXPORT double intPolynomialNormSq2(const IntPolynomial* poly)
 func TestIntPolynomialNormSq2(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 50
+	nbTrials := 50
 	for _, N := range dimensions {
 		pols := NewIntPolynomialArray(2, int32(N))
 		a := &pols[0]
 		acopy := &pols[1]
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			var norm2 double = 0
 			for j := 0; j < N; j++ {
 				r := (UniformTorus32Dist() % 1000) - 500
@@ -399,11 +392,10 @@ func TestIntPolynomialNormSq2(t *testing.T) {
 // This is the naive external multiplication of an integer polynomial
 // with a torus polynomial. (this function should yield exactly the same
 // result as the karatsuba or fft version, but should be slower)
-//EXPORT void torusPolynomialMultNaive(TorusPolynomial* result, const IntPolynomial* poly1, const TorusPolynomial* poly2)
 func TestPolynomialMultNaive(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 5
+	nbTrials := 5
 	for _, N := range dimensions {
 		ipols := NewIntPolynomialArray(2, int32(N))
 		tpols := NewTorusPolynomialArray(3, int32(N))
@@ -412,7 +404,7 @@ func TestPolynomialMultNaive(t *testing.T) {
 		b := &tpols[0]
 		bcopy := &tpols[1]
 		c := &tpols[2]
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
 			TorusPolynomialCopy(bcopy, b)
@@ -435,12 +427,11 @@ func TestPolynomialMultNaive(t *testing.T) {
 // This is the karatsuba external multiplication of an integer polynomial
 // with a torus polynomial.
 // WARNING: for karatsuba, N must be a power of 2
-//EXPORT void torusPolynomialMultKaratsuba(TorusPolynomial* result, const IntPolynomial* poly1, const TorusPolynomial* poly2)
 func TestTorusPolynomialMultKaratsuba(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 5
-	for _, N := range powers_of_two_dimensions {
+	nbTrials := 5
+	for _, N := range powersOfTwoDimensions {
 		ipols := NewIntPolynomialArray(2, int32(N))
 		tpols := NewTorusPolynomialArray(3, int32(N))
 		a := &ipols[0]
@@ -448,7 +439,7 @@ func TestTorusPolynomialMultKaratsuba(t *testing.T) {
 		b := &tpols[0]
 		bcopy := &tpols[1]
 		c := &tpols[2]
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
 			TorusPolynomialCopy(bcopy, b)
@@ -471,12 +462,11 @@ func TestTorusPolynomialMultKaratsuba(t *testing.T) {
 // result += poly1 * poly2 (via karatsuba)
 // WARNING: N must be a power of 2 to use this function. Else, the
 // behaviour is unpredictable
-//EXPORT void torusPolynomialAddMulRKaratsuba(TorusPolynomial* result, const IntPolynomial* poly1, const TorusPolynomial* poly2)
 func TestTorusPolynomialAddMulRKaratsuba(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 5
-	for _, N := range powers_of_two_dimensions {
+	nbTrials := 5
+	for _, N := range powersOfTwoDimensions {
 		ipols := NewIntPolynomialArray(2, int32(N))
 		tpols := NewTorusPolynomialArray(4, int32(N))
 		a := &ipols[0]
@@ -485,7 +475,7 @@ func TestTorusPolynomialAddMulRKaratsuba(t *testing.T) {
 		bcopy := &tpols[1]
 		c := &tpols[2]
 		ccopy := &tpols[3]
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
 			TorusPolynomialCopy(bcopy, b)
@@ -509,12 +499,11 @@ func TestTorusPolynomialAddMulRKaratsuba(t *testing.T) {
 // result -= poly1 * poly2 (via karatsuba)
 // WARNING: N must be a power of 2 to use this function. Else, the
 // behaviour is unpredictable
-//EXPORT void torusPolynomialAddMulRKaratsuba(TorusPolynomial* result, const IntPolynomial* poly1, const TorusPolynomial* poly2)
 func TestTorusPolynomialSubMulRKaratsuba(t *testing.T) {
 	assert := assert.New(t)
 	//TODO: parallelization
-	NB_TRIALS := 5
-	for _, N := range powers_of_two_dimensions {
+	nbTrials := 5
+	for _, N := range powersOfTwoDimensions {
 		ipols := NewIntPolynomialArray(2, int32(N))
 		tpols := NewTorusPolynomialArray(4, int32(N))
 		a := &ipols[0]
@@ -523,7 +512,7 @@ func TestTorusPolynomialSubMulRKaratsuba(t *testing.T) {
 		bcopy := &tpols[1]
 		c := &tpols[2]
 		ccopy := &tpols[3]
-		for trial := 0; trial < NB_TRIALS; trial++ {
+		for trial := 0; trial < nbTrials; trial++ {
 			torusPolynomialUniform(b)
 			torusPolynomialUniform(c)
 			TorusPolynomialCopy(bcopy, b)

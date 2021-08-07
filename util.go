@@ -54,8 +54,6 @@ func castInt(arr []complex128) (res []int32) {
 	res = make([]int32, len(arr))
 	for i, v := range arr {
 		res[i] = int32(int(real(v)))
-		//res[i] = int32(int(math.Round(real(v))))
-		//res[i] = int32(real(v)) // Dtot32(real(v)) // int32(real(v))
 	}
 	return
 }
@@ -63,12 +61,11 @@ func castInt(arr []complex128) (res []int32) {
 func castTorus2(arr []complex128) (res []int32) {
 	_2p32 := double(int(1) << 32)
 	_1sN := double(1) / double(4)
-	//res[i]=Torus32(int64_t(out[i]*_1sN*_2p32))
 	res = make([]int32, len(arr))
 	for i, v := range arr {
 		t := real(v) * _2p32 * _1sN
 		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus32(int((t))))
-		res[i] = int32(int64((real(v)) * _2p32 * _1sN)) //int32(int(real(v))) // Dtot32(real(v)) // int32(real(v))
+		res[i] = int32(int64((real(v)) * _2p32 * _1sN))
 	}
 	return
 }

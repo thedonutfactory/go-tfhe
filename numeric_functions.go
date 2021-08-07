@@ -6,14 +6,27 @@ import (
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
+const two32 int64 = int64(1) << 32 // 2^32
+var two32Double double = math.Pow(2, 32)
+
+// from double to Torus32 - float64 to int32 conversion
+func Dtot32(d double) Torus32 {
+	return Torus32(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
+}
+
+// from Torus32 to double
+func T32tod(x Torus32) double {
+	return double(x) / math.Pow(2, 32)
+}
+
 // Used to approximate the phase to the nearest message possible in the message space
 // The constant Msize will indicate on which message space we are working (how many messages possible)
 //
 // "travailler sur 63 bits au lieu de 64, car dans nos cas pratiques, c'est plus précis"
 func approxPhase(phase Torus32, Msize int32) Torus32 {
 	interv := ((uint64(1) << 63) / uint64(Msize)) * 2 // width of each interval
-	half_interval := interv / 2                       // begin of the first intervall
-	var phase64 uint64 = (uint64(phase) << 32) + half_interval
+	halfInterval := interv / 2                        // begin of the first intervall
+	var phase64 uint64 = (uint64(phase) << 32) + halfInterval
 	//floor to the nearest multiples of interv
 	phase64 -= phase64 % interv
 	//rescale to torus32
@@ -52,30 +65,6 @@ func UniformInt32Dist(min, max int32) int32 {
 	return int32(dist.Rand())
 }
 
-// from double to Torus32
-/*
-EXPORT Torus32 Dtot32(double d) {
-    return int32_t(int64_t((d - int64_t(d))*_two32));
-}
-// from Torus32 to double
-EXPORT double T32tod(Torus32 x) {
-    return double(x)/_two32_double;
-}
-*/
-
-const _two32 int64 = int64(1) << 32 // 2^32
-var _two32_double double = math.Pow(2, 32)
-
-// from double to Torus32 - float64 to int32 conversion
-func Dtot32(d double) Torus32 {
-	return Torus32(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
-}
-
-// from Torus32 to double
-func T32tod(x Torus32) double {
-	return double(x) / math.Pow(2, 32)
-}
-
 // Gaussian sample centered in message, with standard deviation sigma
 func gaussian32(message Torus32, sigma double) Torus32 {
 	// Create a standard normal (mean = 0, stdev = 1)
@@ -100,8 +89,8 @@ func gaussian32(message Torus32, sigma double) Torus32 {
 // "travailler sur 63 bits au lieu de 64, car dans nos cas pratiques, c'est plus précis"
 func ModSwitchFromTorus32(phase Torus32, Msize int32) int32 {
 	interv := ((uint64(1) << 63) / uint64(Msize)) * 2 // width of each intervall
-	half_interval := interv / 2                       // begin of the first intervall
-	phase64 := (uint64(phase) << 32) + half_interval
+	halfInterval := interv / 2                        // begin of the first intervall
+	phase64 := (uint64(phase) << 32) + halfInterval
 	//floor to the nearest multiples of interv
 	return int32(phase64 / interv)
 }
