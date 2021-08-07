@@ -46,7 +46,7 @@ func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitch
 		for j := int32(0); j < t; j++ {
 			ks[i][j] = make([]*LweSample, t)
 			for k := int32(0); k < base; k++ {
-				ks[i][j][k] = &ks0_raw[c]
+				ks[i][j][k] = ks0_raw[c]
 				c++
 			}
 		}

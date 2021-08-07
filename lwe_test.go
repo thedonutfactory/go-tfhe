@@ -70,9 +70,9 @@ func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 		//verify correctness of the decryption
 		for trial := int32(0); trial < NB_SAMPLES; trial++ {
 			message := ModSwitchToTorus32(trial, M)
-			LweSymEncrypt(&samples[trial], message, alpha, key)
-			phase := LwePhase(&samples[trial], key)
-			decrypt := LweSymDecrypt(&samples[trial], key, M)
+			LweSymEncrypt(samples[trial], message, alpha, key)
+			phase := LwePhase(samples[trial], key)
+			decrypt := LweSymDecrypt(samples[trial], key, M)
 			dmessage := T32tod(message)
 			dphase := T32tod(phase)
 			assert.Equal(message, decrypt)
