@@ -27,6 +27,10 @@ type LweSample struct {
 	CurrentVariance double
 }
 
+//func (s *LweSample) B() Torus32 {
+//	return s.A[len(s.A)]
+//}
+
 func NewLweParams(n int32, min, max double) *LweParams {
 	return &LweParams{n, min, max}
 }
@@ -66,12 +70,15 @@ func LweKeyGen(result *LweKey) {
 	result.key = z
 }
 
+// variablize for use with test mocking
+var LweSymEncrypt = LweSymEncryptImpl
+
 /**
  * This function encrypts message by using key, with stdev alpha
  * The Lwe sample for the result must be allocated and initialized
  * (this means that the parameters are already in the result)
  */
-func LweSymEncrypt(result *LweSample, message Torus32, alpha double, key *LweKey) {
+func LweSymEncryptImpl(result *LweSample, message Torus32, alpha double, key *LweKey) {
 	result.B = gaussian32(message, alpha)
 	for i := 0; i < int(key.params.N); i++ {
 		result.A[i] = UniformTorus32Dist()
