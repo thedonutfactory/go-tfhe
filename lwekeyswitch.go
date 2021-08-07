@@ -5,24 +5,74 @@ import (
 )
 
 type LweKeySwitchKey struct {
-	n         int32           ///< length of the input key: s'
-	t         int32           ///< decomposition length
-	basebit   int32           ///< log_2(base)
-	base      int32           ///< decomposition base: a power of 2
-	outParams *LweParams      ///< params of the output key s
-	ks0Raw    []LweSample     //tableau qui contient tout les Lwe samples de taille nlbase
-	ks1Raw    [][]LweSample   // de taille nl  pointe vers un tableau ks0_raw dont les cases sont espaceés de base positions
-	ks        [][][]LweSample ///< the keyswitch elements: a n.l.base matrix
-	// de taille n pointe vers ks1 un tableau dont les cases sont espaceés de ell positions
+	n         int32      ///< length of the input key: s'
+	t         int32      ///< decomposition length
+	basebit   int32      ///< log_2(base)
+	base      int32      ///< decomposition base: a power of 2
+	outParams *LweParams ///< params of the output key s
+	//ks0Raw    []LweSample // array which contains all Lwe samples of size nlbase
+	//ks1Raw    [][]*LweSample   // of size nl points to a ks0_raw array whose cells are spaced at base positions
+	ks [][][]*LweSample ///< the keyswitch elements: a n.l.base matrix
+	// of size n points to ks1 an array whose cells are spaced by ell positions
 }
 
 func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitchKey {
-	//LweKeySwitchKey* obj = alloc_LweKeySwitchKey();
-	//init_LweKeySwitchKey(obj, n, t, basebit, out_params);
-	//return obj;
 
-	return &LweKeySwitchKey{n: n, t: t, basebit: basebit, outParams: outParams}
+	base := int32(1 << basebit)
+	ks0_raw := NewLweSampleArray(n*t*base, outParams)
+
+	//ks1_raw := make([][]*LweSample, n*t) //new LweSample*[n*t];
+
+	ks := make([][][]*LweSample, n)
+
+	/*
+		for i := int32(0); i < n; i++ {
+			ks[i] = make([][]*LweSample, n)
+			for j := int32(0); j < t; j++ {
+				ks[i][j] = make([]*LweSample, t)
+				for h := int32(0); h < base; h++ {
+					ks[i][j][h] = &ks0_raw[i*base]
+				}
+			}
+		}
+	*/
+
+	// N = 300
+	// t = 14
+	// base = 4
+	var c int = 0
+	for i := int32(0); i < n; i++ {
+		ks[i] = make([][]*LweSample, n)
+		for j := int32(0); j < t; j++ {
+			ks[i][j] = make([]*LweSample, t)
+			for k := int32(0); k < base; k++ {
+				ks[i][j][k] = &ks0_raw[c]
+				c++
+			}
+		}
+	}
+
+	return &LweKeySwitchKey{
+		n:         n,
+		t:         t,
+		basebit:   basebit,
+		base:      base,
+		outParams: outParams,
+		//ks0Raw:    ks0_raw,
+		ks: ks,
+	}
 }
+
+/**
+ * LweKeySwitchKey constructor function
+
+func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitchKey {
+	base := int32(1 << basebit)
+	ks0Raw := NewLweSampleArray(n*t*base, outParams)
+	return &LweKeySwitchKey{n: n, t: t, basebit: basebit, outParams: outParams, ks0Raw: ks0Raw}
+	// new(obj) LweKeySwitchKey(n,t,basebit,out_params, ks0_raw)
+}
+*/
 
 func new_LweKeySwitchKey_array(size, n, t, basebit int32, outParams *LweParams) (ksk []LweKeySwitchKey) {
 	//LweKeySwitchKey* obj = alloc_LweKeySwitchKey_array(nbelts);
@@ -57,7 +107,7 @@ func renormalizeKSkey(ks *LweKeySwitchKey, out_key *LweKey, in_key []int32) {
 		for j := int32(0); j < t; j++ {
 			for h := int32(1); h < base; h++ { // pas le terme en 0
 				// compute the phase
-				phase := LwePhase(&ks.ks[i][j][h], out_key)
+				phase := LwePhase(ks.ks[i][j][h], out_key)
 				// compute the error
 				x := (in_key[i] * h) * (1 << (32 - (j+1)*basebit))
 				temp_err := phase - x
@@ -90,7 +140,7 @@ func renormalizeKSkey(ks *LweKeySwitchKey, out_key *LweKey, in_key []int32) {
  * @param t The precision of the keyswitch (technically, 1/2.base^t)
  * @param basebit Log_2 of base
  */
-func lweCreateKeySwitchKey_fromArray(result [][][]LweSample,
+func lweCreateKeySwitchKeyFromArray(result [][][]*LweSample,
 	out_key *LweKey, out_alpha double,
 	in_key []int32, n, t, basebit int32) {
 
@@ -100,8 +150,8 @@ func lweCreateKeySwitchKey_fromArray(result [][][]LweSample,
 		for j := int32(0); j < t; j++ {
 			for k := int32(0); k < base; k++ {
 				x := (in_key[i] * k) * (1 << (32 - (j+1)*basebit))
-				LweSymEncrypt(&result[i][j][k], x, out_alpha, out_key)
-				//printf("i,j,k,ki,x,phase=%d,%d,%d,%d,%d,%d\n",i,j,k,in_key.key[i],x,lwePhase(&result.ks[i][j][k],out_key))
+				LweSymEncrypt(result[i][j][k], x, out_alpha, out_key)
+				//fmt.Printf("i,j,k,ki,x,phase=%d,%d,%d,%d,%d,%d\n", i, j, k, in_key[i], x, LwePhase(result[i][j][k], out_key))
 			}
 		}
 	}
@@ -120,7 +170,7 @@ func lweCreateKeySwitchKey_fromArray(result [][][]LweSample,
  * @param basebit Log_2 of base
  */
 func lweKeySwitchTranslateFromArray(result *LweSample,
-	ks [][][]LweSample, params *LweParams,
+	ks [][][]*LweSample, params *LweParams,
 	ai []Torus32,
 	n, t, basebit int32) {
 
@@ -133,7 +183,7 @@ func lweKeySwitchTranslateFromArray(result *LweSample,
 		for j := int32(0); j < t; j++ {
 			aij := (aibar >> (32 - (j+1)*basebit)) & mask
 			if aij != 0 {
-				LweSubTo(result, &ks[i][j][aij], params)
+				LweSubTo(result, ks[i][j][aij], params)
 			}
 		}
 	}
@@ -181,7 +231,7 @@ func lweCreateKeySwitchKey(result *LweKeySwitchKey, in_key *LweKey, out_key *Lwe
 		for j := int32(0); j < t; j++ {
 
 			// term h=0 as trivial encryption of 0 (it will not be used in the KeySwitching)
-			LweNoiselessTrivial(&result.ks[i][j][0], 0, out_key.params)
+			LweNoiselessTrivial(result.ks[i][j][0], 0, out_key.params)
 			//lweSymEncrypt(&result.ks[i][j][0],0,alpha,out_key)
 
 			for h := int32(1); h < base; h++ { // pas le terme en 0
@@ -196,7 +246,7 @@ func lweCreateKeySwitchKey(result *LweKeySwitchKey, in_key *LweKey, out_key *Lwe
 				   result.ks[i][j][h].b += Dtot32(noise[index])
 				*/
 				mess := (in_key.key[i] * h) * (1 << (32 - (j+1)*basebit))
-				LweSymEncryptWithExternalNoise(&result.ks[i][j][h], mess, noise[index], alpha, out_key)
+				LweSymEncryptWithExternalNoise(result.ks[i][j][h], mess, noise[index], alpha, out_key)
 				index += 1
 			}
 		}
@@ -216,14 +266,4 @@ func lweKeySwitch(result *LweSample, ks *LweKeySwitchKey, sample *LweSample) {
 	lweKeySwitchTranslateFromArray(result,
 		ks.ks, params,
 		sample.A, n, t, basebit)
-}
-
-/**
- * LweKeySwitchKey constructor function
- */
-func init_LweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitchKey {
-	base := int32(1 << basebit)
-	ks0Raw := NewLweSampleArray(n*t*base, outParams)
-	return &LweKeySwitchKey{n: n, t: t, basebit: basebit, outParams: outParams, ks0Raw: ks0Raw}
-	// new(obj) LweKeySwitchKey(n,t,basebit,out_params, ks0_raw)
 }
