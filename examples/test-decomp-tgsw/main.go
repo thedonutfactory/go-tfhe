@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	N             int32   = 1024
-	k             int32   = 1
-	alpha_min_gsw float64 = 0.
-	alpha_max_gsw float64 = 0.071
-	Msize         int32   = 2
-	alpha         float64 = 1e-6
-	l             int     = 3
-	Bgbits        int32   = 10
+	N           int32   = 1024
+	k           int32   = 1
+	alphaMinGsw float64 = 0.
+	alphaMaxGsw float64 = 0.071
+	Msize       int32   = 2
+	alpha       float64 = 1e-6
+	l           int     = 3
+	Bgbits      int32   = 10
 )
 
 // **********************************************************************************
@@ -28,31 +28,28 @@ func approxEquals(a tfhe.Torus32, b tfhe.Torus32) bool {
 func main() {
 
 	//TODO: parallelization
-	//static uniform_int_distribution<int32_t> unift(0, Msize - 1)
 	unift := tfhe.NewUniform(0, Msize-1)
 
 	// PARAMETERS
-	rlwe_params := tfhe.NewTLweParams(N, k, alpha_min_gsw, alpha_max_gsw) //les deux alpha mis un peu au hasard
-	rgsw_params := tfhe.NewTGswParams(int32(l), Bgbits, rlwe_params)
-
-	//tGswParams512_1  = NewTGswParams(4, 8, NewTLweParams(512, 1, 0., 1.))
+	rlweParams := tfhe.NewTLweParams(N, k, alphaMinGsw, alphaMaxGsw) //les deux alpha mis un peu au hasard
+	rgswParams := tfhe.NewTGswParams(int32(l), Bgbits, rlweParams)
 
 	// KEY
-	rgsw_key := tfhe.NewTGswKey(rgsw_params)
-	rlwe_key := &rgsw_key.TlweKey
+	rgswKey := tfhe.NewTGswKey(rgswParams)
+	rlweKey := &rgswKey.TlweKey
 	// CIPHERTEXTS
-	cipherA := tfhe.NewTGswSample(rgsw_params)
-	cipherB := tfhe.NewTLweSample(rlwe_params)
-	cipherAB := tfhe.NewTLweSample(rlwe_params)
+	cipherA := tfhe.NewTGswSample(rgswParams)
+	cipherB := tfhe.NewTLweSample(rlweParams)
+	cipherAB := tfhe.NewTLweSample(rlweParams)
 
 	//the probability that a sample with stdev alpha decrypts wrongly on
 	//the a Msize message space.
 
-	expected_error_proba := 1. - math.Erf(1./(math.Sqrt(2.)*2.*float64(Msize)*alpha))
+	expectedErrorProba := 1. - math.Erf(1./(math.Sqrt(2.)*2.*float64(Msize)*alpha))
 
 	fmt.Println("-------------")
 	fmt.Println("WARNING:")
-	fmt.Printf("All the tests below are supposed to fail with proba: %f \n", expected_error_proba)
+	fmt.Printf("All the tests below are supposed to fail with proba: %f \n", expectedErrorProba)
 	fmt.Println("It is normal and it is part of the test!")
 	fmt.Println("-------------")
 
@@ -65,15 +62,14 @@ func main() {
 	for i := int32(0); i < N; i++ {
 		muB.CoefsT[i] = unift.Int32() //tfhe.UniformTorus32Dist()
 	}
-	tfhe.TGswTorus32PolynomialDecompH(muBDecH, muB, rgsw_params)
+	tfhe.TGswTorus32PolynomialDecompH(muBDecH, muB, rgswParams)
 	for i := int32(0); i < N; i++ {
 		expected := muB.CoefsT[i]
 		var actual int32 = 0
 		for j := 0; j < l; j++ {
-			actual += muBDecH[j].Coefs[i] * rgsw_params.H[j]
-			//fmt.Printf("DEBUG: l: %d, i: %d, j: %d, muBDecH[j].Coefs[i]: %d, rgsw_params->h[j]: %d \n", l, i, j, muBDecH[j].Coefs[i], rgsw_params.H[j])
+			actual += muBDecH[j].Coefs[i] * rgswParams.H[j]
+			//fmt.Printf("DEBUG: l: %d, i: %d, j: %d, muBDecH[j].Coefs[i]: %d, rgswParams->h[j]: %d \n", l, i, j, muBDecH[j].Coefs[i], rgswParams.H[j])
 		}
-		//jcl
 		//fmt.Printf("\t DEBUG: actual: %d, expected: %d\n", actual, expected)
 		if tfhe.Abs(expected-actual) > 3 {
 			fmt.Printf("decompH error %d: %d != %d\n", i, actual, expected)
@@ -81,7 +77,7 @@ func main() {
 	}
 
 	for i := int32(0); i < N; i++ {
-		temp := unift.Int32() // tfhe.UniformInt32Dist(0, Msize-1) //unift(generator)
+		temp := unift.Int32()
 		muB.CoefsT[i] = tfhe.ModSwitchToTorus32(temp, Msize)
 		// fmt.Println(muB.CoefsT[i])
 	}
@@ -98,13 +94,13 @@ func main() {
 	dechifAB := tfhe.NewTorusPolynomial(N)
 	muAB := tfhe.NewTorusPolynomial(N)
 
-	tfhe.TGswKeyGen(rgsw_key)                          // KEY GENERATION
-	tfhe.TLweSymEncrypt(cipherB, muB, alpha, rlwe_key) // ENCRYPTION
+	tfhe.TGswKeyGen(rgswKey)                          // KEY GENERATION
+	tfhe.TLweSymEncrypt(cipherB, muB, alpha, rlweKey) // ENCRYPTION
 
 	//decryption test tlwe
 	fmt.Println("Test TLweSymDecrypt on muB:")
 	fmt.Printf(" variance: %f\n", cipherB.CurrentVariance)
-	tfhe.TLweSymDecrypt(dechifB, cipherB, rlwe_key, Msize) // DECRYPTION
+	tfhe.TLweSymDecrypt(dechifB, cipherB, rlweKey, Msize) // DECRYPTION
 	for i := int32(0); i < N; i++ {
 		expected := tfhe.ModSwitchFromTorus32(muB.CoefsT[i], int(Msize))
 		actual := tfhe.ModSwitchFromTorus32(dechifB.CoefsT[i], int(Msize))
@@ -116,16 +112,14 @@ func main() {
 	//test decompH on tLwe
 	fmt.Println("Test decompH on TLwe(muB)")
 	cipherBDecH := tfhe.NewIntPolynomialArray(l*(int(k)+1), N)
-	tfhe.TGswTLweDecompH(cipherBDecH, cipherB, rgsw_params)
+	tfhe.TGswTLweDecompH(cipherBDecH, cipherB, rgswParams)
 	for p := int32(0); p <= k; p++ {
 		for i := int32(0); i < N; i++ {
 			expected := cipherB.A[p].CoefsT[i]
 			var actual int32 = 0
 			for j := int32(0); j < int32(l); j++ {
 				x := int32(l)*p + j
-				// fmt.Printf("DEBUG: l: %d, p: %d, j: %d, x: %d, i: %d, cipherBDecH[x].coefs[i]: %d, rgsw_params->h[j]: %d \n", l, p, j, x, i, cipherBDecH[x].Coefs[i], rgsw_params.H[j])
-				actual += cipherBDecH[x].Coefs[i] * rgsw_params.H[j]
-				// actual += cipherBDecH[l*int(p)+j].Coefs[i] * rgsw_params.H[j]
+				actual += cipherBDecH[x].Coefs[i] * rgswParams.H[j]
 			}
 			// fails when p == 1, the array is not being populated properly
 			if tfhe.Abs(expected-actual) > 3 {
@@ -142,11 +136,11 @@ func main() {
 	}
 
 	//test externProduct with H
-	tfhe.TGswClear(cipherA, rgsw_params)
-	tfhe.TGswAddH(cipherA, rgsw_params)
+	tfhe.TGswClear(cipherA, rgswParams)
+	tfhe.TGswAddH(cipherA, rgswParams)
 	//cipherB.DebugTLweSample()
-	//cipherA.DebugTGswSample(rgsw_params)
-	tfhe.TGswExternProduct(cipherAB, cipherA, cipherB, rgsw_params)
+	//cipherA.DebugTGswSample(rgswParams)
+	tfhe.TGswExternProduct(cipherAB, cipherA, cipherB, rgswParams)
 	cipherAB.DebugTLweSample()
 	fmt.Println("Test cipher after product 3.5 H*muB:")
 	for p := int32(0); p <= k; p++ {
@@ -163,7 +157,7 @@ func main() {
 			}
 		}
 	}
-	tfhe.TLweSymDecrypt(dechifAB, cipherAB, rlwe_key, Msize) // DECRYPTION
+	tfhe.TLweSymDecrypt(dechifAB, cipherAB, rlweKey, Msize) // DECRYPTION
 	fmt.Println("Test LweSymDecrypt after product 3.5 H*muB:")
 	fmt.Printf(" variance: %f", cipherAB.CurrentVariance)
 	for i := int32(0); i < N; i++ {
@@ -177,8 +171,8 @@ func main() {
 
 	//decryption test tgsw
 	fmt.Println("decryption test tgsw:")
-	tfhe.TGswSymEncrypt(cipherA, muA, alpha, rgsw_key) // ENCRYPTION
-	tfhe.TLwePhase(dechifB, cipherA.BlocSample[k][0], rlwe_key)
+	tfhe.TGswSymEncrypt(cipherA, muA, alpha, rgswKey) // ENCRYPTION
+	tfhe.TLwePhase(dechifB, cipherA.BlocSample[k][0], rlweKey)
 	fmt.Println("manual decryption test: ")
 	for i := int32(0); i < N; i++ {
 		//fmt.Printf("muA->c[i]: %d, dechifB->c[i]: %d\n", muA.Coefs[i], dechifB.CoefsT[i])
@@ -189,7 +183,7 @@ func main() {
 		}
 	}
 
-	tfhe.TGswSymDecrypt(dechifA, cipherA, rgsw_key, int(Msize))
+	tfhe.TGswSymDecrypt(dechifA, cipherA, rgswKey, int(Msize))
 	fmt.Println("automatic decryption test:")
 	for i := int32(0); i < N; i++ {
 		expected := muA.Coefs[i]
@@ -200,8 +194,8 @@ func main() {
 	}
 
 	tfhe.TorusPolynomialMulR(muAB, muA, muB)
-	tfhe.TGswExternProduct(cipherAB, cipherA, cipherB, rgsw_params)
-	tfhe.TLweSymDecrypt(dechifAB, cipherAB, rlwe_key, Msize) // DECRYPTION
+	tfhe.TGswExternProduct(cipherAB, cipherA, cipherB, rgswParams)
+	tfhe.TLweSymDecrypt(dechifAB, cipherAB, rlweKey, Msize) // DECRYPTION
 
 	fmt.Println("Test LweSymDecrypt after product 3.5:")
 	fmt.Printf(" variance: %f", cipherAB.CurrentVariance)

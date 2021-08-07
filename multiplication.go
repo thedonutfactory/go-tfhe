@@ -4,7 +4,7 @@ import (
 	"math/big"
 )
 
-func torusPolynomialMultNaive_plain_aux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
+func torusPolynomialMultNaivePlainAux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
 	_2Nm1 := 2*N - 1
 	var ri Torus32
 	for i := int32(0); i < N; i++ {
@@ -23,7 +23,7 @@ func torusPolynomialMultNaive_plain_aux(result []Torus32, poly1 []int32, poly2 [
 	}
 }
 
-func torusPolynomialMultNaive_aux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
+func torusPolynomialMultNaiveAux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
 	var ri Torus32
 	for i := int32(0); i < N; i++ {
 		ri = 0
@@ -46,44 +46,35 @@ func torusPolynomialMultNaive(result *TorusPolynomial, poly1 *IntPolynomial, pol
 	N := poly1.N
 	Assert(result != poly2)
 	Assert(poly2.N == N && result.N == N)
-	torusPolynomialMultNaive_aux(result.CoefsT, poly1.Coefs, poly2.CoefsT, N)
+	torusPolynomialMultNaiveAux(result.CoefsT, poly1.Coefs, poly2.CoefsT, N)
 }
 
 /**
  * This function multiplies 2 polynomials (an integer poly and a torus poly) by using Karatsuba
  * The karatsuba function is torusPolynomialMultKaratsuba: it takes in input two polynomials and multiplies them
- * To do that, it uses the auxiliary function Karatsuba_aux, which is recursive ad which works with
+ * To do that, it uses the auxiliary function karatsubaAux, which is recursive ad which works with
  * the vectors containing the coefficients of the polynomials (primitive types)
  */
 
 // A and B of size = size
 // R of size = 2*size-1
 
-func Karatsuba_aux(R []Torus32, A []int32, B []Torus32, size int32) {
+func karatsubaAux(R []Torus32, A []int32, B []Torus32, size int32) {
 	h := size / 2
 	sm1 := size - 1
 
 	//we stop the karatsuba recursion at h=4, because on my machine,
 	//it seems to be optimal
 	if h <= 4 {
-		torusPolynomialMultNaive_plain_aux(R, A, B, size)
+		torusPolynomialMultNaivePlainAux(R, A, B, size)
 		return
 	}
 
 	//we split the polynomials in 2
 	Atemp := make([]int32, h)
-	//int32_t* Atemp = (int32_t*) buf
-	//buf += h*sizeof(int32_t)
-
-	//Torus32* Btemp = (Torus32*) buf
-	//buf += h*sizeof(Torus32)
 	Btemp := make([]Torus32, h)
-
-	//Torus32* Rtemp = (Torus32*) buf
-	//buf += size*sizeof(Torus32)
 	Rtemp := make([]Torus32, size)
 	//Note: in the above line, I have put size instead of sm1 so that buf remains aligned on a power of 2
-
 	for i := int32(0); i < h; i++ {
 		Atemp[i] = A[i] + A[h+i]
 	}
@@ -92,10 +83,10 @@ func Karatsuba_aux(R []Torus32, A []int32, B []Torus32, size int32) {
 	}
 
 	// Karatsuba recursivly
-	Karatsuba_aux(R, A, B, h) // (R[0],R[2*h-2]), (A[0],A[h-1]), (B[0],B[h-1])
-	// Karatsuba_aux(R+size, A+h, B+h, h, buf) // (R[2*h],R[4*h-2]), (A[h],A[2*h-1]), (B[h],B[2*h-1])
-	Karatsuba_aux(R[size:], A[h:], B[h:], h)
-	Karatsuba_aux(Rtemp, Atemp, Btemp, h)
+	karatsubaAux(R, A, B, h) // (R[0],R[2*h-2]), (A[0],A[h-1]), (B[0],B[h-1])
+	// karatsubaAux(R+size, A+h, B+h, h, buf) // (R[2*h],R[4*h-2]), (A[h],A[2*h-1]), (B[h],B[2*h-1])
+	karatsubaAux(R[size:], A[h:], B[h:], h)
+	karatsubaAux(Rtemp, Atemp, Btemp, h)
 	R[sm1] = 0 //this one needs to be set manually
 	for i := int32(0); i < sm1; i++ {
 		Rtemp[i] -= R[i] + R[size+i]
@@ -120,8 +111,8 @@ func torusPolynomialMultKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial,
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	//result.CoefsT = Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
-	Karatsuba_aux(R, poly1.Coefs, poly2.CoefsT, N)
+	//result.CoefsT = karatsubaAux(poly1.Coefs, poly2.CoefsT)
+	karatsubaAux(R, poly1.Coefs, poly2.CoefsT, N)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
@@ -137,8 +128,8 @@ func torusPolynomialAddMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomi
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	Karatsuba_aux(R, poly1.Coefs, poly2.CoefsT, N)
-	//R := Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
+	karatsubaAux(R, poly1.Coefs, poly2.CoefsT, N)
+	//R := karatsubaAux(poly1.Coefs, poly2.CoefsT)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
@@ -154,8 +145,8 @@ func torusPolynomialSubMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomi
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	Karatsuba_aux(R, poly1.Coefs, poly2.CoefsT, N)
-	//R = Karatsuba_aux(poly1.Coefs, poly2.CoefsT)
+	karatsubaAux(R, poly1.Coefs, poly2.CoefsT, N)
+	//R = karatsubaAux(poly1.Coefs, poly2.CoefsT)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {

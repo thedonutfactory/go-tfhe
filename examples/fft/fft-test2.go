@@ -133,8 +133,8 @@ func multiply(a, b []int32) []int32 {
 	return result
 }
 
-const _two32 int64 = int64(1) << 32 // 2^32
-var _two32_double double = math.Pow(2, 32)
+const two32 int64 = int64(1) << 32 // 2^32
+var two32Double double = math.Pow(2, 32)
 
 // from double to Torus32 - float64 to int32 conversion
 func Dtot32(d double) Torus32 {
