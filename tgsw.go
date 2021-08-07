@@ -22,9 +22,9 @@ type TGswKey struct {
 }
 
 type TGswSample struct {
-	AllSample  []TLweSample    ///< TLweSample* all_sample; (k+1)l TLwe Sample
+	AllSample  []TLweSample    ///< TLweSample* allSample; (k+1)l TLwe Sample
 	BlocSample [][]*TLweSample ///< optional access to the different size l blocks
-	// double current_variance
+	// double currentVariance
 	k int32
 	l int32
 }
@@ -163,22 +163,6 @@ func (s *TGswSample) DebugTGswSample(params *TGswParams) {
 	}
 	tabs(1, "}")
 }
-
-/*
-func init_TGswSample(obj *TGswSample, params *TGswParams) {
-	k := params.tlweParams.k
-	l := params.l
-	all_sample := NewTLweSampleArray((k+1)*l, params.tlweParams) // all samples as a line vector
-	//TLweSample **bloc_sample = new TLweSample *[k + 1]; // horizontal blocks (l rows) of the TGsw matrix
-
-	bloc_sample := make([][]TLweSample, k+1)
-
-	for p := int32(0); p < k+1; p++ {
-		bloc_sample[p] = all_sample[p*l] // all_sample + p * l
-	}
-	obj = NewTGswSample(all_sample, bloc_sample, k, l)
-}
-*/
 
 // TGsw
 /** generate a tgsw key (in fact, a tlwe key) */
@@ -332,60 +316,19 @@ func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msi
 	}
 }
 
-/*
-// à revoir
-EXPORT int32_t tGswSymDecryptInt(const TGswSample* sample, const TGswKey* key){
-    TorusPolynomial* phase = new_TorusPolynomial(key.params.tlwe_params.N)
-
-    tGswPhase(phase, sample, key)
-    int32_t result = modSwitchFromTorus32(phase.CoefsT[0], Msize)
-
-    delete_TorusPolynomial(phase)
-    return result
-}
-*/
-//do we really decrypt Gsw samples?
-// EXPORT void tGswMulByXaiMinusOne(Gsw* result, int32_t ai, const Gsw* bk)
-// EXPORT void tLweExternMulRLweTo(RLwe* accum, Gsw* a); //  accum = a \odot accum
-
 //fonction de decomposition
 func TGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswParams) {
 	k := params.TlweParams.K
 	l := params.l
-	/*
-		for i := int32(0); i < k; i++ { // b=a[k]
-
-			//tGswTorus32PolynomialDecompH(result+(i*l), &sample.a[i], params)
-
-			// sort of works only when i < k
-			TGswTorus32PolynomialDecompH(result[i:i+l], &sample.A[i], params)
-
-			//TGswTorus32PolynomialDecompH(result[i:i+l], &sample.A[i], params)
-
-			//TGswTorus32PolynomialDecompH(result[l:], &sample.A[i], params)
-			//TGswTorus32PolynomialDecompH(result, &sample.A[i], params)
-			//TGswTorus32PolynomialDecompH(result[:i+l], &sample.A[i], params)
-		}
-	*/
-
 	var j = 0
 	for i := int32(0); i <= k*l; i += l {
-
-		/*
-			sub := result[i : i+l]
-			fmt.Printf("len(sub): %d\n", len(sub))
-			for _, v := range sub {
-				fmt.Println(v.Coefs[0])
-			}
-		*/
-
 		TGswTorus32PolynomialDecompH(result[i:i+l], &sample.A[j], params)
 		j++
 	}
 
 }
 
-func Torus32PolynomialDecompH_old(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
+func torus32PolynomialDecompHOld(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
 	N := params.TlweParams.N
 	l := params.l
 	Bgbit := params.Bgbit
@@ -416,23 +359,19 @@ func TGswTorus32PolynomialDecompH(result []IntPolynomial, sample *TorusPolynomia
 	//First, add offset to everyone
 	for j := int32(0); j < N; j++ {
 		buf[j] += offset
-		//sample.CoefsT[j] += Torus32(offset)
 	}
 
 	//then, do the decomposition (in parallel)
 	for p := int32(0); p < l; p++ {
 		var decal int32 = 32 - (p+1)*Bgbit
-		//res_p := result[p].Coefs
 		for j := int32(0); j < N; j++ {
 			var temp1 int32 = int32((buf[j] >> uint32(decal)) & maskMod)
-			//var temp1 int32 = int32((uint32(sample.CoefsT[j]) >> uint32(decal)) & maskMod)
 			result[p].Coefs[j] = temp1 - halfBg
 		}
 	}
 	//finally, remove offset from everyone
 	for j := int32(0); j < N; j++ {
 		buf[j] -= offset
-		//sample.CoefsT[j] -= Torus32(offset)
 	}
 }
 

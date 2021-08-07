@@ -52,12 +52,12 @@ func TestFftIsBijective(t *testing.T) {
 		fmt.Printf("torusPolynomialCopy(acopy, a):")
 		printTorusPolynomial(acopy)
 
-		TorusPolynomial_ifft(afft, a)
-		fmt.Printf("TorusPolynomial_ifft(afft, a):")
+		torusPolynomialIfft(afft, a)
+		fmt.Printf("torusPolynomialIfft(afft, a):")
 		printLagrange(afft)
 
-		TorusPolynomial_fft(b, afft)
-		fmt.Printf("TorusPolynomial_fft(b, afft):")
+		torusPolynomialFft(b, afft)
+		fmt.Printf("torusPolynomialFft(b, afft):")
 		printTorusPolynomial(b)
 
 		fmt.Printf("A: \n")
@@ -83,7 +83,7 @@ func TestLagrangeHalfCPolynomialClear(t *testing.T) {
 		LagrangeHalfCPolynomialClear(afft)
 		torusPolynomialUniform(a)
 		torusPolynomialClear(zero)
-		TorusPolynomial_fft(a, afft)
+		torusPolynomialFft(a, afft)
 		assert.EqualValues(torusPolynomialNormInftyDist(zero, a), 0)
 	}
 }
@@ -103,7 +103,7 @@ func TestLagrangeHalfCPolynomialSetTorusConstant(t *testing.T) {
 
 		//tested function
 		LagrangeHalfCPolynomialSetTorusConstant(afft, mu)
-		TorusPolynomial_fft(a, afft)
+		torusPolynomialFft(a, afft)
 
 		//expected result
 		torusPolynomialClear(cste)
@@ -128,9 +128,9 @@ func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 		afft := NewLagrangeHalfCPolynomial(N)
 
 		//torusPolynomialUniform(a)
-		TorusPolynomial_ifft(afft, a)
+		torusPolynomialIfft(afft, a)
 		LagrangeHalfCPolynomialAddTorusConstant(afft, mu)
-		TorusPolynomial_fft(b, afft)
+		torusPolynomialFft(b, afft)
 
 		TorusPolynomialCopy(aPlusCste, a)
 		aPlusCste.CoefsT[0] += mu
@@ -236,11 +236,11 @@ func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
 		afft := NewLagrangeHalfCPolynomial(N)
 		bfft := NewLagrangeHalfCPolynomial(N)
 		torusPolynomialUniform(a)
-		TorusPolynomial_ifft(afft, a)
+		torusPolynomialIfft(afft, a)
 		torusPolynomialUniform(b)
-		TorusPolynomial_ifft(bfft, b)
+		torusPolynomialIfft(bfft, b)
 		LagrangeHalfCPolynomialAddTo(afft, bfft)
-		TorusPolynomial_fft(aPlusBbis, afft)
+		torusPolynomialFft(aPlusBbis, afft)
 		TorusPolynomialAdd(aPlusB, b, a)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aPlusBbis, aPlusB), toler)
 	}

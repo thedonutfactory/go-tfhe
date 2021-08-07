@@ -13,17 +13,19 @@ func approxEquals(a tfhe.Torus32, b tfhe.Torus32) bool {
 
 func main() {
 
-	const N int32 = 1024
-	const k int32 = 2
-	alpha_min := 0.01
-	alpha_max := 0.071
-	const Msize int32 = 7 // taille de l'espace des coeffs du polynome du message
-	alpha := 0.02
+	const (
+		N        int32 = 1024
+		k        int32 = 2
+		alphaMin       = 0.01
+		alphaMax       = 0.071
+		Msize    int32 = 7 // taille de l'espace des coeffs du polynome du message
+		alpha          = 0.02
+	)
 
 	unift := tfhe.NewUniform(0, Msize-1)
 
 	// PARAMETERS
-	params := tfhe.NewTLweParams(N, k, alpha_min, alpha_max) //les deux alpha mis un peu au hasard
+	params := tfhe.NewTLweParams(N, k, alphaMin, alphaMax) //les deux alpha mis un peu au hasard
 	// KEY
 	key := tfhe.NewTLweKey(params)
 	// CIPHERTEXTS
@@ -32,11 +34,11 @@ func main() {
 
 	//the probability that a sample with stdev alpha decrypts wrongly on
 	//the a Msize message space.
-	expected_error_proba := 1. - math.Erf(1./(math.Sqrt(2.)*2.*float64(Msize)*alpha))
+	expectedErrorProba := 1. - math.Erf(1./(math.Sqrt(2.)*2.*float64(Msize)*alpha))
 
 	fmt.Println("-------------")
 	fmt.Println("WARNING:")
-	fmt.Printf("All the tests below are supposed to fail with proba: %f\n", expected_error_proba)
+	fmt.Printf("All the tests below are supposed to fail with proba: %f\n", expectedErrorProba)
 	fmt.Println("It is normal and it is part of the test!")
 	fmt.Println("-------------")
 
@@ -185,28 +187,6 @@ func main() {
 		}
 		fmt.Println(cipher.CurrentVariance)
 		fmt.Println("----------------------")
-
-		/*
-		   // result = result + poly.sample
-		   tLweCopy(cipher, cipher0, params);
-		   tLweAddMulRTo(cipher, poly, cipher1, params);
-		   // mu = mu0 + poly.mu1
-		   torusPolynomialCopy(mu, mu0);
-		   torusPolynomialAddMulRKaratsuba(mu, poly, mu1);
-
-		   tLweSymDecrypt(dechif, cipher, key, Msize); // DECRYPTION
-
-		   cout << "Test tLweAddMulRTo Trial:" << trial << endl;
-		   for (int32_t i = 0; i < N; ++i)
-		   {
-		       decInt = modSwitchFromTorus32(dechif.coefsT[i], Msize);
-		       muInt = modSwitchFromTorus32(mu.coefsT[i], Msize);
-		       if (decInt != muInt)
-		           cout << decInt << " =? " << muInt << " error!!!" << endl;
-		   }
-		   cout << cipher.current_variance << endl;
-		   cout << "----------------------" << endl;
-		*/
 	}
 
 	// TEST ADD, SUB, LINEAR COMBINATION, POLYNOMIAL COMBINATIONS

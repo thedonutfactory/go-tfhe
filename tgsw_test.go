@@ -12,27 +12,15 @@ const FAKE_TGSW_UID int64 = 123444802642375465 // precaution: do not confuse fak
 
 // Fake TLWE structure
 type FakeTLwe struct {
-	fake_uid        int32
+	fakeUid         int32
 	message         []TorusPolynomial
 	currentVariance double
-	//this padding is here to make sure that FakeTLwe and TLweSample have the same size
-	//char unused_padding[sizeof(TLweSample) - sizeof(int64_t) - sizeof(TorusPolynomial *) - sizeof(double)];
 }
 
 // construct
-/*
-func NewFakeTLwe(N int32) *FakeTLwe {
-	return &FakeTLwe{
-		fake_uid:        FAKE_TLWE_UID,
-		message:         NewTorusPolynomialArray(N),
-		currentVariance: 0.,
-	}
-}
-*/
-
 func NewFakeTLweFromTLweSample(sample *TLweSample) *FakeTLwe {
 	return &FakeTLwe{
-		fake_uid:        FAKE_TLWE_UID,
+		fakeUid:         FAKE_TLWE_UID,
 		message:         sample.A, //NewTorusPolynomial(N),
 		currentVariance: 0.,
 	}
@@ -44,28 +32,7 @@ type FakeTGsw struct {
 	fakeUid         int64
 	message         *IntPolynomial
 	currentVariance double
-
-	//this padding is here to make sure that FakeTLwe and TLweSample have the same size
-	//char unused_padding[sizeof(TGswSample) - sizeof(int64_t) - sizeof(IntPolynomial *) - sizeof(double)];
 }
-
-/*
-func NewFakeTGsw(N int32) *FakeTGsw {
-	return &FakeTGsw{
-		fakeUid:         FAKE_TGSW_UID,
-		message:         NewIntPolynomial(N),
-		currentVariance: 0,
-	}
-}
-
-
-
-inline void fake_init_TGswSample(TGswSample *ptr, const TGswParams *params) {
-        int32_t N = params.tlwe_params.N;
-        FakeTGsw *arr = (FakeTGsw *) ptr;
-        new(arr) FakeTGsw(N);
-    }
-*/
 
 func NewFakeTGsw(sample *TGswSample, params *TGswParams) *FakeTGsw {
 	var alpha double = 4.2 // valeur pseudo aleatoire fixé
@@ -87,7 +54,6 @@ func (fake *FakeTGsw) setMessageVariance(mess int32, variance double) {
 func FakeTGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswParams) {
 	kpl := params.Kpl
 	N := params.TlweParams.N
-	//const FakeTLwe *seed = fake(sample);
 	seed := NewFakeTLweFromTLweSample(sample)
 	for i := int32(0); i < kpl; i++ {
 		for j := int32(0); j < N; j++ {
@@ -152,8 +118,6 @@ var (
 * The TLwe key for the result must be allocated and initialized
 * (this means that the parameters are already in the result)
  */
-//EXPORT void tGswKeyGen(TGswKey* result);
-//TEST_F(TGswTest, tGswKeyGen) {
 func TestTGswKeyGen(t *testing.T) {
 	assert := assert.New(t)
 	for _, param := range allTGswParams {
@@ -169,9 +133,6 @@ func TestTGswKeyGen(t *testing.T) {
 		}
 	}
 }
-
-//EXPORT void tGswSymEncrypt(TGswSample* result, const IntPolynomial* message, double alpha, const TGswKey* key);
-//TEST_F(TGswFakeTest, tGswSymEncrypt) {
 func TestTGswSymEncrypt(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allTGswKeys {
@@ -209,7 +170,6 @@ func TestTGswSymEncryptInt(t *testing.T) {
 	}
 }
 
-//TEST_F(TGswTest, tGswClear) {
 func TestTGswClear(t *testing.T) {
 	assert := assert.New(t)
 	for _, param := range allTGswParams {
@@ -226,10 +186,9 @@ func TestTGswClear(t *testing.T) {
 	}
 }
 
-//EXPORT void tGswTLweDecompH(IntPolynomial* result, const TLweSample* sample,const TGswParams* params);
 // Test direct Result*H donne le bon resultat
 // sample: TLweSample composed by k+1 torus polynomials, each with N coefficients
-// result: int32_t polynomial with Nl(k+1) coefficients
+// result: int32 polynomial with Nl(k+1) coefficients
 func TestTGswTLweDecompH(t *testing.T) {
 	assert := assert.New(t)
 	for _, param := range allTGswParams {
@@ -322,7 +281,6 @@ func TestTGswAddH(t *testing.T) {
 	}
 }
 
-//TEST_F(TGswDirectTest, tGswAddMuH) {
 func TestTGswAddMuH(t *testing.T) {
 	assert := assert.New(t)
 	for _, params := range allTGswParams {
@@ -333,8 +291,8 @@ func TestTGswAddMuH(t *testing.T) {
 		k := params.TlweParams.K
 		N := params.TlweParams.N
 		h := params.H
-		alpha := 4.2                      // valeur pseudo aleatoire fixé
-		mess := newRandomIntPolynomial(N) // new_random_IntPolynomial(N);
+		alpha := 4.2 // valeur pseudo aleatoire fixé
+		mess := newRandomIntPolynomial(N)
 
 		// make a full random TGSW
 		fullyRandomTGsw(s, alpha, params)
@@ -480,7 +438,7 @@ func TestTGswExternProduct(t *testing.T) {
 
 		fresult := NewFakeTLweFromTLweSample(result) //fake(result);
 		fb := NewFakeTLweFromTLweSample(b)
-		fsamplerows := sample.AllSample //NewFakeTLweFromTLweSample(sample.AllSample) //fake(sample.all_sample);
+		fsamplerows := sample.AllSample //NewFakeTLweFromTLweSample(sample.AllSample) //fake(sample.allSample);
 		alpha := 4.2                    // valeur pseudo aleatoire fixé
 
 		fullyRandomTGsw(sample, alpha, params)
@@ -530,7 +488,6 @@ func TestTGswMulByXaiMinusOne(t *testing.T) {
 	}
 }
 
-//TEST_F(TGswTest, tGswExternMulToTLwe) {
 func TestTGswExternMulToTLwe(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allTGswKeys {
