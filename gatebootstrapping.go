@@ -9,6 +9,19 @@ type TFheGateBootstrappingParameterSet struct {
 	tgswParams  *TGswParams
 }
 
+type TFheGateBootstrappingCloudKeySet struct {
+	params *TFheGateBootstrappingParameterSet
+	bk     *LweBootstrappingKey
+	// bkFFT  *LweBootstrappingKeyFFT
+}
+
+type TFheGateBootstrappingSecretKeySet struct {
+	params  *TFheGateBootstrappingParameterSet
+	LweKey  *LweKey
+	tgswKey *TGswKey
+	Cloud   *TFheGateBootstrappingCloudKeySet
+}
+
 func NewTFheGateBootstrappingParameterSet(ks_t, ks_basebit int32, in_out_params *LweParams, tgsw_params *TGswParams) *TFheGateBootstrappingParameterSet {
 	return &TFheGateBootstrappingParameterSet{
 		ks_t:        ks_t,
@@ -18,12 +31,6 @@ func NewTFheGateBootstrappingParameterSet(ks_t, ks_basebit int32, in_out_params 
 	}
 }
 
-type TFheGateBootstrappingCloudKeySet struct {
-	params *TFheGateBootstrappingParameterSet
-	bk     *LweBootstrappingKey
-	// bkFFT  *LweBootstrappingKeyFFT
-}
-
 func NewTFheGateBootstrappingCloudKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey) *TFheGateBootstrappingCloudKeySet {
 	return &TFheGateBootstrappingCloudKeySet{
 		params: params,
@@ -31,17 +38,10 @@ func NewTFheGateBootstrappingCloudKeySet(params *TFheGateBootstrappingParameterS
 	}
 }
 
-type TFheGateBootstrappingSecretKeySet struct {
-	params  *TFheGateBootstrappingParameterSet
-	lweKey  *LweKey
-	tgswKey *TGswKey
-	Cloud   *TFheGateBootstrappingCloudKeySet
-}
-
 func NewTFheGateBootstrappingSecretKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey, lwe_key *LweKey, tgsw_key *TGswKey) *TFheGateBootstrappingSecretKeySet {
 	return &TFheGateBootstrappingSecretKeySet{
 		params:  params,
-		lweKey:  lwe_key,
+		LweKey:  lwe_key,
 		tgswKey: tgsw_key,
 		Cloud:   NewTFheGateBootstrappingCloudKeySet(params, bk),
 	}
@@ -134,12 +134,12 @@ func BootsSymEncrypt(result *LweSample, message int32, key *TFheGateBootstrappin
 	}
 	//Torus32 mu = message ? _1s8 : -_1s8;
 	alpha := key.params.InOutParams.alphaMin //TODO: specify noise
-	LweSymEncrypt(result, mu, alpha, key.lweKey)
+	LweSymEncrypt(result, mu, alpha, key.LweKey)
 }
 
 /** decrypts a boolean */
 func BootsSymDecrypt(sample *LweSample, key *TFheGateBootstrappingSecretKeySet) int32 {
-	mu := LwePhase(sample, key.lweKey)
+	mu := LwePhase(sample, key.LweKey)
 	if mu > 0 {
 		return 1
 	} else {
