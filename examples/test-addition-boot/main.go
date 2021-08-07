@@ -130,11 +130,13 @@ func toBits(val int) []int {
 	return l
 }
 
-func decryptResult(sum []*tfhe.LweSample, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {
-	for _, v := range sum {
-		messSum := tfhe.BootsSymDecrypt(v, keyset)
-		fmt.Println(messSum)
+func decryptAndDisplayResult(sum []*tfhe.LweSample, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {
+	fmt.Print("[ ")
+	for i := len(sum) - 1; i >= 0; i-- {
+		messSum := tfhe.BootsSymDecrypt(sum[i], keyset)
+		fmt.Printf("%d ", messSum)
 	}
+	fmt.Println("]")
 }
 
 func main() {
@@ -172,7 +174,7 @@ func main() {
 		fullAdderMUX(sum, x, y, nb_bits, keyset)
 		duration := time.Since(start)
 
-		decryptResult(sum, keyset)
+		decryptAndDisplayResult(sum, keyset)
 		// Formatted string, such as "2h3m0.5s" or "4.503μs"
 		fmt.Printf("finished Bootstrapping %d bits addition circuit (FA in MUX version)\n", nb_bits)
 		fmt.Printf("total time: %s\n", duration)
@@ -210,6 +212,7 @@ func main() {
 		start = time.Now()
 		fullAdder(sum, x, y, nb_bits, keyset)
 		duration = time.Since(start)
+		decryptAndDisplayResult(sum, keyset)
 		fmt.Printf("finished Bootstrappings %d bits addition circuit (FA)\n", nb_bits)
 		fmt.Printf("total time: %s\n", duration)
 
