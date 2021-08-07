@@ -79,7 +79,7 @@ func tfhe_blindRotateAndExtract(result *LweSample,
 * @param mu The output message (if phase(x)>0)
 * @param x The input sample
  */
-func tfhe_bootstrap_woKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
+func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
 	bk_params := bk.bk_params
 	accum_params := bk.accum_params
 	in_params := bk.in_out_params
@@ -106,9 +106,9 @@ func tfhe_bootstrap_woKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32,
 * @param mu The output message (if phase(x)>0)
 * @param x The input sample
  */
-func tfhe_bootstrap(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
+func tfheBootstrap(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
 	u := NewLweSample(&bk.accum_params.extractedLweparams)
-	tfhe_bootstrap_woKS(u, bk, mu, x)
+	tfheBootstrapWoKS(u, bk, mu, x)
 	// Key Switching
 	lweKeySwitch(result, bk.ks, u)
 }
