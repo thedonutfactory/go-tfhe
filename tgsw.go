@@ -52,6 +52,14 @@ func TGswAddH(result *TGswSample, params *TGswParams) {
 }
 */
 
+func NewTGswSampleArray(size int32, params *TGswParams) (arr []*TGswSample) {
+	arr = make([]*TGswSample, size)
+	for i := int32(0); i < size; i++ {
+		arr[i] = NewTGswSample(params)
+	}
+	return
+}
+
 func NewTGswSample(params *TGswParams) *TGswSample {
 	k := params.TlweParams.K
 	l := params.l

@@ -107,3 +107,7 @@ func Max(x, y int) int {
 	}
 	return x
 }
+
+func Swap(a, b int) {
+	b, a = a, b
+}
