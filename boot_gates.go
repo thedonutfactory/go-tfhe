@@ -545,12 +545,12 @@ func BootsORYN(result, ca, cb *LweSample, bk *TFheGateBootstrappingCloudKeySet) 
 func BootsMUX(result, a, b, c *LweSample, bk *TFheGateBootstrappingCloudKeySet) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.params.InOutParams
-	extracted_params := &bk.params.tgswParams.TlweParams.extractedLweparams
+	extractedParams := &bk.params.tgswParams.TlweParams.extractedLweparams
 
 	tempResult := NewLweSample(inOutParams)
-	tempResult1 := NewLweSample(extracted_params)
-	u1 := NewLweSample(extracted_params)
-	u2 := NewLweSample(extracted_params)
+	tempResult1 := NewLweSample(extractedParams)
+	u1 := NewLweSample(extractedParams)
+	u2 := NewLweSample(extractedParams)
 
 	//compute "AND(a,b)": (0,-1/8) + a + b
 	AndConst := ModSwitchToTorus32(-1, 8)
@@ -571,9 +571,9 @@ func BootsMUX(result, a, b, c *LweSample, bk *TFheGateBootstrappingCloudKeySet) 
 
 	// Add u1=u1+u2
 	MuxConst := ModSwitchToTorus32(1, 8)
-	LweNoiselessTrivial(tempResult1, MuxConst, extracted_params)
-	LweAddTo(tempResult1, u1, extracted_params)
-	LweAddTo(tempResult1, u2, extracted_params)
+	LweNoiselessTrivial(tempResult1, MuxConst, extractedParams)
+	LweAddTo(tempResult1, u1, extractedParams)
+	LweAddTo(tempResult1, u2, extractedParams)
 	// Key switching
 	//lweKeySwitch(result, bk.bkFFT.ks, tempResult1)
 	lweKeySwitch(result, bk.bk.ks, tempResult1)
