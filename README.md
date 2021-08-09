@@ -2,7 +2,11 @@
 
 # Fully Homomorphic Encryption for Gophers 🍩
 
+<<<<<<< HEAD
 go-tfhe is the Golang implementation of [TFHE Homomorphic Encryption Library](https://tfhe.github.io/tfhe/)
+=======
+### WTF is a "fully bootstrapped circuit environment for running programs within the homomorphic realm"
+>>>>>>> 600756f (Update README.md)
 
 TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm. ( for the uninitiated, a quick rundown of FHE is [here](#fhe-illustrated---like-literally-illustrated-with-cute-gophers) )
 
@@ -10,11 +14,19 @@ TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme develo
 
 The following snippet is a simple fully homomorphic 8-bit integer addition circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
 
+<<<<<<< HEAD
 ```golang
 import (
   "fmt"
   "github.com/thedonutfactory/go-tfhe"
 )
+=======
+Modern day cryptographic miracle.
+
+### FHE Illustrated
+
+So, if Alice writes a simple program to add two numbers and return the results, classically she would create something like this:
+>>>>>>> 600756f (Update README.md)
 
 func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, 
                keyset *TFheGateBootstrappingSecretKeySet) {
@@ -67,6 +79,7 @@ function add(int8 a, int8 b) {
 }
 ```
 
+<<<<<<< HEAD
 So if he were outsource Bob to run the program function:
 
 `add(2, 3)` it would result in `5`
@@ -95,3 +108,18 @@ Now, if he used a fully homomorphic runtime environment, he would be able to fir
 [CGGI16]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. Faster fully homomorphic encryption: Bootstrapping in less than 0.1 seconds. In Asiacrypt 2016 (Best Paper), pages 3-33. [PDF](https://eprint.iacr.org/2016/870.pdf)
 
 
+=======
+So if she were outsource Bob to run the program function:
+
+`addTwoNumbers(2, 3)` it would result in `5`
+
+Simple, but Bob and his employees could see the input and output values of the function.
+
+Now, if she used a fully homomorphic runtime environment, she would be able to first encrypt the values of `a` and `b`, pass these encrypted values to Bob, where he executes the homomorphic version of the same function giving back an encrypted result. For illustration purposes, the interaction might look something like this:
+
+1. Alice encrypts a's value of `2` resulting in `1d8b4cf854c`
+2. Alice encrypts a's value of `3` resulting in `32c4feed996`
+3. Alice asks Bob to run the program function `addTwoNumbers(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
+4. Bob gets the result `489f719cad` and returns it to Alice
+5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
+>>>>>>> 600756f (Update README.md)
