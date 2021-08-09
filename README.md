@@ -114,6 +114,13 @@ Now, if she used a fully homomorphic runtime environment, she would be able to f
 >>>>>>> 600756f (Update README.md)
 =======
 
+## Potential FHE Use Cases
+
+* Private Cloud Computing on public Clouds ( FHE on AWS, Azure or GCP is secure )
+* Distributed, trustless computing / MFA
+* End to end encrypted blockchain smart contracts
+* Trustless Voting
+
 ## References
 
 [CGGI19]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. TFHE: Fast Fully Homomorphic Encryption over the Torus. In Journal of Cryptology, volume 33, pages 34–91 (2020). [PDF](https://eprint.iacr.org/2018/421.pdf)
