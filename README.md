@@ -2,11 +2,7 @@
 
 # Fully Homomorphic Encryption for Gophers 🍩
 
-<<<<<<< HEAD
 go-tfhe is the Golang implementation of [TFHE Homomorphic Encryption Library](https://tfhe.github.io/tfhe/)
-=======
-### WTF is a "fully bootstrapped circuit environment for running programs within the homomorphic realm"
->>>>>>> 600756f (Update README.md)
 
 TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm. ( for the uninitiated, a quick rundown of FHE is [here](#fhe-illustrated---like-literally-illustrated-with-cute-gophers) )
 
@@ -14,19 +10,11 @@ TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme develo
 
 The following snippet is a simple fully homomorphic 8-bit integer addition circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
 
-<<<<<<< HEAD
 ```golang
 import (
   "fmt"
   "github.com/thedonutfactory/go-tfhe"
 )
-=======
-Modern day cryptographic miracle.
-
-### FHE Illustrated
-
-So, if Alice writes a simple program to add two numbers and return the results, classically she would create something like this:
->>>>>>> 600756f (Update README.md)
 
 func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, 
                keyset *TFheGateBootstrappingSecretKeySet) {
@@ -122,4 +110,15 @@ Now, if she used a fully homomorphic runtime environment, she would be able to f
 3. Alice asks Bob to run the program function `addTwoNumbers(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
 4. Bob gets the result `489f719cad` and returns it to Alice
 5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
+<<<<<<< HEAD
 >>>>>>> 600756f (Update README.md)
+=======
+
+## References
+
+[CGGI19]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. TFHE: Fast Fully Homomorphic Encryption over the Torus. In Journal of Cryptology, volume 33, pages 34–91 (2020). [PDF](https://eprint.iacr.org/2018/421.pdf)
+
+[CGGI16]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. Faster fully homomorphic encryption: Bootstrapping in less than 0.1 seconds. In Asiacrypt 2016 (Best Paper), pages 3-33. [PDF](https://eprint.iacr.org/2016/870.pdf)
+
+
+>>>>>>> 178b166 (Update README.md)
