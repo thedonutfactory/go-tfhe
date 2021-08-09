@@ -1,11 +1,11 @@
-# 🍩 go-tfhe - FHE for Gophers
-Golang implementation of [TFHE Homomorphic Encryption Library](https://tfhe.github.io/tfhe/)
+# FHE for Gophers 🍩
+go-tfhe is the Golang implementation of [TFHE Homomorphic Encryption Library](https://tfhe.github.io/tfhe/)
 
-TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm.
+TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm. ( for the uninitiated, a quick rundown of FHE is [here](#eli5) )
 
 ## Show me the Code
 
-The following is a simple fully homomorphic 8-bit integer addition circuit program. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
+The following snippet is a simple fully homomorphic 8-bit integer addition circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
 
 ```golang
 import (
@@ -13,40 +13,19 @@ import (
   "github.com/TheDonutFactory/go-tfhe"
 )
 
-func main() {
-  // generate params
-  const nbBits = 8
-  var minimumLambda int32 = 100
-  params := NewDefaultGateBootstrappingParameters(minimumLambda)
-  inOutParams := params.InOutParams
-  // generate the secret keyset
-  keyset := NewRandomGateBootstrappingSecretKeyset(params)
-  // Encrypt the input
-  x := NewLweSampleArray(nbBits, inOutParams)
-  y := NewLweSampleArray(nbBits, inOutParams)
-  xBits := toBits(22)
-  yBits := toBits(33)
-  for i := 0; i < nbBits; i++ {
-    BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
-    BootsSymEncrypt(y[i], int32(yBits[i]), keyset)
-  }
-  // output sum
-  sum := tfhe.NewLweSampleArray(nbBits+1, inOutParams)
-  fullAdder(sum, x, y, nbBits, keyset)
-}
-
-func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, keyset *TFheGateBootstrappingSecretKeySet) {
+func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, 
+               keyset *TFheGateBootstrappingSecretKeySet) {
   inOutParams := keyset.Params.InOutParams
-  // carry bits
+  // carry bit
   carry := NewLweSampleArray(2, inOutParams)
-  BootsSymEncrypt(carry[0], 0, keyset) // first carry initialized to 0
+  BootsSymEncrypt(carry[0], 0, keyset)
   temp := NewLweSampleArray(3, inOutParams)
   for i := 0; i < nbBits; i++ {
-    //sumi = xi XOR yi XOR carry(i-1)
+    //sum[i] = x[i] XOR y[i] XOR carry(i-1)
     BootsXOR(temp[0], x[i], y[i], keyset.Cloud) // temp = xi XOR yi
     BootsXOR(sum[i], temp[0], carry[0], keyset.Cloud)
     
-    // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
+    // carry = (x[i] AND y[i]) XOR (carry(i-1) AND (x[i] XOR y[i]))
     BootsAND(temp[1], x[i], y[i], keyset.Cloud)        // temp1 = xi AND yi
     BootsAND(temp[2], carry[0], temp[0], keyset.Cloud) // temp2 = carry AND temp
     BootsXOR(carry[1], temp[1], temp[2], keyset.Cloud)
@@ -70,8 +49,8 @@ Modern day cryptographic miracle.
 
 So, if Alice writes a simple program to add two numbers and return the results, classically she would create something like this:
 
-```
-function addTwoNumbers(int32 a, int32 b) {
+```golang
+func addTwoNumbers(int32 a, int32 b) {
   return a + b
 }
 ```
