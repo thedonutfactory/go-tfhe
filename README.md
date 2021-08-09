@@ -37,7 +37,7 @@ func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int,
 
 ### ELI5
 
-In simple terms, fully homomorphic encryption allows two parties, Alice and Bob, to execute programs on each others's computer systems, without knowing the inputs and output of the data. For example, let's say that Bob owns a cloud processing company that crunches health datasets for Alice. Bob has access to cutting-edge bare metal machines with a lot of processing power and is happy to sell Alice that processing power. However, due to HIPPA compliance requirements ( and a general, altruistic respect for an individual's privacy ), Alice cannot actually share the data.
+In simple terms, fully homomorphic encryption allows two parties, Alice and Bob, to execute programs on each others's computer systems, without knowing the inputs and output of the data. For example, let's say that Bob owns a cloud processing company that crunches health datasets for Alice. Bob has access to cutting-edge bare metal machines with a lot of processing power and is happy to sell Alice that processing power. However, due to HIPAA compliance requirements ( and a general, altruistic respect for an individual's privacy ), Alice cannot actually share the data.
 
 How do we solve this problem with today's cryptography? Well, we can encrypt the data over the wire, send it to Bob's cloud processing company, and then securely hand him the private key to decrypt, process and reencrypt the data. However, we are still giving Bob's prying eyes access to very sensitive, private health data of Alice's customers.
 
