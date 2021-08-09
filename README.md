@@ -69,6 +69,13 @@ Now, if she used a fully homomorphic runtime environment, she would be able to f
 4. Bob gets the result `489f719cad` and returns it to Alice
 5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
 
+## Potential FHE Use Cases
+
+* Private Cloud Computing on public Clouds ( FHE on AWS, Azure or GCP is secure )
+* Distributed, trustless computing / MFA
+* End to end encrypted blockchain smart contracts
+* Trustless Voting
+
 ## References
 
 [CGGI19]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. TFHE: Fast Fully Homomorphic Encryption over the Torus. In Journal of Cryptology, volume 33, pages 34–91 (2020). [PDF](https://eprint.iacr.org/2018/421.pdf)
