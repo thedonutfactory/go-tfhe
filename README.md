@@ -1,7 +1,60 @@
-# go-tfhe
-Golang implementation of TFHE Homomorphic Encryption Library
+# 🍩 go-tfhe
+Golang implementation of [TFHE Homomorphic Encryption Library](https://github.com/tfhe/tfhe)
 
-TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme created by (Ilaria Chillotti)[https://github.com/ilachill] et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm.
+TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme created by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm.
+
+## Show me the Code
+
+The following is a simple fully homomorphic 8-bit integer addition circuit program. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
+
+```
+import (
+  "fmt"
+  "github.com/TheDonutFactory/go-tfhe"
+)
+
+func main() {
+  // generate params
+  const nbBits = 8
+  var minimumLambda int32 = 100
+  params := tfhe.NewDefaultGateBootstrappingParameters(minimumLambda)
+  inOutParams := params.InOutParams
+  // generate the secret keyset
+  keyset := tfhe.NewRandomGateBootstrappingSecretKeyset(params)
+  // Encrypt the input
+  x := tfhe.NewLweSampleArray(nbBits, inOutParams)
+  y := tfhe.NewLweSampleArray(nbBits, inOutParams)
+  xBits := toBits(22)
+  yBits := toBits(33)
+  for i := 0; i < nbBits; i++ {
+    tfhe.BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
+    tfhe.BootsSymEncrypt(y[i], int32(yBits[i]), keyset)
+  }
+  // output sum
+  sum := tfhe.NewLweSampleArray(nbBits+1, inOutParams)
+  fullAdder(sum, x, y, nbBits, keyset)
+}
+
+func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, keyset *TFheGateBootstrappingSecretKeySet) {
+  inOutParams := keyset.Params.InOutParams
+  // carry bits
+  carry := NewLweSampleArray(2, inOutParams)
+  tfhe.BootsSymEncrypt(carry[0], 0, keyset) // first carry initialized to 0
+	temp := NewLweSampleArray(3, inOutParams)
+  for i := 0; i < nbBits; i++ {
+    //sumi = xi XOR yi XOR carry(i-1)
+    BootsXOR(temp[0], x[i], y[i], keyset.Cloud) // temp = xi XOR yi
+    BootsXOR(sum[i], temp[0], carry[0], keyset.Cloud)
+    
+    // carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
+    BootsAND(temp[1], x[i], y[i], keyset.Cloud)        // temp1 = xi AND yi
+    BootsAND(temp[2], carry[0], temp[0], keyset.Cloud) // temp2 = carry AND temp
+    BootsXOR(carry[1], temp[1], temp[2], keyset.Cloud)
+    BootsCOPY(carry[0], carry[1], keyset.Cloud)
+  }
+  BootsCOPY(sum[nbBits], carry[0], keyset.Cloud)
+}
+```
 
 ### WTF is a "fully bootstrapped circuit environment for running programs within the homomorphic realm"
 
@@ -36,3 +89,11 @@ Now, if she used a fully homomorphic runtime environment, she would be able to f
 3. Alice asks Bob to run the program function `addTwoNumbers(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
 4. Bob gets the result `489f719cad` and returns it to Alice
 5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
+
+## References
+
+[CGGI19]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. TFHE: Fast Fully Homomorphic Encryption over the Torus. In Journal of Cryptology, volume 33, pages 34–91 (2020). [PDF](https://eprint.iacr.org/2018/421.pdf)
+
+[CGGI16]: I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène. Faster fully homomorphic encryption: Bootstrapping in less than 0.1 seconds. In Asiacrypt 2016 (Best Paper), pages 3-33. [PDF](https://eprint.iacr.org/2016/870.pdf)
+
+
