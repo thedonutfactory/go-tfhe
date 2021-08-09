@@ -1,13 +1,13 @@
-# 🍩 go-tfhe
+# 🍩 go-tfhe - FHE for Gophers
 Golang implementation of [TFHE Homomorphic Encryption Library](https://tfhe.github.io/tfhe/)
 
-TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme created by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm.
+TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm.
 
 ## Show me the Code
 
 The following is a simple fully homomorphic 8-bit integer addition circuit program. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
 
-```
+```golang
 import (
   "fmt"
   "github.com/TheDonutFactory/go-tfhe"
@@ -17,18 +17,18 @@ func main() {
   // generate params
   const nbBits = 8
   var minimumLambda int32 = 100
-  params := tfhe.NewDefaultGateBootstrappingParameters(minimumLambda)
+  params := NewDefaultGateBootstrappingParameters(minimumLambda)
   inOutParams := params.InOutParams
   // generate the secret keyset
-  keyset := tfhe.NewRandomGateBootstrappingSecretKeyset(params)
+  keyset := NewRandomGateBootstrappingSecretKeyset(params)
   // Encrypt the input
-  x := tfhe.NewLweSampleArray(nbBits, inOutParams)
-  y := tfhe.NewLweSampleArray(nbBits, inOutParams)
+  x := NewLweSampleArray(nbBits, inOutParams)
+  y := NewLweSampleArray(nbBits, inOutParams)
   xBits := toBits(22)
   yBits := toBits(33)
   for i := 0; i < nbBits; i++ {
-    tfhe.BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
-    tfhe.BootsSymEncrypt(y[i], int32(yBits[i]), keyset)
+    BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
+    BootsSymEncrypt(y[i], int32(yBits[i]), keyset)
   }
   // output sum
   sum := tfhe.NewLweSampleArray(nbBits+1, inOutParams)
@@ -39,8 +39,8 @@ func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, key
   inOutParams := keyset.Params.InOutParams
   // carry bits
   carry := NewLweSampleArray(2, inOutParams)
-  tfhe.BootsSymEncrypt(carry[0], 0, keyset) // first carry initialized to 0
-	temp := NewLweSampleArray(3, inOutParams)
+  BootsSymEncrypt(carry[0], 0, keyset) // first carry initialized to 0
+  temp := NewLweSampleArray(3, inOutParams)
   for i := 0; i < nbBits; i++ {
     //sumi = xi XOR yi XOR carry(i-1)
     BootsXOR(temp[0], x[i], y[i], keyset.Cloud) // temp = xi XOR yi
@@ -56,7 +56,7 @@ func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, key
 }
 ```
 
-### WTF is a "fully bootstrapped circuit environment for running programs within the homomorphic realm"
+### ELI5
 
 In simple terms, fully homomorphic encryption allows two parties, Alice and Bob, to execute programs on each others's computer systems, without knowing the inputs and output of the data. For example, let's say that Bob owns a cloud processing company that crunches health datasets for Alice. Bob has access to cutting-edge bare metal machines with a lot of processing power and is happy to sell Alice that processing power. However, due to HIPPA compliance requirements ( and a general, altruistic respect for an individual's privacy ), Alice cannot actually share the data.
 
