@@ -76,11 +76,19 @@ Simple, but Bob and his employees could see the input and output values of the f
 
 Now, if he used a fully homomorphic runtime environment, he would be able to first encrypt the values of `a` and `b`, pass these encrypted values to Bob, where he executes the homomorphic version of the same function giving back an encrypted result. For illustration purposes, the interaction might look something like this:
 
+<<<<<<< HEAD
 1. Allan encrypts a's value of `2` resulting in `1d8b4cf854c`
 2. Allan encrypts a's value of `3` resulting in `32c4feed996`
 3. Allan asks Bob to run the program function `add(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
 4. Bob gets the result `489f719cad` and returns it to Allan
 5. Allan decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Allan's input or output data, but he performed all of the processing for her. Magic.
+=======
+1. Alice encrypts a's value of `2` resulting in `1d8b4cf854c`
+2. Alice encrypts a's value of `3` resulting in `32c4feed996`
+3. Alice asks Bob to run the program function `add(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
+4. Bob gets the result `489f719cad` and returns it to Alice
+5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
+>>>>>>> 2bbb5a1 (updated README)
 
 ## Potential FHE Use Cases
 
