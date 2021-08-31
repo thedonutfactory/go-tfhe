@@ -51,15 +51,15 @@ Modern day cryptographic miracle.
 
 So, if Alice writes a simple program to add two numbers and return the results, classically she would create something like this:
 
-```golang
-func addTwoNumbers(int32 a, int32 b) {
+```solidity
+function add(int8 a, int8 b) {
   return a + b
 }
 ```
 
 So if she were outsource Bob to run the program function:
 
-`addTwoNumbers(2, 3)` it would result in `5`
+`add(2, 3)` it would result in `5`
 
 Simple, but Bob and his employees could see the input and output values of the function.
 
@@ -67,7 +67,7 @@ Now, if she used a fully homomorphic runtime environment, she would be able to f
 
 1. Alice encrypts a's value of `2` resulting in `1d8b4cf854c`
 2. Alice encrypts a's value of `3` resulting in `32c4feed996`
-3. Alice asks Bob to run the program function `addTwoNumbers(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
+3. Alice asks Bob to run the program function `add(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
 4. Bob gets the result `489f719cad` and returns it to Alice
 5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
 
