@@ -148,7 +148,7 @@ func TestTorusPolynomialSmallMultFFT(t *testing.T) {
 func TestTorusPolynomialMultFFT(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
-	var N int32 = 1024
+	var N int32 = 4
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
 		a := NewIntPolynomial(N)
