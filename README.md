@@ -47,6 +47,8 @@ Modern day cryptographic miracle.
 
 ### FHE Illustrated
 
+![Alt text](/docs/images/FHE.png?raw=true "FHE Illustrated")
+
 So, if Alice writes a simple program to add two numbers and return the results, classically she would create something like this:
 
 ```golang
