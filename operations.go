@@ -1,6 +1,46 @@
 package tfhe
 
-type Operations struct {
+type Operations interface {
+	// comparison
+	CompareBit(a, b, lsbCarry, tmp *LweSample) (result *LweSample)
+	Equals(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Minimum(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Maximum(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Gte(a, b []*LweSample, nbBits int) (result []*LweSample)
+
+	// arithmetic
+	Add(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Sub(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Mul(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Div(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Pow(a []*LweSample, n, nbBits int) (result []*LweSample)
+
+	// bitwise shift
+	ShiftLeft(a []*LweSample, positions, nbBits int) (result []*LweSample)
+	ShiftRight(a []*LweSample, positions, nbBits int) (result []*LweSample)
+	UshiftLeft(a []*LweSample, positions, nbBits int) (result []*LweSample)
+	UshiftRight(a []*LweSample, positions, nbBits int) (result []*LweSample)
+
+	// bitwise operations
+	Nand(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Or(a, b []*LweSample, nbBits int) (result []*LweSample)
+	And(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Xor(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Xnor(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Not(a []*LweSample, nbBits int) (result []*LweSample)
+	Nor(a, b []*LweSample, nbBits int) (result []*LweSample)
+	AndNY(a, b []*LweSample, nbBits int) (result []*LweSample)
+	AndYN(a, b []*LweSample, nbBits int) (result []*LweSample)
+	OrNY(a, b []*LweSample, nbBits int) (result []*LweSample)
+	OrYN(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Mux(a, b, c []*LweSample, nbBits int) (result []*LweSample)
+
+	// misc
+	Copy(a, b []*LweSample, nbBits int) (result []*LweSample)
+	Constant(value int32, nbBits int) (result []*LweSample)
+}
+
+type CipheredOperations struct {
 	bk *TFheGateBootstrappingCloudKeySet
 }
 
@@ -8,7 +48,7 @@ type Operations struct {
 //   input: ai and bi the i-th bit of a and b
 //          lsb_carry: the result of the comparison on the lowest bits
 //   algo: if (a==b) return lsb_carry else return b
-func (ops *Operations) CompareBit(a, b, lsbCarry, tmp *LweSample) (result *LweSample) {
+func (ops *CipheredOperations) CompareBit(a, b, lsbCarry, tmp *LweSample) (result *LweSample) {
 	result = NewLweSample(ops.bk.params.InOutParams)
 	BootsXNOR(tmp, a, b, ops.bk)
 	BootsMUX(result, tmp, lsbCarry, a, ops.bk)
@@ -16,7 +56,7 @@ func (ops *Operations) CompareBit(a, b, lsbCarry, tmp *LweSample) (result *LweSa
 }
 
 // Returns a == b
-func (ops *Operations) Equals(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Equals(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	tmps := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	BootsCONSTANT(result[0], 1, ops.bk)
@@ -27,12 +67,12 @@ func (ops *Operations) Equals(a, b []*LweSample, nbBits int) (result []*LweSampl
 	return result
 }
 
-func (ops *Operations) isNegative(result, a []*LweSample, nbBits int) {
+func (ops *CipheredOperations) isNegative(result, a []*LweSample, nbBits int) {
 	BootsCOPY(result[0], a[nbBits-1], ops.bk)
 }
 
 // this function compares two multibit words, and puts the min in result
-func (ops *Operations) Minimum(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Minimum(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	tmps := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	aGreater := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
@@ -76,7 +116,7 @@ func (ops *Operations) Minimum(a, b []*LweSample, nbBits int) (result []*LweSamp
 }
 
 // this function compares two multibit words, and puts the min in result
-func (ops *Operations) Maximum2(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Maximum2(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	tmps := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	aGreater := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
@@ -120,7 +160,7 @@ func (ops *Operations) Maximum2(a, b []*LweSample, nbBits int) (result []*LweSam
 }
 
 // this function compares two multibit words, and puts the min in result
-func (ops *Operations) Maximum(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Maximum(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	tmps := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	aGreater := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
@@ -164,7 +204,7 @@ func (ops *Operations) Maximum(a, b []*LweSample, nbBits int) (result []*LweSamp
 	return result
 }
 
-func (ops *Operations) addBit(result, carry_out, a, b, carry_in *LweSample) {
+func (ops *CipheredOperations) addBit(result, carry_out, a, b, carry_in *LweSample) {
 	s1 := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	c1 := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	c2 := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
@@ -183,7 +223,7 @@ func (ops *Operations) addBit(result, carry_out, a, b, carry_in *LweSample) {
 }
 
 // return -a
-func (ops *Operations) negative(result, a []*LweSample, nbBits int) {
+func (ops *CipheredOperations) negative(result, a []*LweSample, nbBits int) {
 
 	ha_changed := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	not_x := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
@@ -201,7 +241,7 @@ func (ops *Operations) negative(result, a []*LweSample, nbBits int) {
 
 }
 
-func (ops *Operations) Add(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Add(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	tmpsCarry := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 
@@ -215,14 +255,14 @@ func (ops *Operations) Add(a, b []*LweSample, nbBits int) (result []*LweSample) 
 	return result
 }
 
-func (ops *Operations) Sub(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Sub(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	res := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	ops.negative(res, b, nbBits)
 	return ops.Add(a, res, nbBits)
 }
 
 // Unsigned multiply
-func (ops *Operations) umul(result, a, b []*LweSample, nbBits int) {
+func (ops *CipheredOperations) umul(result, a, b []*LweSample, nbBits int) {
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux2 := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
@@ -255,7 +295,7 @@ func (ops *Operations) umul(result, a, b []*LweSample, nbBits int) {
 }
 
 // multiply two ciphertexts and return the result
-func (ops *Operations) Mul(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Mul(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux2 := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
@@ -320,13 +360,13 @@ func (ops *Operations) Mul(a, b []*LweSample, nbBits int) (result []*LweSample) 
  0 si a >= b
  Ignores the sign!
 */
-func (ops *Operations) Gte(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Gte(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	ops.gte(result, a, b, nbBits)
 	return result
 }
 
-func (ops *Operations) gte(result, a, b []*LweSample, nbBits int) {
+func (ops *CipheredOperations) gte(result, a, b []*LweSample, nbBits int) {
 	eq := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	BootsCONSTANT(result[0], 0, ops.bk)
 	for i := 0; i < nbBits; i++ {
@@ -336,7 +376,7 @@ func (ops *Operations) gte(result, a, b []*LweSample, nbBits int) {
 }
 
 // signed bit shift left
-func (ops *Operations) ShiftLeft(a []*LweSample, positions, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) ShiftLeft(a []*LweSample, positions, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
@@ -375,7 +415,7 @@ func (ops *Operations) ShiftLeft(a []*LweSample, positions, nbBits int) (result 
 }
 
 // signed bit shift right
-func (ops *Operations) ShiftRight(a []*LweSample, positions, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) ShiftRight(a []*LweSample, positions, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
@@ -415,7 +455,7 @@ func (ops *Operations) ShiftRight(a []*LweSample, positions, nbBits int) (result
 }
 
 // Unsigned shift left
-func (ops *Operations) UshiftLeft(a []*LweSample, positions, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) UshiftLeft(a []*LweSample, positions, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
@@ -438,7 +478,7 @@ func (ops *Operations) UshiftLeft(a []*LweSample, positions, nbBits int) (result
 }
 
 // unsigned shift right
-func (ops *Operations) UshiftRight(a []*LweSample, positions, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) UshiftRight(a []*LweSample, positions, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
@@ -461,7 +501,7 @@ func (ops *Operations) UshiftRight(a []*LweSample, positions, nbBits int) (resul
 }
 
 // Scaling from nb_bits to nb_bits_result
-func (ops *Operations) urescale(result, a []*LweSample, nbBitsResult, nbBits int) {
+func (ops *CipheredOperations) urescale(result, a []*LweSample, nbBitsResult, nbBits int) {
 
 	for i := 0; i < nbBitsResult; i++ {
 		BootsCONSTANT(result[i], 0, ops.bk)
@@ -477,7 +517,7 @@ func (ops *Operations) urescale(result, a []*LweSample, nbBitsResult, nbBits int
 	}
 }
 
-func (ops *Operations) rescale(result, a []*LweSample, nbBitsResult, nbBits int) {
+func (ops *CipheredOperations) rescale(result, a []*LweSample, nbBitsResult, nbBits int) {
 	auxA := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	corrige := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 
@@ -497,7 +537,7 @@ func (ops *Operations) rescale(result, a []*LweSample, nbBitsResult, nbBits int)
 	}
 }
 
-func (ops *Operations) udiv(cociente, a, b []*LweSample, nbBits int) {
+func (ops *CipheredOperations) udiv(cociente, a, b []*LweSample, nbBits int) {
 	gt := NewGateBootstrappingCiphertextArray(2, ops.bk.params)
 	div_aux := NewGateBootstrappingCiphertextArray(2*nbBits, ops.bk.params)
 	div_aux2 := NewGateBootstrappingCiphertextArray(2*nbBits, ops.bk.params)
@@ -529,7 +569,7 @@ func (ops *Operations) udiv(cociente, a, b []*LweSample, nbBits int) {
 
 }
 
-func (ops *Operations) Div(a, b []*LweSample, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Div(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
 	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
@@ -600,7 +640,7 @@ func (ops *Operations) Div(a, b []*LweSample, nbBits int) (result []*LweSample) 
 	return result
 }
 
-func (ops *Operations) Pow(a []*LweSample, n, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Pow(a []*LweSample, n, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	// aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 
@@ -625,6 +665,119 @@ func (ops *Operations) Pow(a []*LweSample, n, nbBits int) (result []*LweSample) 
 		for j := 0; j < nbBits; j++ {
 			BootsCOPY(result[j], aux[j], ops.bk)
 		}
+	}
+	return result
+}
+
+// boolean operations wrappers
+func (ops *CipheredOperations) Nand(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsNAND(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Or(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsOR(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) And(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsAND(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Xor(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsXOR(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Xnor(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsXNOR(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Not(a []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsNOT(result[i], a[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Copy(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsCOPY(result[i], a[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Constant(value int32, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsCONSTANT(result[i], value, ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Nor(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsNOR(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) AndNY(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsANDNY(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) AndYN(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsANDYN(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) OrNY(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsORNY(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) OrYN(a, b []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsORYN(result[i], a[i], b[i], ops.bk)
+	}
+	return result
+}
+
+func (ops *CipheredOperations) Mux(a, b, c []*LweSample, nbBits int) (result []*LweSample) {
+	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	for i := 0; i < nbBits; i++ {
+		BootsMUX(result[i], a[i], b[i], c[i], ops.bk)
 	}
 	return result
 }

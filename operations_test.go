@@ -13,8 +13,8 @@ const NB_BITS = 4
 var (
 	minimumLambda int32 = 100
 	// generate the secret keyset
-	keyset             = NewRandomGateBootstrappingSecretKeyset(NewDefaultGateBootstrappingParameters(minimumLambda))
-	ops    *Operations = &Operations{bk: keyset.Cloud}
+	keyset            = NewRandomGateBootstrappingSecretKeyset(NewDefaultGateBootstrappingParameters(minimumLambda))
+	ops    Operations = &CipheredOperations{bk: keyset.Cloud}
 )
 
 func to4Bits(val int) []int {
@@ -41,6 +41,36 @@ func toCiphertext(nums ...int) [][]*LweSample {
 	return r
 }
 
+// Sets the bit at pos in the integer n.
+func setBit(n int, pos uint) int {
+	n |= (1 << pos)
+	return n
+}
+
+// Clears the bit at pos in n.
+func clearBit(n int, pos uint) int {
+	mask := ^(1 << pos)
+	n &= mask
+	return n
+}
+
+func toPlaintext(ciphers ...[]*LweSample) []int {
+	arr := make([]int, len(ciphers))
+	for ci, c := range ciphers {
+		var current int = 0
+		for i := 0; i < len(c); i++ {
+			message := BootsSymDecrypt(c[i], keyset)
+			fmt.Printf("%d ", message)
+			if message == 1 {
+				current |= (1 << i)
+			}
+		}
+		fmt.Printf("\ncurrent = %d \n", current)
+		arr[ci] = current
+	}
+	return arr
+}
+
 func decryptAndDisplayResult(sum []*LweSample, tt *testing.T) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
@@ -48,6 +78,14 @@ func decryptAndDisplayResult(sum []*LweSample, tt *testing.T) {
 		fmt.Printf("%d ", messSum)
 	}
 	fmt.Print("]")
+}
+
+func TestToPlaintext(tt *testing.T) {
+	assert := assert.New(tt)
+	value := 7
+	v := toCiphertext(value)
+	v1 := toPlaintext(v[0])
+	assert.EqualValues(value, v1[0])
 }
 
 func TestCompareBit(tt *testing.T) {
@@ -101,6 +139,9 @@ func TestMinimum(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(3, r[0])
 }
 
 func TestMaximum(tt *testing.T) {
@@ -114,6 +155,9 @@ func TestMaximum(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(4, r[0])
 }
 
 func TestAddition(tt *testing.T) {
@@ -127,6 +171,9 @@ func TestAddition(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(3, r[0])
 }
 
 func TestSubtraction(tt *testing.T) {
@@ -140,6 +187,9 @@ func TestSubtraction(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(3, r[0])
 }
 
 func TestMultiply(tt *testing.T) {
@@ -153,6 +203,9 @@ func TestMultiply(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(6, r[0])
 }
 
 func TestGte(tt *testing.T) {
@@ -166,6 +219,9 @@ func TestGte(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(1, r[0])
 }
 
 func TestGteCheckFalse(tt *testing.T) {
@@ -179,6 +235,9 @@ func TestGteCheckFalse(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(0, r[0])
 }
 
 func TestGteCheckEquality(tt *testing.T) {
@@ -192,6 +251,9 @@ func TestGteCheckEquality(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(1, r[0])
 }
 
 func TestShiftLeft(tt *testing.T) {
@@ -205,6 +267,9 @@ func TestShiftLeft(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(2, r[0])
 }
 
 func TestShiftLeftByTwo(tt *testing.T) {
@@ -218,6 +283,9 @@ func TestShiftLeftByTwo(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(4, r[0])
 }
 
 func TestShiftRight(tt *testing.T) {
@@ -231,6 +299,9 @@ func TestShiftRight(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(2, r[0])
 }
 
 func TestShiftRightByTwo(tt *testing.T) {
@@ -244,6 +315,9 @@ func TestShiftRightByTwo(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(1, r[0])
 }
 
 func TestUshiftLeft(tt *testing.T) {
@@ -257,6 +331,9 @@ func TestUshiftLeft(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(2, r[0])
 }
 
 func TestUshiftLeftByTwo(tt *testing.T) {
@@ -270,6 +347,9 @@ func TestUshiftLeftByTwo(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(4, r[0])
 }
 
 func TestUshiftRight(tt *testing.T) {
@@ -283,6 +363,9 @@ func TestUshiftRight(tt *testing.T) {
 	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(2, r[0])
 }
 
 func TestUshiftRightByTwo(tt *testing.T) {
@@ -322,4 +405,101 @@ func TestPow(tt *testing.T) {
 	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
 	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
 	assert.EqualValues(1, BootsSymDecrypt(result[3], keyset))
+
+	r := toPlaintext(result)
+	assert.EqualValues(8, r[0])
+}
+
+func TestAnd(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := 2, 3
+	v := toCiphertext(a, b)
+	result := ops.And(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a&b, r[0])
+}
+
+func TestOr(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := 2, 3
+	v := toCiphertext(a, b)
+	result := ops.Or(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a|b, r[0])
+}
+
+func TestXor(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := 7, 3
+	v := toCiphertext(a, b)
+	result := ops.Xor(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a^b, r[0])
+}
+
+func TestNot(tt *testing.T) {
+	assert := assert.New(tt)
+	var a int = 4
+	v := toCiphertext(a)
+	result := ops.Not(v[0], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(0b1111^a, r[0])
+}
+
+func TestXnor(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := 2, 3
+	v := toCiphertext(a, b)
+	result := ops.Xnor(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(0b1111^(a^b), r[0])
+}
+
+func TestNand(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := 2, 3
+	v := toCiphertext(a, b)
+	result := ops.Nand(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(0b1111^(a&b), r[0])
+}
+
+func TestAndNY(tt *testing.T) {
+	// Gate: not(a) and b
+	assert := assert.New(tt)
+	a, b := 2, 3
+	v := toCiphertext(a, b)
+	result := ops.AndNY(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(^a&b, r[0])
+}
+
+func TestAndYN(tt *testing.T) {
+	// Gate: a and not(b)
+	assert := assert.New(tt)
+	a, b := 2, 8
+	v := toCiphertext(a, b)
+	result := ops.AndYN(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a&^b, r[0])
+}
+
+func TestOrNY(tt *testing.T) {
+	// Gate: not(a) or b
+	assert := assert.New(tt)
+	a, b := 2, 8
+	v := toCiphertext(a, b)
+	result := ops.OrNY(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(16+(^a|b), r[0])
+}
+
+func TestOrYN(tt *testing.T) {
+	// Gate: a or not(b)
+	assert := assert.New(tt)
+	a, b := 2, 3
+	v := toCiphertext(a, b)
+	result := ops.OrYN(v[0], v[1], NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(16+(a|^b), r[0])
 }
