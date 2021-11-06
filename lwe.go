@@ -51,6 +51,11 @@ func NewLweSampleArray(size int32, params *LweParams) (arr []*LweSample) {
 	return
 }
 
+/** generate a new unititialized ciphertext array of length nbelems */
+func NewGateBootstrappingCiphertextArray(nbelems int, params *TFheGateBootstrappingParameterSet) (arr []*LweSample) {
+	return NewLweSampleArray(int32(nbelems), params.InOutParams)
+}
+
 /**
  * This function generates a random Lwe key for the given parameters.
  * The Lwe key for the result must be allocated and initialized
