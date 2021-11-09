@@ -37,7 +37,7 @@ func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int,
 
 ### ELI5
 
-In spite of strong advances in confidential computing technologies, critical information is encrypted only temporarily – while not in use – and remains unencrypted during computation in most present-day computing infrastructures. Fully homomorphic encryption provides a method for computing on fully encrypted data.
+In spite of strong advances in confidential computing technologies, critical information is encrypted only temporarily – while not in use – and remains unencrypted during computation in most present-day computing infrastructures. Fully homomorphic encryption addresses this flaw by providing a mechanism for computation on fully encrypted data.
 
 For example, let's say that Bob owns a cloud processing company that crunches health datasets for Alice. Bob has access to cutting-edge bare metal machines with a lot of processing power and is happy to sell Alice that processing power. However, due to HIPAA compliance requirements ( and a general, altruistic respect for an individual's privacy ), Alice cannot actually share the data.
 
