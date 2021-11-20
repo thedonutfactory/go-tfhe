@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	tfhe "github.com/TheDonutFactory/go-tfhe"
+	tfhe "github.com/thedonutfactory/go-tfhe"
 )
 
 const (

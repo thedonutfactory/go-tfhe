@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	tfhe "github.com/TheDonutFactory/go-tfhe"
+	tfhe "github.com/thedonutfactory/go-tfhe"
 )
 
 func fullAdderMUX(sum []*tfhe.LweSample, x []*tfhe.LweSample, y []*tfhe.LweSample, nbBits int, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {

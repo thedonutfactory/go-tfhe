@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	tfhe "github.com/TheDonutFactory/go-tfhe"
+	tfhe "github.com/thedonutfactory/go-tfhe"
 )
 
 func main() {

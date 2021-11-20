@@ -10,7 +10,7 @@ The following snippet is a simple fully homomorphic 8-bit integer addition circu
 ```golang
 import (
   "fmt"
-  "github.com/TheDonutFactory/go-tfhe"
+  "github.com/thedonutfactory/go-tfhe"
 )
 
 func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, 
