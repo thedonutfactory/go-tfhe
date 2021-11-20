@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	tfhe "github.com/TheDonutFactory/go-tfhe"
+	tfhe "github.com/thedonutfactory/go-tfhe"
 )
 
 func approxEquals(a tfhe.Torus32, b tfhe.Torus32) bool {
