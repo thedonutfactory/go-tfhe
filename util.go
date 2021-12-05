@@ -70,8 +70,8 @@ func castTorus2(arr []complex128) (res []int32) {
 	return
 }
 
-func castTorus(arr []complex128) (res []Torus32) {
-	res = make([]int32, len(arr))
+func castTorus(arr []complex128) (res []int64) {
+	res = make([]int64, len(arr))
 	for i, v := range arr {
 
 		//res[i] = int32(real(v))
