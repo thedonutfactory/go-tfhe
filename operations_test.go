@@ -29,7 +29,7 @@ func to4Bits(val int) []int {
 
 func toCiphertext(nums ...int) [][]*LweSample {
 	r := make([][]*LweSample, 0)
-	nbBits := int32(NB_BITS)
+	nbBits := int(NB_BITS)
 	for _, num := range nums {
 		xBits := to4Bits(num)
 		x := NewLweSampleArray(nbBits, pubKey.Params.InOutParams)

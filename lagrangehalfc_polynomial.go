@@ -6,7 +6,7 @@ type LagrangeHalfCPolynomial struct {
 	Coefs []complex128
 }
 
-func NewLagrangeHalfCPolynomial(n int32) *LagrangeHalfCPolynomial {
+func NewLagrangeHalfCPolynomial(n int) *LagrangeHalfCPolynomial {
 	//Assert(n == 1024)
 	return &LagrangeHalfCPolynomial{Coefs: make([]complex128, n/2)}
 }

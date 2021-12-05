@@ -723,13 +723,8 @@ func (ops *CipheredOperations) Copy(a, b []*LweSample, nbBits int) (result []*Lw
 	return result
 }
 
-func (ops *CipheredOperations) Constant(value bool, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.Params)
 	for i := 0; i < nbBits; i++ {
-		result[i] = Constant(value, ops.bk)
-	}
-	return result
-}
 
 func (ops *CipheredOperations) Nor(a, b []*LweSample, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.Params)

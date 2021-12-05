@@ -10,8 +10,8 @@ import (
 func TestGaussian32(t *testing.T) {
 	assert := assert.New(t)
 
-	const MESSAGE1 Torus32 = 123456789
-	const MESSAGE2 Torus32 = 987654321
+	const MESSAGE1 Torus = 123456789
+	const MESSAGE2 Torus = 987654321
 
 	reps1 := gaussian32(MESSAGE1, 0)
 	reps2 := gaussian32(MESSAGE2, 0)
@@ -22,7 +22,7 @@ func TestGaussian32(t *testing.T) {
 	reps2 = gaussian32(MESSAGE2, 0.5)
 	assert.NotEqual(MESSAGE1, reps1)
 	assert.NotEqual(MESSAGE2, reps2)
-	assert.LessOrEqual(Abs(MESSAGE1-reps1), int32(80000000))
+	assert.LessOrEqual(Abs(MESSAGE1-reps1), int(80000000))
 }
 
 func TestConversion(t *testing.T) {
@@ -39,8 +39,8 @@ func TestConversion(t *testing.T) {
 //  Used to approximate the phase to the nearest multiple of  1/Msize
 func TestApproxPhase(t *testing.T) {
 	assert := assert.New(t)
-	for i := int32(2); i < 200; i++ {
-		v := UniformTorus32Dist()
+	for i := int(2); i < 200; i++ {
+		v := UniformTorusDist()
 		w := approxPhase(v, i)
 		dv := TorusToDouble(v)
 		dw := TorusToDouble(w)
@@ -50,7 +50,7 @@ func TestApproxPhase(t *testing.T) {
 	}
 }
 
-func TestModSwitchFromTorus32(t *testing.T) {
+func TestModSwitchFromTorus(t *testing.T) {
 	assert := assert.New(t)
 
 	for i := 2; i < 200; i++ {
@@ -62,8 +62,8 @@ func TestModSwitchFromTorus32(t *testing.T) {
 	}
 }
 
-// converts mu/Msize to a Torus32 for mu in [0,Msize[
-func TestModSwitchToTorus32(t *testing.T) {
+// converts mu/Msize to a Torus for mu in [0,Msize[
+func TestModSwitchToTorus(t *testing.T) {
 	assert := assert.New(t)
 	for i := int32(2); i < 200; i++ {
 		j := UniformTorus32Dist() % i

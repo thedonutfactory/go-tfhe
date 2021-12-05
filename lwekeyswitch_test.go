@@ -30,7 +30,7 @@ func TestLweCreateKeySwitchKeyFromArray(tt *testing.T) {
 	defer func() { LweSymEncrypt = old }()
 	LweSymEncrypt = func(
 		result *LweSample,
-		message Torus32,
+		message Torus,
 		alpha double,
 		key *LweKey) {
 		LweNoiselessTrivial(result, message, key.Params)

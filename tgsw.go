@@ -33,7 +33,7 @@ type TGswSample struct {
 
 func TGswClear(result *TGswSample, params *TGswParams) {
 	kpl := params.kpl
-	for p := int32(0); p < kpl; p++ {
+	for p := int(0); p < kpl; p++ {
 		tLweClear(&result.AllSample[p], params.tlweParams)
 	}
 }
@@ -52,9 +52,9 @@ func TGswAddH(result *TGswSample, params *TGswParams) {
 }
 */
 
-func NewTGswSampleArray(size int32, params *TGswParams) (arr []*TGswSample) {
+func NewTGswSampleArray(size int, params *TGswParams) (arr []*TGswSample) {
 	arr = make([]*TGswSample, size)
-	for i := int32(0); i < size; i++ {
+	for i := int(0); i < size; i++ {
 		arr[i] = NewTGswSample(params)
 	}
 	return
@@ -85,19 +85,19 @@ func NewTGswSample(params *TGswParams) *TGswSample {
 	}
 }
 
-func NewTGswParams(l, Bgbit int32, tlweParams *TLweParams) *TGswParams {
-	var Bg int32 = 1 << Bgbit
-	var halfBg int32 = Bg / 2
-	h := make([]Torus32, l)
-	for i := int32(0); i < l; i++ {
+func NewTGswParams(l, Bgbit int, tlweParams *TLweParams) *TGswParams {
+	var Bg int = 1 << Bgbit
+	var halfBg int = Bg / 2
+	h := make([]Torus, l)
+	for i := int(0); i < l; i++ {
 		kk := (32 - (i+1)*Bgbit)
-		h[i] = 1 << kk // 1/(Bg^(i+1)) as a Torus32
+		h[i] = 1 << kk // 1/(Bg^(i+1)) as a Torus
 	}
 
 	// offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
-	var temp1 int32 = 0
-	for i := int32(0); i < l; i++ {
-		temp0 := int32(1 << (32 - (i+1)*Bgbit))
+	var temp1 int = 0
+	for i := int(0); i < l; i++ {
+		temp0 := int(1 << (32 - (i+1)*Bgbit))
 		temp1 += temp0
 	}
 	offset := temp1 * halfBg
@@ -109,7 +109,7 @@ func NewTGswParams(l, Bgbit int32, tlweParams *TLweParams) *TGswParams {
 		HalfBg:     halfBg,
 		MaskMod:    uint32(Bg - 1),
 		TlweParams: tlweParams,
-		Kpl:        int32((tlweParams.K + 1) * l),
+		Kpl:        int((tlweParams.K + 1) * l),
 		H:          h,
 		Offset:     uint32(offset),
 	}
@@ -136,14 +136,14 @@ func (s *TGswSample) DebugTGswSample(params *TGswParams) {
 	tabs(2, fmt.Sprintf("kpl: %d", kpl))
 
 	tabs(2, "AllSample {")
-	for i := int32(0); i < kpl; i++ {
+	for i := int(0); i < kpl; i++ {
 		s.AllSample[i].DebugTLweSample()
 	}
 	tabs(2, "}")
 
-	for bloc := int32(0); bloc <= k; bloc++ {
+	for bloc := int(0); bloc <= k; bloc++ {
 		tabs(2, "BlockSample {")
-		for i := int32(0); i < l; i++ {
+		for i := int(0); i < l; i++ {
 			s.BlocSample[bloc][i].DebugTLweSample()
 		}
 		tabs(2, "}")
@@ -161,7 +161,7 @@ func TGswKeyGen(result *TGswKey) {
 // Result = 0
 func TGswClear(result *TGswSample, params *TGswParams) {
 	kpl := params.Kpl
-	for p := int32(0); p < kpl; p++ {
+	for p := int(0); p < kpl; p++ {
 		TLweClear(&result.AllSample[p], params.TlweParams)
 	}
 }
@@ -192,7 +192,7 @@ func TGswAddMuH(result *TGswSample, message *IntPolynomial, params *TGswParams) 
 		for i := int32(0); i < l; i++ {
 			target := result.BlocSample[bloc][i].A[bloc].Coefs
 			hi := h[i]
-			for j := int32(0); j < N; j++ {
+			for j := int(0); j < N; j++ {
 				target[j] += mu[j] * hi
 			}
 		}
@@ -200,7 +200,7 @@ func TGswAddMuH(result *TGswSample, message *IntPolynomial, params *TGswParams) 
 }
 
 // Result += mu*H, mu integer
-func TGswAddMuIntH(result *TGswSample, message int32, params *TGswParams) {
+func TGswAddMuIntH(result *TGswSample, message int, params *TGswParams) {
 	k := params.TlweParams.K
 	l := params.L
 	h := params.H
@@ -223,10 +223,10 @@ func TGswEncryptZero(result *TGswSample, alpha double, key *TGswKey) {
 }
 
 //mult externe de X^{a_i} par bki
-func TGswMulByXaiMinusOne(result *TGswSample, ai int32, bk *TGswSample, params *TGswParams) {
+func TGswMulByXaiMinusOne(result *TGswSample, ai int, bk *TGswSample, params *TGswParams) {
 	par := params.TlweParams
 	kpl := params.Kpl
-	for i := int32(0); i < kpl; i++ {
+	for i := int(0); i < kpl; i++ {
 		TLweMulByXaiMinusOne(&result.AllSample[i], ai, &bk.AllSample[i], par)
 	}
 }
@@ -259,7 +259,7 @@ func TGswSymEncrypt(result *TGswSample, message *IntPolynomial, alpha double, ke
 /**
  * encrypts a constant message
  */
-func TGswSymEncryptInt(result *TGswSample, message int32, alpha double, key *TGswKey) {
+func TGswSymEncryptInt(result *TGswSample, message int, alpha double, key *TGswKey) {
 	TGswEncryptZero(result, alpha, key)
 	TGswAddMuIntH(result, message, key.Params)
 }
@@ -267,7 +267,7 @@ func TGswSymEncryptInt(result *TGswSample, message int32, alpha double, key *TGs
 /**
  * encrypts a message = 0 ou 1
  */
-func TGswEncryptB(result *TGswSample, message int32, alpha double, key *TGswKey) {
+func TGswEncryptB(result *TGswSample, message int, alpha double, key *TGswKey) {
 	TGswEncryptZero(result, alpha, key)
 	if message == 1 {
 		TGswAddH(result, key.Params)
@@ -285,14 +285,14 @@ func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msi
 	tmp := NewTorusPolynomial(N)
 	decomp := NewIntPolynomialArray(int(l), N)
 
-	indic := ModSwitchToTorus32(1, int32(Msize))
+	indic := ModSwitchToTorus(1, int(Msize))
 	torusPolynomialClear(testvec)
 	testvec.Coefs[0] = indic
 	TGswTorus32PolynomialDecompH(decomp, testvec, params)
 
 	torusPolynomialClear(testvec)
-	for i := int32(0); i < l; i++ {
-		for j := int32(1); j < N; j++ {
+	for i := int(0); i < l; i++ {
+		for j := int(1); j < N; j++ {
 			Assert(decomp[i].Coefs[j] == 0)
 		}
 		TLwePhase(tmp, sample.BlocSample[k][i], &key.TlweKey)
@@ -308,14 +308,14 @@ func TGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswPar
 	k := params.TlweParams.K
 	l := params.L
 	var j = 0
-	for i := int32(0); i <= k*l; i += l {
-		TGswTorus32PolynomialDecompH(result[i:i+l], &sample.A[j], params)
+	for i := int(0); i <= k*l; i += l {
+		TGswTorusPolynomialDecompH(result[i:i+l], &sample.A[j], params)
 		j++
 	}
 
 }
 
-func torus32PolynomialDecompHOld(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
+func TorusPolynomialDecompHOld(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
 	N := params.TlweParams.N
 	l := params.L
 	Bgbit := params.Bgbit
@@ -327,12 +327,12 @@ func torus32PolynomialDecompHOld(result []IntPolynomial, sample *TorusPolynomial
 		temp0 := uint32(sample.Coefs[j]) + offset
 		for p := int32(0); p < l; p++ {
 			temp1 := (temp0 >> (32 - (p+1)*Bgbit)) & maskMod // doute
-			result[p].Coefs[j] = int32(temp1) - halfBg
+			result[p].Coefs[j] = int(temp1) - halfBg
 		}
 	}
 }
 
-func TGswTorus32PolynomialDecompH(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
+func TGswTorusPolynomialDecompH(result []IntPolynomial, sample *TorusPolynomial, params *TGswParams) {
 	N := params.TlweParams.N
 	l := params.L
 	Bgbit := params.Bgbit
@@ -344,20 +344,20 @@ func TGswTorus32PolynomialDecompH(result []IntPolynomial, sample *TorusPolynomia
 	halfBg := params.HalfBg
 	offset := params.Offset
 	//First, add offset to everyone
-	for j := int32(0); j < N; j++ {
+	for j := int(0); j < N; j++ {
 		buf[j] += offset
 	}
 
 	//then, do the decomposition (in parallel)
-	for p := int32(0); p < l; p++ {
-		var decal int32 = 32 - (p+1)*Bgbit
-		for j := int32(0); j < N; j++ {
-			var temp1 int32 = int32((buf[j] >> uint32(decal)) & maskMod)
+	for p := int(0); p < l; p++ {
+		var decal int = 32 - (p+1)*Bgbit
+		for j := int(0); j < N; j++ {
+			var temp1 int = int((buf[j] >> uint(decal)) & maskMod)
 			result[p].Coefs[j] = temp1 - halfBg
 		}
 	}
 	//finally, remove offset from everyone
-	for j := int32(0); j < N; j++ {
+	for j := int(0); j < N; j++ {
 		buf[j] -= offset
 	}
 }
@@ -370,7 +370,7 @@ func TGswExternProduct(result *TLweSample, a *TGswSample, b *TLweSample, params 
 	dec := NewIntPolynomialArray(int(kpl), N)
 	TGswTLweDecompH(dec, b, params)
 	TLweClear(result, parlwe)
-	for i := int32(0); i < kpl; i++ {
+	for i := int(0); i < kpl; i++ {
 		TLweAddMulRTo(result, &dec[i], &a.AllSample[i], parlwe)
 	}
 	result.CurrentVariance += b.CurrentVariance //todo + the error term?

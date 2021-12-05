@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  node:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: node
+    volumes:
+      - .:/workspace
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]

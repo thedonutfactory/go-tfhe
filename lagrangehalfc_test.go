@@ -26,7 +26,7 @@ func TestFftIsBijective(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
 	toler := 1e-9
-	var N int32 = 1024
+	var N int = 1024
 	for trials := 0; trials < NBTRIALS; trials++ {
 		//a := NewTorusPolynomial(N)
 		acopy := NewTorusPolynomial(N)
@@ -64,7 +64,7 @@ func TestFftIsBijective(t *testing.T) {
 func TestLagrangeHalfCPolynomialClear(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 10
-	var N int32 = 1024
+	var N int = 1024
 	for trials := 0; trials < NBTRIALS; trials++ {
 		a := NewTorusPolynomial(N)
 		zero := NewTorusPolynomial(N)
@@ -77,14 +77,14 @@ func TestLagrangeHalfCPolynomialClear(t *testing.T) {
 	}
 }
 
-/** sets to this torus32 constant */
-//EXPORT void LagrangeHalfCPolynomialSetTorusConstant(LagrangeHalfCPolynomial* result, const Torus32 mu);
+/** sets to this Torus constant */
+//EXPORT void LagrangeHalfCPolynomialSetTorusConstant(LagrangeHalfCPolynomial* result, const Torus mu);
 func TestLagrangeHalfCPolynomialSetTorusConstant(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 10
-	var N int32 = 1024
+	var N int = 1024
 	for trials := 0; trials < NBTRIALS; trials++ {
-		mu := UniformTorus32Dist()
+		mu := UniformTorusDist()
 		a := NewTorusPolynomial(N)
 		cste := NewTorusPolynomial(N)
 		afft := NewLagrangeHalfCPolynomial(N)
@@ -102,11 +102,11 @@ func TestLagrangeHalfCPolynomialSetTorusConstant(t *testing.T) {
 	}
 }
 
-//EXPORT void LagrangeHalfCPolynomialAddTorusConstant(LagrangeHalfCPolynomial* result, const Torus32 cst);
+//EXPORT void LagrangeHalfCPolynomialAddTorusConstant(LagrangeHalfCPolynomial* result, const Torus cst);
 func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
-	var N int32 = 1024
+	var N int = 1024
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
 		var mu int32 = UniformTorus32Dist()
@@ -148,7 +148,7 @@ func TestTorusPolynomialSmallMultFFT(t *testing.T) {
 func TestTorusPolynomialMultFFT(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
-	var N int32 = 4
+	var N int = 4
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
 		a := NewIntPolynomial(N)
@@ -170,15 +170,15 @@ func TestTorusPolynomialMultFFT(t *testing.T) {
 func TestTorusPolynomialAddMulRFFT(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
-	var N int32 = 1024
+	var N int = 1024
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
 		a := NewIntPolynomial(N)
 		b := NewTorusPolynomial(N)
 		aB := NewTorusPolynomial(N)
 		aBref := NewTorusPolynomial(N)
-		for i := int32(0); i < N; i++ {
-			a.Coefs[i] = UniformTorus32Dist()%1000 - 500
+		for i := int(0); i < N; i++ {
+			a.Coefs[i] = UniformTorusDist()%1000 - 500
 		}
 		torusPolynomialUniform(b)
 		torusPolynomialUniform(aB)
@@ -192,7 +192,7 @@ func TestTorusPolynomialAddMulRFFT(t *testing.T) {
 func TestTorusPolynomialSubMulRFFT(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
-	var N int32 = 1024
+	var N int = 1024
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
 		a := NewIntPolynomial(N)
@@ -215,7 +215,7 @@ func TestTorusPolynomialSubMulRFFT(t *testing.T) {
 func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
-	var N int32 = 1024
+	var N int = 1024
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
 		a := NewTorusPolynomial(N)

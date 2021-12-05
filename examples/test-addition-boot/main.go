@@ -90,15 +90,20 @@ func comparisonMUX(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.Public
 	return t.Copy(carry[0], key)
 }
 
+<<<<<<< HEAD
 func fromBool(x bool) int32 {
 	if !x {
+=======
+func fromBool(x bool) int {
+	if x == false {
+>>>>>>> de69509 (factored out the use of explicit int32 in favour of int)
 		return 0
 	} else {
 		return 1
 	}
 }
 
-func toBool(x int32) bool {
+func toBool(x int) bool {
 	if x == 0 {
 		return false
 	} else {
@@ -155,8 +160,13 @@ func main() {
 		nbTrials = 1
 	)
 	// generate params
+<<<<<<< HEAD
 	var minimumLambda int32 = 100
 	params := t.NewDefaultGateBootstrappingParameters(minimumLambda)
+=======
+	var minimumLambda int = 100
+	params := tfhe.NewDefaultGateBootstrappingParameters(minimumLambda)
+>>>>>>> de69509 (factored out the use of explicit int32 in favour of int)
 	inOutParams := params.InOutParams
 	pubKey, privKey := keys(params)
 
@@ -169,10 +179,17 @@ func main() {
 		x := t.NewLweSampleArray(nbBits, inOutParams)
 		y := t.NewLweSampleArray(nbBits, inOutParams)
 		for i := 0; i < nbBits; i++ {
+<<<<<<< HEAD
 			//t.BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
 			//t.BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
 			t.BootsSymEncrypt(x[i], int32(xBits[i]), privKey)
 			t.BootsSymEncrypt(y[i], int32(yBits[i]), privKey)
+=======
+			//tfhe.BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
+			//tfhe.BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
+			tfhe.BootsSymEncrypt(x[i], int(xBits[i]), keyset)
+			tfhe.BootsSymEncrypt(y[i], int(yBits[i]), keyset)
+>>>>>>> de69509 (factored out the use of explicit int32 in favour of int)
 		}
 		// output sum
 		//sum := t.NewLweSampleArray(nbBits+1, inOutParams)
@@ -189,7 +206,7 @@ func main() {
 		fmt.Printf("total time: %s\n", duration)
 
 		// verification
-		var messCarry int32 = 0
+		var messCarry int = 0
 		for i := 0; i < nbBits; i++ {
 			messX := t.BootsSymDecrypt(x[i], privKey)
 			messY := t.BootsSymDecrypt(y[i], privKey)
@@ -224,7 +241,7 @@ func main() {
 
 		// verification
 		{
-			var messCarry int32 = 0
+			var messCarry int = 0
 			for i := 0; i < nbBits; i++ {
 				messX := t.BootsSymDecrypt(x[i], privKey)
 				messY := t.BootsSymDecrypt(y[i], privKey)
@@ -256,7 +273,7 @@ func main() {
 
 		// verification
 		{
-			var messCarry int32 = 1
+			var messCarry int = 1
 			for i := 0; i < nbBits; i++ {
 				messX := t.BootsSymDecrypt(x[i], privKey)
 				messY := t.BootsSymDecrypt(y[i], privKey)

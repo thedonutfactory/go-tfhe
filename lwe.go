@@ -22,16 +22,16 @@ type LweParams struct {
 }
 
 type LweSample struct {
-	A               []Torus32 // the n coefs of the mask
-	B               Torus32
+	A               []Torus // the n coefs of the mask
+	B               Torus
 	CurrentVariance double
 }
 
-//func (s *LweSample) B() Torus32 {
+//func (s *LweSample) B() Torus {
 //	return s.A[len(s.A)]
 //}
 
-func NewLweParams(n int32, min, max double) *LweParams {
+func NewLweParams(n int, min, max double) *LweParams {
 	return &LweParams{n, min, max}
 }
 
@@ -40,12 +40,12 @@ func NewLweKey(params *LweParams) *LweKey {
 }
 
 func NewLweSample(params *LweParams) *LweSample {
-	return &LweSample{A: make([]Torus32, params.N), B: 0, CurrentVariance: 0}
+	return &LweSample{A: make([]Torus, params.N), B: 0, CurrentVariance: 0}
 }
 
-func NewLweSampleArray(size int32, params *LweParams) (arr []*LweSample) {
+func NewLweSampleArray(size int, params *LweParams) (arr []*LweSample) {
 	arr = make([]*LweSample, size)
-	for i := int32(0); i < size; i++ {
+	for i := int(0); i < size; i++ {
 		arr[i] = NewLweSample(params)
 	}
 	return
@@ -70,7 +70,7 @@ func LweKeyGen(result *LweKey) {
 	z := make([]int32, result.Params.N)
 	// Generate some random numbers from standard normal distribution
 	for i := range z {
-		z[i] = Torus32(math.Round(dist.Rand()))
+		z[i] = Torus(math.Round(dist.Rand()))
 	}
 	result.Key = z
 }
@@ -83,7 +83,7 @@ var LweSymEncrypt = LweSymEncryptImpl
  * The Lwe sample for the result must be allocated and initialized
  * (this means that the parameters are already in the result)
  */
-func LweSymEncryptImpl(result *LweSample, message Torus32, alpha double, key *LweKey) {
+func LweSymEncryptImpl(result *LweSample, message Torus, alpha double, key *LweKey) {
 	result.B = gaussian32(message, alpha)
 	for i := 0; i < int(key.Params.N); i++ {
 		result.A[i] = UniformTorus32Dist()
@@ -120,7 +120,7 @@ func LwePhase(sample *LweSample, key *LweKey) Torus32 {
  * This function computes the decryption of sample by using key
  * The constant Msize indicates the message space and is used to approximate the phase
  */
-func LweSymDecrypt(sample *LweSample, key *LweKey, Msize int32) Torus32 {
+func LweSymDecrypt(sample *LweSample, key *LweKey, Msize int) Torus {
 	phi := LwePhase(sample, key)
 	return approxPhase(phi, Msize)
 }
@@ -154,7 +154,7 @@ func LweNegate(result, sample *LweSample, params *LweParams) {
 }
 
 /** result = (0,mu) */
-func LweNoiselessTrivial(result *LweSample, mu Torus32, params *LweParams) {
+func LweNoiselessTrivial(result *LweSample, mu Torus, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] = 0
 	}
@@ -181,7 +181,7 @@ func LweSubTo(result, sample *LweSample, params *LweParams) {
 }
 
 /** result = result + p.sample */
-func LweAddMulTo(result *LweSample, p int32, sample *LweSample, params *LweParams) {
+func LweAddMulTo(result *LweSample, p int, sample *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] += p * sample.A[i]
 	}
@@ -190,15 +190,15 @@ func LweAddMulTo(result *LweSample, p int32, sample *LweSample, params *LweParam
 }
 
 /** result = result - p.sample */
-func LweSubMulTo(result *LweSample, p int32, sample *LweSample, params *LweParams) {
-	for i := int32(0); i < params.N; i++ {
+func LweSubMulTo(result *LweSample, p int, sample *LweSample, params *LweParams) {
+	for i := int(0); i < params.N; i++ {
 		result.A[i] -= p * sample.A[i]
 	}
 	result.B -= p * sample.B
 	result.CurrentVariance += float64(p*p) * sample.CurrentVariance
 }
 
-func tLweExtractLweSampleIndex(result *LweSample, x *TLweSample, index int32, params *LweParams, rparams *TLweParams) {
+func tLweExtractLweSampleIndex(result *LweSample, x *TLweSample, index int, params *LweParams, rparams *TLweParams) {
 	N := rparams.N
 	k := rparams.K
 	Assert(params.N == k*N)

@@ -18,7 +18,7 @@ func tabs(count int, msg string) {
 	fmt.Printf("%s\n", msg)
 }
 
-func tabsi(count int, msg int32) {
+func tabsi(count int, msg int) {
 	for i := 0; i < count; i++ {
 		fmt.Printf("\t")
 	}
@@ -41,7 +41,7 @@ func complexToFloatSlice(arr []complex128) (res []float64) {
 	return
 }
 
-func castComplex(arr []int32) (res []complex128) {
+func castComplex(arr []int) (res []complex128) {
 	res = make([]complex128, len(arr))
 	for i, v := range arr {
 		//res[i] = complex(T32tod(v), 0.)
@@ -50,28 +50,28 @@ func castComplex(arr []int32) (res []complex128) {
 	return
 }
 
-func castInt(arr []complex128) (res []int32) {
-	res = make([]int32, len(arr))
+func castInt(arr []complex128) (res []int) {
+	res = make([]int, len(arr))
 	for i, v := range arr {
-		res[i] = int32(int(real(v)))
+		res[i] = int(int(real(v)))
 	}
 	return
 }
 
-func castTorus2(arr []complex128) (res []int32) {
+func castTorus2(arr []complex128) (res []int) {
 	_2p32 := double(int(1) << 32)
 	_1sN := double(1) / double(4)
-	res = make([]int32, len(arr))
+	res = make([]int, len(arr))
 	for i, v := range arr {
 		t := real(v) * _2p32 * _1sN
-		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus32(int((t))))
-		res[i] = int32(int64((real(v)) * _2p32 * _1sN))
+		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus(int((t))))
+		res[i] = int(int64((real(v)) * _2p32 * _1sN))
 	}
 	return
 }
 
-func castTorus(arr []complex128) (res []Torus32) {
-	res = make([]int32, len(arr))
+func castTorus(arr []complex128) (res []Torus) {
+	res = make([]int, len(arr))
 	for i, v := range arr {
 
 		//res[i] = int32(real(v))
@@ -82,7 +82,7 @@ func castTorus(arr []complex128) (res []Torus32) {
 	return
 }
 
-func toBig(a []int32) (res []*big.Int) {
+func toBig(a []int) (res []*big.Int) {
 	res = make([]*big.Int, len(a))
 	for i, v := range a {
 		res[i] = big.NewInt(int64(v))
@@ -90,10 +90,10 @@ func toBig(a []int32) (res []*big.Int) {
 	return
 }
 
-func fromBig(a []*big.Int) (res []int32) {
-	res = make([]int32, len(a))
+func fromBig(a []*big.Int) (res []int) {
+	res = make([]int, len(a))
 	for i, v := range a {
-		res[i] = int32(v.Int64())
+		res[i] = int(v.Int64())
 	}
 	return
 }

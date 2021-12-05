@@ -7,9 +7,6 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
-const N = 4
-const Ns2 = 2
-
 type Torus = int
 type double = float64
 
@@ -102,88 +99,19 @@ func invfft2(a []complex128) []complex128 {
 	return a
 }
 
-func revTorus(a []Torus) []complex128 {
-	//N := len(a)
-	//Ns2 := len(a) / 2
-	_2pm33 := 1. / double(int64(1)<<33)
-	revIn := make([]complex128, N*2)
-
-	for i := 0; i < N; i++ {
-		revIn[i] = complex(float64(a[i])*_2pm33, 0.)
-	}
-	for i := 0; i < N; i++ {
-		revIn[N+i] = -revIn[i]
-	}
-
-	revOutCplx := fft.FFT(revIn)
-
-	res := make([]complex128, Ns2)
-	for i := 0; i < Ns2; i++ {
-		res[i] = revOutCplx[2*i+1]
-	}
-
-	// assert
-	for i := 0; i <= Ns2; i++ {
-		if math.Abs(real(revOutCplx[2*i])) >= 1e-20 {
-			panic("err")
-		}
-	}
-
-	return res
+func invfft(a []complex128) []complex128 {
+	return fft.IFFT(a)
 }
 
-func revInt(a []int) []complex128 {
-	revIn := make([]complex128, N*2)
-
-	for i := 0; i < N; i++ {
-		revIn[i] = complex(float64(a[i])/2., 0.)
+func mulfft2(a []complex128) []complex128 {
+	n := len(a)
+	for i := 0; i < n; i++ {
+		a = append(a, 0)
 	}
-	for i := 0; i < N; i++ {
-		revIn[N+i] = -revIn[i]
-	}
-
-	revOutCplx := fft.FFT(revIn)
-
-	res := make([]complex128, Ns2)
-	for i := 0; i < Ns2; i++ {
-		res[i] = revOutCplx[2*i+1]
-	}
-
-	// assert
-	for i := 0; i <= Ns2; i++ {
-		if math.Abs(real(revOutCplx[2*i])) >= 1e-20 {
-			panic("err")
-		}
-	}
-
-	return res
+	return Fft(a)
 }
 
-func dirTorus(a []complex128) []Torus {
-	//N := len(a)
-	//Ns2 := len(a) / 2
-	_2p32 := double(int64(1) << 32)
-	_1sN := double(1) / double(N)
-
-	inCplx := make([]complex128, N+1)
-	for i := 0; i <= Ns2; i++ {
-		inCplx[2*i] = 0
-	}
-	for i := 0; i < Ns2; i++ {
-		inCplx[2*i+1] = a[i]
-	}
-
-	out := fft.FFT(inCplx)
-
-	res := make([]Torus, N)
-	for i := 0; i < N; i++ {
-		fmt.Printf("%f => %f \n", real(out[i]), real(out[i])*_1sN*_2p32)
-		res[i] = Torus(math.Round(real(out[i]) * _1sN * _2p32))
-	}
-	return res
-}
-
-func mulfft3(a []complex128) []complex128 {
+func mulfft(a []complex128) []complex128 {
 	n := len(a)
 	for i := 0; i < n; i++ {
 		a = append(a, 0)
@@ -227,6 +155,7 @@ func castComplex(arr []int) (res []complex128) {
 func castTorus(arr []complex128) (res []int) {
 	_2p32 := double(int(1) << 32)
 	_1sN := double(1) / double(4)
+	//res[i]=Torus(int64_t(out[i]*_1sN*_2p32))
 	res = make([]int, len(arr))
 	for i, v := range arr {
 		t := real(v) * _2p32 * _1sN
@@ -236,11 +165,11 @@ func castTorus(arr []complex128) (res []int) {
 	return
 }
 
-func multi(a, b []int) []int {
-	x := revInt(a)
-	y := revTorus(b)
+func multiply(a, b []int) []int {
+	x := mulfft(castComplex(a))
+	y := mulfft(castComplex(b))
 	c := mult(x, y)
-	return dirTorus(c) //castTorus(mulfft3(c))
+	return castTorus(invfft(c))
 }
 
 func main() {
@@ -255,11 +184,10 @@ func main() {
 	//a := []int{-1865008400, 470211269, -689632771, 1115438162}
 	//b := []int{156091742, 1899894088, -1210297292, -1557125705}
 
-	// -89, 100, -63, -20
 	a := []int{9, -10, 7, 6}
 	b := []int{-5, 4, 0, -2}
 
-	c := multi(a, b)
+	c := multiply(a, b)
 	fmt.Print("Vector c:\n")
 	for i := 0; i < len(c); i++ {
 		fmt.Println(c[i])

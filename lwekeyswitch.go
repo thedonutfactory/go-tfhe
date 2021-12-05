@@ -16,7 +16,7 @@ type LweKeySwitchKey struct {
 	// of size n points to ks1 an array whose cells are spaced by ell positions
 }
 
-func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitchKey {
+func NewLweKeySwitchKey(n, t, basebit int, outParams *LweParams) *LweKeySwitchKey {
 
 	base := int32(1 << basebit)
 	ks := make([][][]*LweSample, n)
@@ -39,9 +39,9 @@ func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitch
 	}
 }
 
-func NewLweKeySwitchKeyArray(size, n, t, basebit int32, outParams *LweParams) (ksk []LweKeySwitchKey) {
+func NewLweKeySwitchKeyArray(size, n, t, basebit int, outParams *LweParams) (ksk []LweKeySwitchKey) {
 	ksk = make([]LweKeySwitchKey, size)
-	for i := int32(0); i < size; i++ {
+	for i := int(0); i < size; i++ {
 		ksk = append(ksk, *NewLweKeySwitchKey(n, t, basebit, outParams))
 	}
 	return
@@ -59,9 +59,9 @@ func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
 	var err Torus32
 
 	// compute the average error
-	for i := int32(0); i < n; i++ {
-		for j := int32(0); j < t; j++ {
-			for h := int32(1); h < base; h++ { // pas le terme en 0
+	for i := int(0); i < n; i++ {
+		for j := int(0); j < t; j++ {
+			for h := int(1); h < base; h++ { // pas le terme en 0
 				// compute the phase
 				phase := LwePhase(ks.Ks[i][j][h], outKey)
 				// compute the error
@@ -98,13 +98,13 @@ func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
  */
 func lweCreateKeySwitchKeyFromArray(result [][][]*LweSample,
 	outKey *LweKey, outAlpha double,
-	inKey []int32, n, t, basebit int32) {
+	inKey []int, n, t, basebit int) {
 
-	base := int32(1 << basebit) // base=2 in [CGGI16]
+	base := int(1 << basebit) // base=2 in [CGGI16]
 
-	for i := int32(0); i < n; i++ {
-		for j := int32(0); j < t; j++ {
-			for k := int32(0); k < base; k++ {
+	for i := int(0); i < n; i++ {
+		for j := int(0); j < t; j++ {
+			for k := int(0); k < base; k++ {
 				x := (inKey[i] * k) * (1 << (32 - (j+1)*basebit))
 				LweSymEncrypt(result[i][j][k], x, outAlpha, outKey)
 				//fmt.Printf("i,j,k,ki,x,phase=%d,%d,%d,%d,%d,%d\n", i, j, k, inKey[i], x, LwePhase(result[i][j][k], outKey))
@@ -127,16 +127,16 @@ func lweCreateKeySwitchKeyFromArray(result [][][]*LweSample,
  */
 func lweKeySwitchTranslateFromArray(result *LweSample,
 	ks [][][]*LweSample, params *LweParams,
-	ai []Torus32,
-	n, t, basebit int32) {
+	ai []Torus,
+	n, t, basebit int) {
 
 	base := 1 << basebit
-	precOffset := int32(1 << (32 - (1 + basebit*t)))
-	mask := int32(base - 1)
+	precOffset := int(1 << (32 - (1 + basebit*t)))
+	mask := int(base - 1)
 
-	for i := int32(0); i < n; i++ {
+	for i := int(0); i < n; i++ {
 		aibar := ai[i] + precOffset
-		for j := int32(0); j < t; j++ {
+		for j := int(0); j < t; j++ {
 			aij := (aibar >> (32 - (j+1)*basebit)) & mask
 			if aij != 0 {
 				LweSubTo(result, ks[i][j][aij], params)
@@ -167,20 +167,20 @@ func lweCreateKeySwitchKey(result *LweKeySwitchKey, inKey *LweKey, outKey *LweKe
 	}
 	// chose a random vector of gaussian noises
 	noise := make([]double, sizeks)
-	for i := int32(0); i < sizeks; i++ {
+	for i := int(0); i < sizeks; i++ {
 		noise[i] = dist.Rand()
 		err += noise[i]
 	}
 	// recenter the noises
 	err = err / double(sizeks)
-	for i := int32(0); i < sizeks; i++ {
+	for i := int(0); i < sizeks; i++ {
 		noise[i] -= err
 	}
 
 	// generate the ks
 	var index int = 0
-	for i := int32(0); i < n; i++ {
-		for j := int32(0); j < t; j++ {
+	for i := int(0); i < n; i++ {
+		for j := int(0); j < t; j++ {
 			// term h=0 as trivial encryption of 0 (it will not be used in the KeySwitching)
 			LweNoiselessTrivial(result.Ks[i][j][0], 0, outKey.Params)
 

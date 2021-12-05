@@ -1,6 +1,6 @@
 package tfhe
 
-func tfheMuxRotate(result *TLweSample, accum *TLweSample, bki *TGswSample, barai int32,
+func tfheMuxRotate(result *TLweSample, accum *TLweSample, bki *TGswSample, barai int,
 	bkParams *TGswParams) {
 	// ACC = BKi*[(X^barai-1)*ACC]+ACC
 	// temp = (X^barai-1)*ACC
@@ -18,11 +18,11 @@ func tfheMuxRotate(result *TLweSample, accum *TLweSample, bki *TGswSample, barai
 * @param bara An array of n coefficients between 0 and 2N-1
 * @param bkParams The parameters of bk
  */
-func tfheBlindRotate(accum *TLweSample, bk []*TGswSample, bara []int32, n int32, bkParams *TGswParams) {
+func tfheBlindRotate(accum *TLweSample, bk []*TGswSample, bara []int, n int, bkParams *TGswParams) {
 	temp := NewTLweSample(bkParams.TlweParams)
 	temp2 := temp
 	temp3 := accum
-	for i := int32(0); i < n; i++ {
+	for i := int(0); i < n; i++ {
 		barai := bara[i]
 		if barai == 0 {
 			continue //indeed, this is an easy case!
@@ -49,9 +49,9 @@ func tfheBlindRotate(accum *TLweSample, bk []*TGswSample, bara []int32, n int32,
 func tfheBlindRotateAndExtract(result *LweSample,
 	v *TorusPolynomial,
 	bk []*TGswSample,
-	barb int32,
-	bara []int32,
-	n int32,
+	barb int,
+	bara []int,
+	n int,
 	bkParams *TGswParams) {
 
 	accumParams := bkParams.TlweParams
@@ -87,10 +87,10 @@ func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x
 	Nx2 := 2 * N
 	n := inParams.N
 	testvect := NewTorusPolynomial(N)
-	bara := make([]int32, N)
-	barb := ModSwitchFromTorus32(x.B, Nx2)
-	for i := int32(0); i < n; i++ {
-		bara[i] = ModSwitchFromTorus32(x.A[i], Nx2)
+	bara := make([]int, N)
+	barb := ModSwitchFromTorus(x.B, Nx2)
+	for i := int(0); i < n; i++ {
+		bara[i] = ModSwitchFromTorus(x.A[i], Nx2)
 	}
 	//the initial testvec = [mu,mu,mu,...,mu]
 	for i := int32(0); i < N; i++ {

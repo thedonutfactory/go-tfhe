@@ -12,45 +12,45 @@ var fp1024Nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(1024)
 //var fp1024Nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(4)
 
 type FFTProcessor interface {
-	executeReverseTorus32(a []Torus32) (res []complex128)
-	executeReverseInt(a []int32) (res []complex128)
-	executeDirectTorus32(a []complex128) (res []Torus32)
+	executeReverseTorus(a []Torus) (res []complex128)
+	executeReverseInt(a []int) (res []complex128)
+	executeDirectTorus(a []complex128) (res []Torus)
 }
 
 type NayukiFFTProcessor struct {
-	_2N int32
-	N   int32
-	Ns2 int32
+	_2N int
+	N   int
+	Ns2 int
 
 	realInout     []double
 	imagInout     []double
 	tablesDirect  *FftTables
-	tablesReverse *FftTablesUint64
+	tablesReverse *FftTablesUint
 
 	omegaxminus1 []complex128
 }
 
 // Private data structure
 type FftTables struct {
-	n           int64
-	bitReversed []int64
+	n           int
+	bitReversed []int
 	cosTable    []double
 	sinTable    []double
 }
 
-func NewNayukiFFTProcessor(N int32) *NayukiFFTProcessor {
+func NewNayukiFFTProcessor(N int) *NayukiFFTProcessor {
 	p := &NayukiFFTProcessor{
 		_2N:           2 * N,
 		N:             N,
 		Ns2:           N / 2,
 		realInout:     make([]double, 2*N),
 		imagInout:     make([]double, 2*N),
-		tablesDirect:  fftInit(int64(2 * N)),
-		tablesReverse: fftInitReverse(int64(2 * N)),
+		tablesDirect:  fftInit(2 * N),
+		tablesReverse: fftInitReverse(2 * N),
 		omegaxminus1:  make([]complex128, 2*N),
 	}
 
-	for x := int32(0); x < 2*N; x++ {
+	for x := int(0); x < 2*N; x++ {
 		p.omegaxminus1[x] = complex(math.Cos(double(x)*math.Pi/double(N))-1., math.Sin(double(x)*math.Pi/double(N)))
 		// instead of cos(x*M_PI/N)-1. + sin(x*M_PI/N) * 1i
 	}
@@ -59,10 +59,10 @@ func NewNayukiFFTProcessor(N int32) *NayukiFFTProcessor {
 
 func (p *NayukiFFTProcessor) checkAlternateReal() {
 	if debug {
-		for i := int32(0); i < p._2N; i++ {
+		for i := int(0); i < p._2N; i++ {
 			Assert(math.Abs(p.imagInout[i]) < 1e-8)
 		}
-		for i := int32(0); i < p.N; i++ {
+		for i := int(0); i < p.N; i++ {
 			Assert(math.Abs(p.realInout[i]+p.realInout[p.N+i]) < 1e-9)
 		}
 	}
@@ -70,10 +70,10 @@ func (p *NayukiFFTProcessor) checkAlternateReal() {
 
 func (p *NayukiFFTProcessor) checkConjugateCplx() {
 	if debug {
-		for i := int32(0); i < p.N; i++ {
+		for i := int(0); i < p.N; i++ {
 			Assert(math.Abs(p.realInout[2*i])+math.Abs(p.imagInout[2*i]) < 1e-20)
 		}
-		for i := int32(0); i < p.Ns2; i++ {
+		for i := int(0); i < p.Ns2; i++ {
 			a := p.imagInout[2*i+1]
 			b := p.imagInout[p._2N-1-2*i]
 			toler := 1e-20
@@ -85,17 +85,17 @@ func (p *NayukiFFTProcessor) checkConjugateCplx() {
 	}
 }
 
-func (p *NayukiFFTProcessor) executeReverseTorus32(a []Torus32) (res []complex128) {
+func (p *NayukiFFTProcessor) executeReverseTorus(a []Torus) (res []complex128) {
 	res = fft.IFFT(castComplex(a))
 	return
 }
 
-func (p *NayukiFFTProcessor) executeReverseInt(a []int32) (res []complex128) {
+func (p *NayukiFFTProcessor) executeReverseInt(a []int) (res []complex128) {
 	res = fft.IFFT(castComplex(a))
 	return
 }
 
-func (p *NayukiFFTProcessor) executeDirectTorus32(a []complex128) (res []Torus32) {
+func (p *NayukiFFTProcessor) executeDirectTorus(a []complex128) (res []Torus) {
 	res = castTorus(fft.FFT(a))
 	for i := 0; i < int(p.Ns2); i++ {
 		res = append(res, 0)
@@ -113,14 +113,14 @@ func intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
 }
 
 func torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	result.coefsC = fp1024Nayuki.executeReverseTorus32(p.CoefsT)
+	result.coefsC = fp1024Nayuki.executeReverseTorus(p.CoefsT)
 }
 
 func torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	result.CoefsT = fp1024Nayuki.executeDirectTorus32(p.coefsC)
+	result.CoefsT = fp1024Nayuki.executeDirectTorus(p.coefsC)
 }
 
-func fftInit(n int64) *FftTables {
+func fftInit(n int) *FftTables {
 	// Check size argument
 	if n <= 0 || (n&(n-1)) != 0 {
 		return nil // Error: Size is not a power of 2
@@ -128,17 +128,17 @@ func fftInit(n int64) *FftTables {
 
 	tables := &FftTables{
 		n:           n,
-		bitReversed: make([]int64, n),
+		bitReversed: make([]int, n),
 		cosTable:    make([]double, n/2),
 		sinTable:    make([]double, n/2),
 	}
 
 	// Precompute values and store to tables
-	levels := floorLog2(int64(n))
-	for i := int64(0); i < n; i++ {
-		tables.bitReversed[i] = int64(reverseBits(int64(i), uint32(levels)))
+	levels := floorLog2(int(n))
+	for i := 0; i < n; i++ {
+		tables.bitReversed[i] = reverseBits(int(i), uint(levels))
 	}
-	for i := int64(0); i < n/2; i++ {
+	for i := 0; i < n/2; i++ {
 		var angle double = 2. * math.Pi * double(i) / double(n)
 		tables.cosTable[i] = math.Cos(angle)
 		tables.sinTable[i] = math.Sin(angle)
@@ -152,9 +152,9 @@ func (p *NayukiFFTProcessor) fftTransform(tbl *FftTables, real []double, imag []
 
 	// Bit-reversed addressing permutation
 	bitreversed := tbl.bitReversed
-	for i := int64(0); i < n; i++ {
+	for i := 0; i < n; i++ {
 		j := bitreversed[i]
-		if i < int64(j) {
+		if i < int(j) {
 			tp0re := real[i]
 			tp0im := imag[i]
 			tp1re := real[j]
@@ -169,12 +169,12 @@ func (p *NayukiFFTProcessor) fftTransform(tbl *FftTables, real []double, imag []
 	// Cooley-Tukey decimation-in-time radix-2 FFT
 	costable := tbl.cosTable
 	sintable := tbl.sinTable
-	for size := int64(2); size <= n; size *= 2 {
+	for size := int(2); size <= n; size *= 2 {
 		halfsize := size / 2
 		tablestep := n / size
-		for i := int64(0); i < n; i += size {
+		for i := 0; i < n; i += size {
 			j := i
-			for k := int64(0); j < i+halfsize; k += tablestep {
+			for k := 0; j < i+halfsize; k += tablestep {
 				tpre := real[j+halfsize]*costable[k] + imag[j+halfsize]*sintable[k]
 				tpim := -real[j+halfsize]*sintable[k] + imag[j+halfsize]*costable[k]
 				real[j+halfsize] = real[j] - tpre
@@ -190,18 +190,18 @@ func (p *NayukiFFTProcessor) fftTransform(tbl *FftTables, real []double, imag []
 	}
 }
 
-type FftTablesUint64 struct {
-	n           int64
-	bitReversed []int64
+type FftTablesUint struct {
+	n           int
+	bitReversed []int
 	trigTables  []double
 }
 
 // Returns sin(2 * pi * i / n), for n that is a multiple of 4.
-func accurateSine(i int64, n int64) double {
+func accurateSine(i int, n int) double {
 	if n%4 != 0 {
 		return 0.
 	} else {
-		var neg int32 = 0 // Boolean
+		var neg int = 0 // Boolean
 		// Reduce to full cycle
 		i %= n
 		// Reduce to half cycle
@@ -231,8 +231,8 @@ func accurateSine(i int64, n int64) double {
 }
 
 // Returns the largest i such that 2^i <= n.
-func floorLog2(n int64) int32 {
-	var result int32 = 0
+func floorLog2(n int) int {
+	var result int = 0
 	for ; n > 1; n /= 2 {
 		result++
 	}
@@ -240,9 +240,9 @@ func floorLog2(n int64) int32 {
 }
 
 // Returns the bit reversal of the n-bit unsigned integer x.
-func reverseBits(x int64, n uint32) int64 {
-	var result int64 = 0
-	for i := uint32(0); i < n; i++ {
+func reverseBits(x int, n uint) int {
+	var result int = 0
+	for i := uint(0); i < n; i++ {
 		result = (result << 1) | (x & 1)
 		x >>= 1
 	}
@@ -250,15 +250,15 @@ func reverseBits(x int64, n uint32) int64 {
 }
 
 // Returns a pointer to an opaque structure of FFT tables. n must be a power of 2 and n >= 4.
-func fftInitReverse(n int64) *FftTablesUint64 {
+func fftInitReverse(n int) *FftTablesUint {
 	// Check size argument
-	if n < 4 || n > math.MaxUint32 || (n&(n-1)) != 0 {
+	if n < 4 || n > math.MaxInt || (n&(n-1)) != 0 {
 		return nil // Error: Size is too small or is not a power of 2
 	}
 
-	tables := &FftTablesUint64{
+	tables := &FftTablesUint{
 		n:           n,
-		bitReversed: make([]int64, n),
+		bitReversed: make([]int, n),
 		//trigTables:  make([]double, n-4),
 		trigTables: make([]double, n-4),
 		//trigTables: make([]double, n*2),
@@ -266,20 +266,20 @@ func fftInitReverse(n int64) *FftTablesUint64 {
 
 	// Precompute bit reversal table
 	levels := floorLog2(n)
-	for i := int64(0); i < n; i++ {
-		tables.bitReversed[i] = reverseBits(i, uint32(levels))
+	for i := 0; i < n; i++ {
+		tables.bitReversed[i] = reverseBits(i, uint(levels))
 	}
 
 	// Precompute the packed trigonometric table for each FFT internal level
-	var k int64 = 0
-	for size := int64(8); size <= n; size *= 2 {
-		for i := int64(0); i < size/2; i += 4 {
-			for j := int64(0); j < 4; j++ {
+	var k int = 0
+	for size := int(8); size <= n; size *= 2 {
+		for i := 0; i < size/2; i += 4 {
+			for j := 0; j < 4; j++ {
 				tables.trigTables[k] = accurateSine(i+j+size/4, size) // Cosine
 				k++
 			}
 			k = 0
-			for j := int64(0); j < 4; j++ {
+			for j := 0; j < 4; j++ {
 				tables.trigTables[k] = -accurateSine(i+j, size) // Sine
 				k++
 			}
@@ -292,13 +292,13 @@ func fftInitReverse(n int64) *FftTablesUint64 {
 }
 
 // This is a C implementation that models the x86-64 AVX implementation.
-func (p *NayukiFFTProcessor) fftTransformReverse(tbl *FftTablesUint64, real []double, imag []double) {
+func (p *NayukiFFTProcessor) fftTransformReverse(tbl *FftTablesUint, real []double, imag []double) {
 	//struct FftTables *tbl = (struct FftTables *)tables;
 	n := tbl.n
 
 	// Bit-reversed addressing permutation
 	bitreversed := tbl.bitReversed
-	for i := int64(0); i < n; i++ {
+	for i := 0; i < n; i++ {
 		j := bitreversed[i]
 		if i < j {
 			tp0re := real[i]
@@ -314,7 +314,7 @@ func (p *NayukiFFTProcessor) fftTransformReverse(tbl *FftTablesUint64, real []do
 
 	// Size 2 merge (special)
 	if n >= 2 {
-		for i := int64(0); i < n; i += 2 {
+		for i := 0; i < n; i += 2 {
 			tpre := real[i]
 			tpim := imag[i]
 			real[i] += real[i+1]
@@ -326,7 +326,7 @@ func (p *NayukiFFTProcessor) fftTransformReverse(tbl *FftTablesUint64, real []do
 
 	// Size 4 merge (special)
 	if n >= 4 {
-		for i := int64(0); i < n; i += 4 {
+		for i := 0; i < n; i += 4 {
 			// Even indices
 			tpre := real[i]
 			tpim := imag[i]
@@ -348,14 +348,14 @@ func (p *NayukiFFTProcessor) fftTransformReverse(tbl *FftTablesUint64, real []do
 
 	// Size 8 and larger merges (general)
 	trigtables := tbl.trigTables
-	// for size := int64(8); size <= n; size <<= 1 {
-	for size := int64(8); size <= int64(len(trigtables)); size <<= 1 {
+	// for size := int(8); size <= n; size <<= 1 {
+	for size := 8; size <= len(trigtables); size <<= 1 {
 		halfsize := size >> 1
-		for i := int64(0); i < n; i += size {
-			var j int64 = 0
-			var off int64 = 0
+		for i := 0; i < n; i += size {
+			var j int = 0
+			var off int = 0
 			for ; j < halfsize; j += 4 {
-				for k := int64(0); k < 4; k++ { // To simulate x86 AVX 4-vectors
+				for k := 0; k < 4; k++ { // To simulate x86 AVX 4-vectors
 					vi := i + j + k // Vector index
 					ti := off + k   // Table index
 					re := real[vi+halfsize]
