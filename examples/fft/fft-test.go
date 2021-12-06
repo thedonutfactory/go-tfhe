@@ -7,19 +7,19 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
-type Torus32 = int32
+type Torus = int64
 type double = float64
 
 const _two32 int64 = int64(1) << 32 // 2^32
 var _two32_double double = math.Pow(2, 32)
 
-// from double to Torus32 - float64 to int32 conversion
-func Dtot32(d double) Torus32 {
-	return Torus32(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
+// from double to Torus - float64 to int64 conversion
+func Dtot32(d double) Torus {
+	return Torus(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
 }
 
-// from Torus32 to double
-func T32tod(x Torus32) double {
+// from Torus to double
+func T32tod(x Torus) double {
 	return double(x) / math.Pow(2, 32)
 }
 
@@ -144,7 +144,7 @@ func resize(a []complex128, n int) []complex128 {
 	return a
 }
 
-func castComplex(arr []int32) (res []complex128) {
+func castComplex(arr []int64) (res []complex128) {
 	res = make([]complex128, len(arr))
 	for i, v := range arr {
 		res[i] = complex(float64(v), 0.)
@@ -152,20 +152,20 @@ func castComplex(arr []int32) (res []complex128) {
 	return
 }
 
-func castTorus(arr []complex128) (res []int32) {
+func castTorus(arr []complex128) (res []int64) {
 	_2p32 := double(int(1) << 32)
 	_1sN := double(1) / double(4)
-	//res[i]=Torus32(int64_t(out[i]*_1sN*_2p32))
-	res = make([]int32, len(arr))
+	//res[i]=Torus(int64_t(out[i]*_1sN*_2p32))
+	res = make([]int64, len(arr))
 	for i, v := range arr {
 		t := real(v) * _2p32 * _1sN
-		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus32(int((t))))
-		res[i] = int32(real(v)) //int32(int(real(v))) // Dtot32(real(v)) // int32(real(v))
+		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus(int((t))))
+		res[i] = int64(real(v)) //int64(int(real(v))) // Dtot32(real(v)) // int64(real(v))
 	}
 	return
 }
 
-func multiply(a, b []int32) []int32 {
+func multiply(a, b []int64) []int64 {
 	x := mulfft(castComplex(a))
 	y := mulfft(castComplex(b))
 	c := mult(x, y)
@@ -181,11 +181,11 @@ func main() {
 		2136454616
 	*/
 
-	//a := []int32{-1865008400, 470211269, -689632771, 1115438162}
-	//b := []int32{156091742, 1899894088, -1210297292, -1557125705}
+	//a := []int64{-1865008400, 470211269, -689632771, 1115438162}
+	//b := []int64{156091742, 1899894088, -1210297292, -1557125705}
 
-	a := []int32{9, -10, 7, 6}
-	b := []int32{-5, 4, 0, -2}
+	a := []int64{9, -10, 7, 6}
+	b := []int64{-5, 4, 0, -2}
 
 	c := multiply(a, b)
 	fmt.Print("Vector c:\n")

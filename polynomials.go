@@ -10,33 +10,33 @@ import (
 
 /** This structure represents an integer polynomial modulo X^N+1 */
 type IntPolynomial struct {
-	N     int32
-	Coefs []int32
+	N     int
+	Coefs []int64
 }
 
 /** This structure represents an torus polynomial modulo X^N+1 */
 type TorusPolynomial struct {
-	N      int32
-	CoefsT []Torus32
+	N      int
+	CoefsT []Torus
 }
 
-func NewTorusPolynomial(n int32) *TorusPolynomial {
-	return &TorusPolynomial{N: n, CoefsT: make([]Torus32, n)}
+func NewTorusPolynomial(n int) *TorusPolynomial {
+	return &TorusPolynomial{N: n, CoefsT: make([]Torus, n)}
 }
 
-func NewTorusPolynomialArray(size int, n int32) (arr []TorusPolynomial) {
+func NewTorusPolynomialArray(size, n int) (arr []TorusPolynomial) {
 	arr = make([]TorusPolynomial, size)
 	for i := 0; i < size; i++ {
-		arr[i] = TorusPolynomial{N: n, CoefsT: make([]Torus32, n)}
+		arr[i] = TorusPolynomial{N: n, CoefsT: make([]Torus, n)}
 	}
 	return
 }
 
-func NewIntPolynomial(n int32) *IntPolynomial {
-	return &IntPolynomial{N: n, Coefs: make([]int32, n)}
+func NewIntPolynomial(n int) *IntPolynomial {
+	return &IntPolynomial{N: n, Coefs: make([]int64, n)}
 }
 
-func NewIntPolynomialArray(size int, n int32) (arr []IntPolynomial) {
+func NewIntPolynomialArray(size, n int) (arr []IntPolynomial) {
 	arr = make([]IntPolynomial, size)
 	for i := 0; i < size; i++ {
 		arr[i] = *NewIntPolynomial(n)
@@ -46,7 +46,7 @@ func NewIntPolynomialArray(size int, n int32) (arr []IntPolynomial) {
 
 // TorusPolynomial = 0
 func torusPolynomialClear(result *TorusPolynomial) {
-	for i := int32(0); i < result.N; i++ {
+	for i := 0; i < result.N; i++ {
 		result.CoefsT[i] = 0
 	}
 }
@@ -55,11 +55,11 @@ func torusPolynomialClear(result *TorusPolynomial) {
 func torusPolynomialUniform(result *TorusPolynomial) {
 	//x := result.CoefsT
 	dist := distuv.Uniform{
-		Min: math.MinInt32,
-		Max: math.MaxInt32,
+		Min: math.MinInt64,
+		Max: math.MaxInt64,
 	}
-	for i := int32(0); i < result.N; i++ {
-		result.CoefsT[i] = Torus32(dist.Rand())
+	for i := 0; i < result.N; i++ {
+		result.CoefsT[i] = Torus(dist.Rand())
 	}
 }
 
@@ -71,7 +71,7 @@ func TorusPolynomialCopy(result *TorusPolynomial, sample *TorusPolynomial) {
 	}
 	s := sample.CoefsT
 	r := result.CoefsT
-	for i := int32(0); i < result.N; i++ {
+	for i := 0; i < result.N; i++ {
 		r[i] = s[i]
 	}
 }
@@ -83,7 +83,7 @@ func TorusPolynomialAdd(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 	r := result.CoefsT
 	a := poly1.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly1.N; i++ {
+	for i := 0; i < poly1.N; i++ {
 		r[i] = a[i] + b[i]
 	}
 }
@@ -92,7 +92,7 @@ func TorusPolynomialAdd(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 func TorusPolynomialAddTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
 	//r := result.CoefsT
 	//b := poly2.CoefsT
-	for i := int32(0); i < poly2.N; i++ {
+	for i := 0; i < poly2.N; i++ {
 		result.CoefsT[i] += poly2.CoefsT[i]
 	}
 }
@@ -107,7 +107,7 @@ func TorusPolynomialSub(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 	r := result.CoefsT
 	a := poly1.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly1.N; i++ {
+	for i := 0; i < poly1.N; i++ {
 		r[i] = a[i] - b[i]
 	}
 }
@@ -116,43 +116,43 @@ func TorusPolynomialSub(result *TorusPolynomial, poly1 *TorusPolynomial, poly2 *
 func TorusPolynomialSubTo(result *TorusPolynomial, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly2.N; i++ {
+	for i := 0; i < poly2.N; i++ {
 		r[i] -= b[i]
 	}
 }
 
 // TorusPolynomial + p*TorusPolynomial
-func TorusPolynomialAddMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialAddMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int64, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	a := poly1.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly1.N; i++ {
+	for i := 0; i < poly1.N; i++ {
 		r[i] = a[i] + p*b[i]
 	}
 }
 
 // TorusPolynomial += p*TorusPolynomial
-func TorusPolynomialAddMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialAddMulZTo(result *TorusPolynomial, p int64, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly2.N; i++ {
+	for i := 0; i < poly2.N; i++ {
 		r[i] += p * b[i]
 	}
 }
 
 // TorusPolynomial - p*TorusPolynomial
-func TorusPolynomialSubMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialSubMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p int64, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	a := poly1.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly1.N; i++ {
+	for i := 0; i < poly1.N; i++ {
 		r[i] = a[i] - p*b[i]
 	}
 }
 
 //result= (X^{a}-1)*source
-func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *TorusPolynomial) {
-	N := source.N
+func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int64, source *TorusPolynomial) {
+	N := int64(source.N)
 	out := result.CoefsT
 	in := source.CoefsT
 
@@ -162,7 +162,7 @@ func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *T
 	}
 
 	if a < N {
-		for i := int32(0); i < a; i++ { //sur que i-a<0
+		for i := int64(0); i < a; i++ { //sur que i-a<0
 			out[i] = -in[i-a+N] - in[i]
 		}
 		for i := a; i < N; i++ { //sur que N>i-a>=0
@@ -170,7 +170,7 @@ func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *T
 		}
 	} else {
 		aa := a - N
-		for i := int32(0); i < aa; i++ { //sur que i-a<0
+		for i := int64(0); i < aa; i++ { //sur que i-a<0
 			out[i] = in[i-aa+N] - in[i]
 		}
 		for i := aa; i < N; i++ { //sur que N>i-a>=0
@@ -180,8 +180,8 @@ func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *T
 }
 
 //result= X^{a}*source
-func TorusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPolynomial) {
-	N := source.N
+func TorusPolynomialMulByXai(result *TorusPolynomial, a int64, source *TorusPolynomial) {
+	N := int64(source.N)
 	out := result.CoefsT
 	in := source.CoefsT
 
@@ -195,7 +195,7 @@ func TorusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPoly
 	}
 
 	if a < N {
-		for i := int32(0); i < a; i++ { //sur que i-a<0
+		for i := int64(0); i < a; i++ { //sur que i-a<0
 			out[i] = -in[i-a+N]
 		}
 		for i := a; i < N; i++ { //sur que N>i-a>=0
@@ -203,7 +203,7 @@ func TorusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPoly
 		}
 	} else {
 		aa := a - N
-		for i := int32(0); i < aa; i++ { //sur que i-a<0
+		for i := int64(0); i < aa; i++ { //sur que i-a<0
 			out[i] = in[i-aa+N]
 		}
 		for i := aa; i < N; i++ { //sur que N>i-a>=0
@@ -213,18 +213,18 @@ func TorusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPoly
 }
 
 // TorusPolynomial -= p*TorusPolynomial
-func TorusPolynomialSubMulZTo(result *TorusPolynomial, p int32, poly2 *TorusPolynomial) {
+func TorusPolynomialSubMulZTo(result *TorusPolynomial, p int64, poly2 *TorusPolynomial) {
 	r := result.CoefsT
 	b := poly2.CoefsT
-	for i := int32(0); i < poly2.N; i++ {
+	for i := 0; i < poly2.N; i++ {
 		r[i] -= p * b[i]
 	}
 }
 
 // Norme Euclidienne d'un IntPolynomial
-func intPolynomialNormSq2(poly *IntPolynomial) int32 {
-	var temp1 int32 = 0
-	for i := int32(0); i < poly.N; i++ {
+func intPolynomialNormSq2(poly *IntPolynomial) int64 {
+	var temp1 int64 = 0
+	for i := 0; i < poly.N; i++ {
 		temp0 := poly.Coefs[i] * poly.Coefs[i]
 		temp1 += temp0
 	}
@@ -233,28 +233,28 @@ func intPolynomialNormSq2(poly *IntPolynomial) int32 {
 
 // Sets to zero
 func intPolynomialClear(poly *IntPolynomial) {
-	for i := int32(0); i < poly.N; i++ {
+	for i := 0; i < poly.N; i++ {
 		poly.Coefs[i] = 0
 	}
 }
 
 // Sets to zero
 func intPolynomialCopy(result *IntPolynomial, source *IntPolynomial) {
-	for i := int32(0); i < source.N; i++ {
+	for i := 0; i < source.N; i++ {
 		result.Coefs[i] = source.Coefs[i]
 	}
 }
 
 /** accum += source */
 func intPolynomialAddTo(accum *IntPolynomial, source *IntPolynomial) {
-	for i := int32(0); i < source.N; i++ {
+	for i := 0; i < source.N; i++ {
 		accum.Coefs[i] += source.Coefs[i]
 	}
 }
 
 /**  result = (X^ai-1) * source */
-func intPolynomialMulByXaiMinusOne(result *IntPolynomial, ai int32, source *IntPolynomial) {
-	N := source.N
+func intPolynomialMulByXaiMinusOne(result *IntPolynomial, ai int64, source *IntPolynomial) {
+	N := int64(source.N)
 	out := result.Coefs
 	in := source.Coefs
 
@@ -264,7 +264,7 @@ func intPolynomialMulByXaiMinusOne(result *IntPolynomial, ai int32, source *IntP
 	}
 
 	if ai < N {
-		for i := int32(0); i < ai; i++ { //sur que i-a<0
+		for i := int64(0); i < ai; i++ { //sur que i-a<0
 			out[i] = -in[i-ai+N] - in[i]
 		}
 		for i := ai; i < N; i++ { //sur que N>i-a>=0
@@ -272,7 +272,7 @@ func intPolynomialMulByXaiMinusOne(result *IntPolynomial, ai int32, source *IntP
 		}
 	} else {
 		aa := ai - N
-		for i := int32(0); i < aa; i++ { //sur que i-a<0
+		for i := int64(0); i < aa; i++ { //sur que i-a<0
 			out[i] = in[i-aa+N] - in[i]
 		}
 		for i := aa; i < N; i++ { //sur que N>i-a>=0
@@ -286,7 +286,7 @@ func intPolynomialMulByXaiMinusOne(result *IntPolynomial, ai int32, source *IntP
 func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial) double {
 	var norm double = 0
 	// Max between the coefficients of abs(poly1-poly2)
-	for i := int32(0); i < poly1.N; i++ {
+	for i := 0; i < poly1.N; i++ {
 		r := math.Abs(T32tod(poly1.CoefsT[i] - poly2.CoefsT[i]))
 		if r > norm {
 			norm = r
@@ -302,7 +302,7 @@ func torusPolynomialNormInftyDistSkipFirst(poly1 *TorusPolynomial, poly2 *TorusP
 
 	// Max between the coefficients of abs(poly1-poly2)
 	fmt.Println("Warning, skipping 0th element in torusPolynomialNormInftyDist")
-	for i := int32(1); i < N; i++ {
+	for i := 1; i < N; i++ {
 		r := math.Abs(T32tod(poly1.CoefsT[i] - poly2.CoefsT[i]))
 		fmt.Printf("%d, %d => %f \n", poly1.CoefsT[i], poly2.CoefsT[i], r)
 		if r > norm {
@@ -317,7 +317,7 @@ func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial
 	var norm double = 0
 
 	// Max between the coefficients of abs(poly1-poly2)
-	for i := int32(0); i < N; i++ {
+	for i := 0; i < N; i++ {
 		r := math.Abs(T32tod(poly1.CoefsT[i] - poly2.CoefsT[i]))
 		fmt.Printf("%d, %d => %f \n", poly1.CoefsT[i], poly2.CoefsT[i], r)
 		if r > norm {
@@ -330,7 +330,7 @@ func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial
 // Norme 2 d'un IntPolynomial
 func intPolynomialNorm2sq(poly *IntPolynomial) double {
 	var norm double = 0
-	for i := int32(0); i < poly.N; i++ {
+	for i := 0; i < poly.N; i++ {
 		r := poly.Coefs[i]
 		norm += double(r * r)
 	}
@@ -341,7 +341,7 @@ func intPolynomialNorm2sq(poly *IntPolynomial) double {
 func intPolynomialNormInftyDist(poly1 *IntPolynomial, poly2 *IntPolynomial) double {
 	var norm double = 0
 	// Max between the coefficients of abs(poly1-poly2)
-	for i := int32(0); i < poly1.N; i++ {
+	for i := 0; i < poly1.N; i++ {
 		r := Abs(poly1.Coefs[i] - poly2.Coefs[i])
 		if double(r) > norm {
 			norm = double(r)
@@ -371,7 +371,7 @@ func mult(a, b []complex128) []complex128 {
 	return c
 }
 
-func multiply(a, b []int32) []int32 {
+func multiply(a, b []int64) []int64 {
 	/*
 		x := mulfft(castComplex(a))
 		y := mulfft(castComplex(b))
@@ -384,7 +384,7 @@ func multiply(a, b []int32) []int32 {
 	return dirTorus(c)
 }
 
-func revTorus(a []Torus32) []complex128 {
+func revTorus(a []Torus) []complex128 {
 	N := len(a)
 	Ns2 := len(a) / 2
 	_2pm33 := 1. / double(int64(1)<<33)
@@ -407,7 +407,7 @@ func revTorus(a []Torus32) []complex128 {
 	return res
 }
 
-func revInt(a []int32) []complex128 {
+func revInt(a []int64) []complex128 {
 	N := len(a)
 	Ns2 := len(a) / 2
 	revIn := make([]complex128, len(a)*2)
@@ -429,10 +429,10 @@ func revInt(a []int32) []complex128 {
 	return res
 }
 
-func dirTorus(a []complex128) []Torus32 {
+func dirTorus(a []complex128) []Torus {
 	N := len(a)
 	Ns2 := len(a) / 2
-	_2p32 := double(int64(1) << 32)
+	_2p32 := double(uint64(1) << 63)
 	_1sN := double(1) / double(N)
 
 	inCplx := make([]complex128, len(a)+1)
@@ -445,9 +445,9 @@ func dirTorus(a []complex128) []Torus32 {
 
 	out := fft.FFT(inCplx)
 
-	res := make([]Torus32, N)
+	res := make([]Torus, N)
 	for i := 0; i < N; i++ {
-		res[i] = Torus32(real(out[i]) * _1sN * _2p32)
+		res[i] = Torus(real(out[i]) * _1sN * _2p32)
 	}
 	return res
 }

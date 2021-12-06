@@ -11,13 +11,13 @@ import (
 func main() {
 
 	const (
-		//nbSamples int32 = 64
+		//nbSamples int64 = 64
 		//nbTrials        = 10
-		nbSamples int32 = 64
-		nbTrials        = 1
+		nbSamples int = 64
+		nbTrials      = 1
 	)
 	// generate params
-	var minimumLambda int32 = 100
+	var minimumLambda int = 100
 	params := tfhe.NewDefaultGateBootstrappingParameters(minimumLambda)
 	inOutParams := params.InOutParams
 	// generate the secret keyset

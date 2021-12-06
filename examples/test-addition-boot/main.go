@@ -87,7 +87,7 @@ func comparisonMUX(comp *tfhe.LweSample, x []*tfhe.LweSample, y []*tfhe.LweSampl
 	tfhe.BootsCOPY(comp, carry[0], keyset.Cloud)
 }
 
-func fromBool(x bool) int32 {
+func fromBool(x bool) int64 {
 	if x == false {
 		return 0
 	} else {
@@ -95,7 +95,7 @@ func fromBool(x bool) int32 {
 	}
 }
 
-func toBool(x int32) bool {
+func toBool(x int64) bool {
 	if x == 0 {
 		return false
 	} else {
@@ -134,7 +134,7 @@ func main() {
 		nbTrials = 1
 	)
 	// generate params
-	var minimumLambda int32 = 100
+	var minimumLambda int = 100
 	params := tfhe.NewDefaultGateBootstrappingParameters(minimumLambda)
 	inOutParams := params.InOutParams
 	// generate the secret keyset
@@ -151,8 +151,8 @@ func main() {
 		for i := 0; i < nbBits; i++ {
 			//tfhe.BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
 			//tfhe.BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
-			tfhe.BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
-			tfhe.BootsSymEncrypt(y[i], int32(yBits[i]), keyset)
+			tfhe.BootsSymEncrypt(x[i], int64(xBits[i]), keyset)
+			tfhe.BootsSymEncrypt(y[i], int64(yBits[i]), keyset)
 		}
 		// output sum
 		sum := tfhe.NewLweSampleArray(nbBits+1, inOutParams)
@@ -169,7 +169,7 @@ func main() {
 		fmt.Printf("total time: %s\n", duration)
 
 		// verification
-		var messCarry int32 = 0
+		var messCarry int64 = 0
 		for i := 0; i < nbBits; i++ {
 			messX := tfhe.BootsSymDecrypt(x[i], keyset)
 			messY := tfhe.BootsSymDecrypt(y[i], keyset)
@@ -207,7 +207,7 @@ func main() {
 
 		// verification
 		{
-			var messCarry int32 = 0
+			var messCarry int64 = 0
 			for i := 0; i < nbBits; i++ {
 				messX := tfhe.BootsSymDecrypt(x[i], keyset)
 				messY := tfhe.BootsSymDecrypt(y[i], keyset)
@@ -241,7 +241,7 @@ func main() {
 
 		// verification
 		{
-			var messCarry int32 = 1
+			var messCarry int64 = 1
 			for i := 0; i < nbBits; i++ {
 				messX := tfhe.BootsSymDecrypt(x[i], keyset)
 				messY := tfhe.BootsSymDecrypt(y[i], keyset)

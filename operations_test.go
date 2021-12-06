@@ -11,7 +11,7 @@ const NB_BITS = 4
 
 // generate params
 var (
-	minimumLambda int32 = 100
+	minimumLambda int = 100
 	// generate the secret keyset
 	keyset            = NewRandomGateBootstrappingSecretKeyset(NewDefaultGateBootstrappingParameters(minimumLambda))
 	ops    Operations = &CipheredOperations{bk: keyset.Cloud}
@@ -29,12 +29,12 @@ func to4Bits(val int) []int {
 
 func toCiphertext(nums ...int) [][]*LweSample {
 	r := make([][]*LweSample, 0)
-	nbBits := int32(NB_BITS)
+	nbBits := NB_BITS
 	for _, num := range nums {
 		xBits := to4Bits(num)
 		x := NewLweSampleArray(nbBits, keyset.Params.InOutParams)
-		for i := int32(0); i < nbBits; i++ {
-			BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
+		for i := 0; i < nbBits; i++ {
+			BootsSymEncrypt(x[i], int64(xBits[i]), keyset)
 		}
 		r = append(r, x)
 	}

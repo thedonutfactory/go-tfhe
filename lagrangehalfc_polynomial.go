@@ -6,7 +6,7 @@ type LagrangeHalfCPolynomial struct {
 	coefsC []complex128
 }
 
-func NewLagrangeHalfCPolynomial(n int32) *LagrangeHalfCPolynomial {
+func NewLagrangeHalfCPolynomial(n int) *LagrangeHalfCPolynomial {
 	//Assert(n == 1024)
 	return &LagrangeHalfCPolynomial{coefsC: make([]complex128, n/2)}
 }
@@ -15,14 +15,14 @@ func LagrangeHalfCPolynomialClear(p *LagrangeHalfCPolynomial) {
 	p.coefsC = make([]complex128, len(p.coefsC))
 }
 
-func LagrangeHalfCPolynomialSetTorusConstant(result *LagrangeHalfCPolynomial, mu Torus32) {
+func LagrangeHalfCPolynomialSetTorusConstant(result *LagrangeHalfCPolynomial, mu Torus) {
 	muc := complex(T32tod(mu), 0.)
 	for j := 0; j < len(result.coefsC); j++ {
 		result.coefsC[j] = muc
 	}
 }
 
-func LagrangeHalfCPolynomialAddTorusConstant(result *LagrangeHalfCPolynomial, mu Torus32) {
+func LagrangeHalfCPolynomialAddTorusConstant(result *LagrangeHalfCPolynomial, mu Torus) {
 	muc := complex(T32tod(mu), 0.)
 	for j := 0; j < len(result.coefsC); j++ {
 		if j < 10 {

@@ -9,7 +9,7 @@ type LweBootstrappingKey struct {
 	ks            *LweKeySwitchKey ///< the keyswitch key (s'.s)
 }
 
-func NewLweBootstrappingKey(ksT, ksBasebit int32, inOutParams *LweParams,
+func NewLweBootstrappingKey(ksT, ksBasebit int, inOutParams *LweParams,
 	bkParams *TGswParams) *LweBootstrappingKey {
 
 	accumParams := bkParams.TlweParams

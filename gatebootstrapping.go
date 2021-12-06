@@ -3,8 +3,8 @@ package tfhe
 import "math"
 
 type TFheGateBootstrappingParameterSet struct {
-	ksT         int32
-	ksBasebit   int32
+	ksT         int
+	ksBasebit   int
 	InOutParams *LweParams
 	tgswParams  *TGswParams
 }
@@ -22,7 +22,7 @@ type TFheGateBootstrappingSecretKeySet struct {
 	Cloud   *TFheGateBootstrappingCloudKeySet
 }
 
-func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *LweParams, tgswParams *TGswParams) *TFheGateBootstrappingParameterSet {
+func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int, inOutParams *LweParams, tgswParams *TGswParams) *TFheGateBootstrappingParameterSet {
 	return &TFheGateBootstrappingParameterSet{
 		ksT:         ksT,
 		ksBasebit:   ksBasebit,
@@ -98,7 +98,7 @@ func Default128bitGateBootstrappingParameters() *TFheGateBootstrappingParameterS
 	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
 
-func NewDefaultGateBootstrappingParameters(minimumLambda int32) *TFheGateBootstrappingParameterSet {
+func NewDefaultGateBootstrappingParameters(minimumLambda int) *TFheGateBootstrappingParameterSet {
 	if minimumLambda > 128 {
 		panic("Sorry, for now, the parameters are only implemented for 80bit and 128bit of security!")
 	}
@@ -126,19 +126,19 @@ func NewRandomGateBootstrappingSecretKeyset(params *TFheGateBootstrappingParamet
 }
 
 /** encrypts a boolean */
-func BootsSymEncrypt(result *LweSample, message int32, key *TFheGateBootstrappingSecretKeySet) {
-	_1s8 := ModSwitchToTorus32(1, 8)
-	var mu Torus32 = -_1s8
+func BootsSymEncrypt(result *LweSample, message int64, key *TFheGateBootstrappingSecretKeySet) {
+	_1s8 := ModSwitchToTorus(1, 8)
+	var mu Torus = -_1s8
 	if message != 0 {
 		mu = _1s8
 	}
-	//Torus32 mu = message ? _1s8 : -_1s8;
+	//Torus mu = message ? _1s8 : -_1s8;
 	alpha := key.Params.InOutParams.alphaMin //TODO: specify noise
 	LweSymEncrypt(result, mu, alpha, key.LweKey)
 }
 
 /** decrypts a boolean */
-func BootsSymDecrypt(sample *LweSample, key *TFheGateBootstrappingSecretKeySet) int32 {
+func BootsSymDecrypt(sample *LweSample, key *TFheGateBootstrappingSecretKeySet) int64 {
 	mu := LwePhase(sample, key.LweKey)
 	/*
 		if mu != 0 {

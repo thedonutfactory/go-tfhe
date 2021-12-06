@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-type Torus32 = int32
+type Torus = int64
 type double = float64
 
 // https://cp-algorithms.com/algebra/fft.html#toc-tgt-1
@@ -97,7 +97,7 @@ func resize(a []complex128, n int) []complex128 {
 	return a
 }
 
-func multiply(a, b []int32) []int32 {
+func multiply(a, b []int64) []int64 {
 	//vector<cd> fa(a.begin(), a.end()), fb(b.begin(), b.end());
 
 	fa := []complex128{
@@ -125,9 +125,9 @@ func multiply(a, b []int32) []int32 {
 	}
 	fft(fa, true)
 
-	result := make([]int32, n)
+	result := make([]int64, n)
 	for i := 0; i < n; i++ {
-		result[i] = int32(int(math.Round(real(fa[i]))))
+		result[i] = int64(int(math.Round(real(fa[i]))))
 		//result[i] = Dtot32(real(fa[i])) // int(math.Round(real(fa[i])))
 	}
 	return result
@@ -136,13 +136,13 @@ func multiply(a, b []int32) []int32 {
 const two32 int64 = int64(1) << 32 // 2^32
 var two32Double double = math.Pow(2, 32)
 
-// from double to Torus32 - float64 to int32 conversion
-func Dtot32(d double) Torus32 {
-	return Torus32(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
+// from double to Torus - float64 to int64 conversion
+func Dtot32(d double) Torus {
+	return Torus(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
 }
 
-// from Torus32 to double
-func T32tod(x Torus32) double {
+// from Torus to double
+func T32tod(x Torus) double {
 	return double(x) / math.Pow(2, 32)
 }
 
@@ -155,8 +155,8 @@ func main() {
 		0, 2136454616
 	*/
 
-	a := []int32{-1865008400, 470211269, -689632771, 1115438162}
-	b := []int32{156091742, 1899894088, -1210297292, -1557125705}
+	a := []int64{-1865008400, 470211269, -689632771, 1115438162}
+	b := []int64{156091742, 1899894088, -1210297292, -1557125705}
 
 	c := multiply(a, b)
 	fmt.Print("Vector c:\n")

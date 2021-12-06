@@ -12,15 +12,15 @@ var fp1024Nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(1024)
 //var fp1024Nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(4)
 
 type FFTProcessor interface {
-	executeReverseTorus32(a []Torus32) (res []complex128)
-	executeReverseInt(a []int32) (res []complex128)
-	executeDirectTorus32(a []complex128) (res []Torus32)
+	executeReverseTorus(a []Torus) (res []complex128)
+	executeReverseInt(a []int64) (res []complex128)
+	executeDirectTorus(a []complex128) (res []Torus)
 }
 
 type NayukiFFTProcessor struct {
-	_2N int32
-	N   int32
-	Ns2 int32
+	_2N int64
+	N   int64
+	Ns2 int64
 
 	realInout     []double
 	imagInout     []double
@@ -38,7 +38,7 @@ type FftTables struct {
 	sinTable    []double
 }
 
-func NewNayukiFFTProcessor(N int32) *NayukiFFTProcessor {
+func NewNayukiFFTProcessor(N int64) *NayukiFFTProcessor {
 	p := &NayukiFFTProcessor{
 		_2N:           2 * N,
 		N:             N,
@@ -50,7 +50,7 @@ func NewNayukiFFTProcessor(N int32) *NayukiFFTProcessor {
 		omegaxminus1:  make([]complex128, 2*N),
 	}
 
-	for x := int32(0); x < 2*N; x++ {
+	for x := int64(0); x < 2*N; x++ {
 		p.omegaxminus1[x] = complex(math.Cos(double(x)*math.Pi/double(N))-1., math.Sin(double(x)*math.Pi/double(N)))
 		// instead of cos(x*M_PI/N)-1. + sin(x*M_PI/N) * 1i
 	}
@@ -59,10 +59,10 @@ func NewNayukiFFTProcessor(N int32) *NayukiFFTProcessor {
 
 func (p *NayukiFFTProcessor) checkAlternateReal() {
 	if debug {
-		for i := int32(0); i < p._2N; i++ {
+		for i := int64(0); i < p._2N; i++ {
 			Assert(math.Abs(p.imagInout[i]) < 1e-8)
 		}
-		for i := int32(0); i < p.N; i++ {
+		for i := int64(0); i < p.N; i++ {
 			Assert(math.Abs(p.realInout[i]+p.realInout[p.N+i]) < 1e-9)
 		}
 	}
@@ -70,10 +70,10 @@ func (p *NayukiFFTProcessor) checkAlternateReal() {
 
 func (p *NayukiFFTProcessor) checkConjugateCplx() {
 	if debug {
-		for i := int32(0); i < p.N; i++ {
+		for i := int64(0); i < p.N; i++ {
 			Assert(math.Abs(p.realInout[2*i])+math.Abs(p.imagInout[2*i]) < 1e-20)
 		}
-		for i := int32(0); i < p.Ns2; i++ {
+		for i := int64(0); i < p.Ns2; i++ {
 			a := p.imagInout[2*i+1]
 			b := p.imagInout[p._2N-1-2*i]
 			toler := 1e-20
@@ -85,17 +85,17 @@ func (p *NayukiFFTProcessor) checkConjugateCplx() {
 	}
 }
 
-func (p *NayukiFFTProcessor) executeReverseTorus32(a []Torus32) (res []complex128) {
+func (p *NayukiFFTProcessor) executeReverseTorus(a []Torus) (res []complex128) {
 	res = fft.IFFT(castComplex(a))
 	return
 }
 
-func (p *NayukiFFTProcessor) executeReverseInt(a []int32) (res []complex128) {
+func (p *NayukiFFTProcessor) executeReverseInt(a []int64) (res []complex128) {
 	res = fft.IFFT(castComplex(a))
 	return
 }
 
-func (p *NayukiFFTProcessor) executeDirectTorus32(a []complex128) (res []Torus32) {
+func (p *NayukiFFTProcessor) executeDirectTorus(a []complex128) (res []Torus) {
 	res = castTorus(fft.FFT(a))
 	for i := 0; i < int(p.Ns2); i++ {
 		res = append(res, 0)
@@ -113,11 +113,11 @@ func intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
 }
 
 func torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	result.coefsC = fp1024Nayuki.executeReverseTorus32(p.CoefsT)
+	result.coefsC = fp1024Nayuki.executeReverseTorus(p.CoefsT)
 }
 
 func torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	result.CoefsT = fp1024Nayuki.executeDirectTorus32(p.coefsC)
+	result.CoefsT = fp1024Nayuki.executeDirectTorus(p.coefsC)
 }
 
 func fftInit(n int64) *FftTables {
@@ -136,7 +136,7 @@ func fftInit(n int64) *FftTables {
 	// Precompute values and store to tables
 	levels := floorLog2(int64(n))
 	for i := int64(0); i < n; i++ {
-		tables.bitReversed[i] = int64(reverseBits(int64(i), uint32(levels)))
+		tables.bitReversed[i] = int64(reverseBits(int64(i), uint64(levels)))
 	}
 	for i := int64(0); i < n/2; i++ {
 		var angle double = 2. * math.Pi * double(i) / double(n)
@@ -201,7 +201,7 @@ func accurateSine(i int64, n int64) double {
 	if n%4 != 0 {
 		return 0.
 	} else {
-		var neg int32 = 0 // Boolean
+		var neg int64 = 0 // Boolean
 		// Reduce to full cycle
 		i %= n
 		// Reduce to half cycle
@@ -231,8 +231,8 @@ func accurateSine(i int64, n int64) double {
 }
 
 // Returns the largest i such that 2^i <= n.
-func floorLog2(n int64) int32 {
-	var result int32 = 0
+func floorLog2(n int64) int64 {
+	var result int64 = 0
 	for ; n > 1; n /= 2 {
 		result++
 	}
@@ -240,9 +240,9 @@ func floorLog2(n int64) int32 {
 }
 
 // Returns the bit reversal of the n-bit unsigned integer x.
-func reverseBits(x int64, n uint32) int64 {
+func reverseBits(x int64, n uint64) int64 {
 	var result int64 = 0
-	for i := uint32(0); i < n; i++ {
+	for i := uint64(0); i < n; i++ {
 		result = (result << 1) | (x & 1)
 		x >>= 1
 	}
@@ -252,9 +252,11 @@ func reverseBits(x int64, n uint32) int64 {
 // Returns a pointer to an opaque structure of FFT tables. n must be a power of 2 and n >= 4.
 func fftInitReverse(n int64) *FftTablesUint64 {
 	// Check size argument
-	if n < 4 || n > math.MaxUint32 || (n&(n-1)) != 0 {
-		return nil // Error: Size is too small or is not a power of 2
-	}
+	/*
+		if n < 4 || n > math.MaxUint64 || (n&(n-1)) != 0 {
+			return nil // Error: Size is too small or is not a power of 2
+		}
+	*/
 
 	tables := &FftTablesUint64{
 		n:           n,
@@ -267,7 +269,7 @@ func fftInitReverse(n int64) *FftTablesUint64 {
 	// Precompute bit reversal table
 	levels := floorLog2(n)
 	for i := int64(0); i < n; i++ {
-		tables.bitReversed[i] = reverseBits(i, uint32(levels))
+		tables.bitReversed[i] = reverseBits(i, uint64(levels))
 	}
 
 	// Precompute the packed trigonometric table for each FFT internal level

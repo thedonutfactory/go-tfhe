@@ -37,7 +37,7 @@ type Operations interface {
 
 	// misc
 	Copy(a, b []*LweSample, nbBits int) (result []*LweSample)
-	Constant(value int32, nbBits int) (result []*LweSample)
+	Constant(value int64, nbBits int) (result []*LweSample)
 }
 
 type CipheredOperations struct {
@@ -726,7 +726,7 @@ func (ops *CipheredOperations) Copy(a, b []*LweSample, nbBits int) (result []*Lw
 	return result
 }
 
-func (ops *CipheredOperations) Constant(value int32, nbBits int) (result []*LweSample) {
+func (ops *CipheredOperations) Constant(value int64, nbBits int) (result []*LweSample) {
 	result = NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
 	for i := 0; i < nbBits; i++ {
 		BootsCONSTANT(result[i], value, ops.bk)
