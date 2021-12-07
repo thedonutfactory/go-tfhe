@@ -58,7 +58,7 @@ func TestLweCreateKeySwitchKeyFromArray(tt *testing.T) {
 				ksIjk := test.ks[i][j][k]
 				assert.EqualValues(alpha*alpha, ksIjk.CurrentVariance)
 				//fmt.Printf("%d, %d\n", k*inKey[i]*1<<(32-(j+1)*basebit), ksIjk.B)
-				assert.EqualValues(int64(k)*inKey[i]*1<<int64(32-(j+1)*basebit), ksIjk.B)
+				assert.EqualValues(int64(k)*inKey[i]*1<<int64(64-(j+1)*basebit), ksIjk.B)
 			}
 		}
 	}

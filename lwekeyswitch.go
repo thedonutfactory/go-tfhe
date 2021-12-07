@@ -131,16 +131,16 @@ func lweCreateKeySwitchKeyFromArray(result [][][]*LweSample,
 func lweKeySwitchTranslateFromArray(result *LweSample,
 	ks [][][]*LweSample, params *LweParams,
 	ai []Torus,
-	n, t, basebit int) {
+	n, t, basebit int64) {
 
 	base := 1 << basebit
 	precOffset := int64(1 << (64 - (1 + basebit*t)))
-	mask := base - 1
+	mask := int64(base - 1)
 
-	for i := 0; i < n; i++ {
-		aibar := ai[i] + precOffset
-		for j := 0; j < t; j++ {
-			aij := aibar >> int64((32-(j+1)*basebit)&mask)
+	for i := int64(0); i < n; i++ {
+		aibar := int64(ai[i]) + precOffset
+		for j := int64(0); j < t; j++ {
+			aij := (aibar >> (64 - (j+1)*basebit)) & mask
 			if aij != 0 {
 				LweSubTo(result, ks[i][j][aij], params)
 			}
@@ -206,5 +206,5 @@ func lweKeySwitch(result *LweSample, ks *LweKeySwitchKey, sample *LweSample) {
 	LweNoiselessTrivial(result, sample.B, params)
 	lweKeySwitchTranslateFromArray(result,
 		ks.ks, params,
-		sample.A, n, t, basebit)
+		sample.A, int64(n), int64(t), int64(basebit))
 }
