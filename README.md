@@ -4,7 +4,7 @@
 
 go-tfhe is the Golang implementation of [TFHE Homomorphic Encryption Library](https://tfhe.github.io/tfhe/)
 
-TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm. ( for the uninitiated, a quick rundown of FHE is [here](#eli5) )
+TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme developed by [Ilaria Chillotti](https://github.com/ilachill) et al, that implements a fast, fully bootstrapped circuit environment for running programs within the homomorphic realm. ( for the uninitiated, a quick rundown of FHE is [here](#fhe-illustrated---like-literally-illustrated-with-cute-gophers) )
 
 ## Show me the Code
 
