@@ -48,7 +48,7 @@ How do we solve this problem with today's cryptography? Well, we can encrypt the
 
 <img src="docs/images/enc1.png" alt="FHE Gopher"/>
 
-Enter fully homomorphic encryption. Using an FHE cryptographic runtime, Allan can build a special homomorphic software program designed to process her customer data. He gives this special program over to Bob, where he installs it onto one of his meaty servers. Now, here's the magic: Allan can fully encrypt all of his customer data, give it to Bob, who executes the homomorphic software program to process it (because he's now a clearly a wizard), returning to Allan the fully encrypted results, all without ever seeing any of his customer's data unencrypted! Allan decrypts the resulting data with the same key she used to encrypt it's inputs, knowing full well that his data was always safe, even when being processed on Bob's servers.
+Enter fully homomorphic encryption. Using an FHE cryptographic runtime, Allan can build a special homomorphic software program designed to process his customer data. He gives this special program over to Bob, where he installs it onto one of his meaty servers. Now, here's the magic: Allan can fully encrypt all of his customer data, give it to Bob, who executes the homomorphic software program to process it (because he's now a clearly a wizard), returning to Allan the fully encrypted results, all without ever seeing any of his customer's data unencrypted! Allan decrypts the resulting data with the same key she used to encrypt it's inputs, knowing full well that his data was always safe, even when being processed on Bob's servers.
 
 <img src="docs/images/enc2.png" alt="FHE Gopher"/>
 
