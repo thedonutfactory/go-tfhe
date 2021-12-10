@@ -38,23 +38,25 @@ func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int,
 }
 ```
 
-### ELI5
+### FHE Illustrated - like literally illustrated, with cute gophers
 
 In spite of strong advances in confidential computing technologies, critical information is encrypted only temporarily – while not in use – and remains unencrypted during computation in most present-day computing infrastructures. Fully homomorphic encryption addresses this flaw by providing a mechanism for computation on fully encrypted data.
 
-For example, let's say that Bob owns a cloud processing company that crunches health datasets for Alice. Bob has access to cutting-edge bare metal machines with a lot of processing power and is happy to sell Alice that processing power. However, due to HIPAA compliance requirements ( and a general, altruistic respect for an individual's privacy ), Alice cannot actually share the data.
+For example, let's say that Bob owns a cloud processing company that crunches health datasets for Allan. Bob has access to cutting-edge bare metal machines with a lot of processing power and is happy to sell Allan that processing power. However, due to HIPAA compliance requirements ( and a general, altruistic respect for an individual's privacy ), Allan cannot actually share the data.
 
-How do we solve this problem with today's cryptography? Well, we can encrypt the data over the wire, send it to Bob's cloud processing company, and then securely hand him the private key to decrypt, process and reencrypt the data. Again, this only provides protection while the data is in transit or at rest. During computation, the data must be decrypted first. This still allows Bob access to very sensitive, private health data of Alice's customers.
+How do we solve this problem with today's cryptography? Well, we can encrypt the data over the wire, send it to Bob's cloud processing company, and then securely hand him the private key to decrypt, process and reencrypt the data. Again, this only provides protection while the data is in transit or at rest. During computation, the data must be decrypted first. This still allows Bob access to very sensitive, private health data of Allan's customers.
 
-Enter fully homomorphic encryption. Using an FHE cryptographic runtime, Alice can build a special homomorphic software program designed to process her customer data. She gives this special program over to Bob, where he installs it onto one of his meaty servers. Now, here's the magic: Alice can fully encrypt all of her customer data, give it to Bob, who executes the homomorphic software program to process it, returning to Alice the fully encrypted results, all without ever seeing any of her customer's data unencrypted! Alice decrypts the resulting data with the same key she used to encrypt it's inputs, knowing full well that her data was always safe, even when being processed on Bob's servers.
+<img src="docs/images/enc1.png" alt="FHE Gopher"/>
 
-Modern day cryptographic miracle.
+Enter fully homomorphic encryption. Using an FHE cryptographic runtime, Allan can build a special homomorphic software program designed to process her customer data. He gives this special program over to Bob, where he installs it onto one of his meaty servers. Now, here's the magic: Allan can fully encrypt all of his customer data, give it to Bob, who executes the homomorphic software program to process it (because he's now a clearly a wizard), returning to Allan the fully encrypted results, all without ever seeing any of his customer's data unencrypted! Allan decrypts the resulting data with the same key she used to encrypt it's inputs, knowing full well that his data was always safe, even when being processed on Bob's servers.
 
-### FHE Illustrated
+<img src="docs/images/enc2.png" alt="FHE Gopher"/>
 
-![Alt text](/docs/images/FHE.png?raw=true "FHE Illustrated")
+Homomorphic encryption means that the data is never decrypted, yet it is still able to be processed by a third party. Modern day cryptographic miracle.
 
-So, if Alice writes a simple program to add two numbers and return the results, classically she would create something like this:
+### FHE Workflow
+
+So, if Allan writes a simple program to add two numbers and return the results, classically he would create something like this:
 
 ```solidity
 function add(int8 a, int8 b) {
@@ -62,19 +64,19 @@ function add(int8 a, int8 b) {
 }
 ```
 
-So if she were outsource Bob to run the program function:
+So if he were outsource Bob to run the program function:
 
 `add(2, 3)` it would result in `5`
 
 Simple, but Bob and his employees could see the input and output values of the function.
 
-Now, if she used a fully homomorphic runtime environment, she would be able to first encrypt the values of `a` and `b`, pass these encrypted values to Bob, where he executes the homomorphic version of the same function giving back an encrypted result. For illustration purposes, the interaction might look something like this:
+Now, if he used a fully homomorphic runtime environment, he would be able to first encrypt the values of `a` and `b`, pass these encrypted values to Bob, where he executes the homomorphic version of the same function giving back an encrypted result. For illustration purposes, the interaction might look something like this:
 
-1. Alice encrypts a's value of `2` resulting in `1d8b4cf854c`
-2. Alice encrypts a's value of `3` resulting in `32c4feed996`
-3. Alice asks Bob to run the program function `add(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
-4. Bob gets the result `489f719cad` and returns it to Alice
-5. Alice decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Alice's input or output data, but he performed all of the processing for her. Magic.
+1. Allan encrypts a's value of `2` resulting in `1d8b4cf854c`
+2. Allan encrypts a's value of `3` resulting in `32c4feed996`
+3. Allan asks Bob to run the program function `add(1d8b4cf854c, 32c4feed996)`. (To Bob, the numbers are encrypted nonsense)
+4. Bob gets the result `489f719cad` and returns it to Allan
+5. Allan decrypts the result with her key revealing the number to be `5`. At no point did Bob ever see Allan's input or output data, but he performed all of the processing for her. Magic.
 
 ## Potential FHE Use Cases
 
