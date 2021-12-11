@@ -8,7 +8,7 @@ type Binary = uint32
 type TGSWKey = TLWEKey
 
 func Assert(condition bool) {
-	if condition == false {
+	if !condition {
 		panic("Assertion error")
 	}
 }
@@ -54,7 +54,7 @@ func NewLWESample(n int) *LWESample {
 func NewLweSampleArray(n, t int) (arr []*LWESample) {
 	arr = make([]*LWESample, n)
 	for i := 0; i < n; i++ {
-		arr[i] = NewLWESample(n)
+		arr[i] = NewLWESample(t)
 	}
 	return
 }
@@ -67,10 +67,6 @@ type LWEKey struct {
 
 func NewLWEKey(n int) *LWEKey {
 	return &LWEKey{Key: make([]Binary, n), N: n}
-}
-
-func (sample *LWEKey) b() Binary {
-	return sample.Key[len(sample.Key)]
 }
 
 // LweParams
@@ -117,7 +113,7 @@ type TLWESample struct {
 
 func NewTLWESample(n, k int) *TLWESample {
 	//arr := NewTorusPolynomialArray(k+1, n)
-	arr := make([][]Torus, k)
+	arr := make([][]Torus, k+1)
 	for i := range arr {
 		arr[i] = make([]Torus, n)
 	}
@@ -152,7 +148,7 @@ func (sample *TLWESample) a(index int) []Torus {
 }
 
 func (sample *TLWESample) b() []Torus {
-	return sample.ExtractPoly(sample.K)
+	return sample.A[sample.K]
 }
 
 // TLWEKey
@@ -188,7 +184,7 @@ func (sample *TLWEKey) ExtractPoly(index int) []Binary {
 }
 
 func (sample *TLWEKey) ExtractLWEKey() *LWEKey {
-	return &LWEKey{Key: sample.A[sample.K], N: sample.N}
+	return &LWEKey{Key: sample.A[sample.K-1], N: sample.N}
 }
 
 // TGSWSample
@@ -254,7 +250,8 @@ func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
 			param.tlwe_n_*param.tlwe_k_),
 	*/
 
-	raw := NewLweSampleArray(int(n), int(m*l<<w))
+	size := m * l * (0x1 << w)
+	raw := NewLweSampleArray(size, n)
 
 	return &KeySwitchingKey{
 		raw: raw,
