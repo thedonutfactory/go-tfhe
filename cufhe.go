@@ -239,28 +239,31 @@ func LWEEncrypt(ct *LWESample, pt Torus, key *LWEKey) {
 	ct.B = pt + TorusFromDouble(d1.Rand())
 	d2 := UniformDist(math.MinInt32, math.MaxInt32)
 	for i := 0; i < key.N; i++ {
-		ct.A[i] = TorusFromDouble(d2.Rand())
+		ct.A[i] = Torus(d2.Rand())
 		ct.B += ct.A[i] * int32(key.Key[i])
 	}
 }
 
 func LWEEncryptExternalNoise(ct *LWESample, pt Torus, key *LWEKey, noise float64) {
-	ct.B = pt + TorusFromDouble(noise)
+	ct.B = pt + int32(noise)
 	d1 := UniformDist(math.MinInt32, math.MaxInt32)
 	for i := 0; i < key.N; i++ {
-		ct.A[i] = TorusFromDouble(d1.Rand())
+		ct.A[i] = Torus(d1.Rand())
 		ct.B += ct.A[i] * int32(key.Key[i])
 	}
 }
 
-func LWEDecrypt(pt Torus, ct *LWESample, key *LWEKey, space int32) {
+func LWEDecrypt(ct *LWESample, key *LWEKey, space int32) Torus {
 	Assert(ct.N == key.N)
 	err := ct.B
+
 	for i := 0; i < ct.N; i++ {
 		err -= ct.A[i] * int32(key.Key[i])
 	}
-	//pt = ApproxPhase(err, space)
-	pt = err //pt = ApproxPhase(err, space);
+	return err
+
+	//LwePhase(ct, key)
+	//return ApproxPhase(err, space)
 }
 
 func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
@@ -275,6 +278,7 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 	// lwe_sample := NewLWESample(param.lwe_n_)
 
 	//base := int32(1 << basebit)
+	// n=1024, t=8, base=2
 	//sizeks := n * t * (base - 1)
 
 	total := key.M * key.L * (0x1 << key.W)
@@ -297,10 +301,18 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 		temp = lwe_key_from.Key[i]
 		for j := 0; j < key.L; j++ {
 			looper := (0x1 << key.W)
+			/*
+				for k := 0; k < looper; k++ {
+					lwe_sample := key.ExtractLWESample(key.GetLWESampleIndex(i, j, k))
+					mu = Torus((temp * uint32(k)) * (1 << (32 - (j+1)*key.W)))
+					LWEEncryptExternalNoise(lwe_sample, mu, lwe_key_to, noise[index])
+					index++
+				}
+			*/
+
 			for k := 0; k < looper; k++ {
-				lwe_sample := key.ExtractLWESample(key.GetLWESampleIndex(i, j, k))
 				mu = Torus((temp * uint32(k)) * (1 << (32 - (j+1)*key.W)))
-				LWEEncryptExternalNoise(lwe_sample, mu, lwe_key_to, noise[index])
+				LWEEncryptExternalNoise(key.A[i][j][k], mu, lwe_key_to, noise[index])
 				index++
 			}
 		}
@@ -441,8 +453,7 @@ func Encrypt(ctxt *Ctxt, ptxt *Ptxt, pri_key *PriKey) {
 }
 
 func Decrypt(ptxt *Ptxt, ctxt *Ctxt, pri_key *PriKey) {
-	var mu Torus
-	LWEDecrypt(mu, ctxt.lwe_sample_, pri_key.lwe_key_, KPtxtSpace)
+	mu := LWEDecrypt(ctxt.lwe_sample_, pri_key.lwe_key_, KPtxtSpace)
 	//  ptxt.message_ = (uint32_t)int32_t((Ptxt::kPtxtSpace) * DoubleFromTorus(mu));
 	//  ptxt.message_ %= ptxt.kPtxtSpace;
 

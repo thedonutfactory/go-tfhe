@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	kNumTests := 5
+	kNumTests := 50
 
 	//SetSeed();  // set random seed
 

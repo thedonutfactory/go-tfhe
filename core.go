@@ -250,32 +250,27 @@ func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
 			param.tlwe_n_*param.tlwe_k_),
 	*/
 
-	size := m * l * (0x1 << w)
-	raw := NewLweSampleArray(size, n)
+	//size := m * l * (0x1 << w)
 
-	return &KeySwitchingKey{
-		raw: raw,
-		N:   n, L: l, W: w, M: m,
-	}
-
-	//LWESampleArray_T<T>(n, m * l << w)
-
-	/*
-		ks := make([][][]*LWESample, m)
-		for i := 0; i < m; i++ {
-			ks[i] = make([][]*LWESample, l)
-			for j := 0; j < l; j++ {
-				ks[i][j] = make([]*LWESample, (0x1 << w))
-				for k := 0; k < (0x1 << w); k++ {
-					ks[i][j][k] = NewLWESample(n)
-				}
+	ks := make([][][]*LWESample, m)
+	raw := make([]*LWESample, m*l*(0x1<<w))
+	var c int = 0
+	for i := 0; i < m; i++ {
+		ks[i] = make([][]*LWESample, l)
+		for j := 0; j < l; j++ {
+			ks[i][j] = make([]*LWESample, (0x1 << w))
+			for k := 0; k < (0x1 << w); k++ {
+				ks[i][j][k] = NewLWESample(n)
+				raw[c] = ks[i][j][k]
+				c++
 			}
 		}
+	}
 
-		return &KeySwitchingKey{
-			A: ks, N: n, L: l, W: w, M: m,
-		}
-	*/
+	return &KeySwitchingKey{
+		A: ks, raw: raw, N: n, L: l, W: w, M: m,
+	}
+
 }
 
 func (me *KeySwitchingKey) GetLWESampleIndex(degree, digit, value int) int {
