@@ -273,6 +273,7 @@ func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
 
 }
 
+/*
 func (me *KeySwitchingKey) GetLWESampleIndex(degree, digit, value int) int {
 	Assert(degree < me.M)
 	Assert(digit < me.L)
@@ -280,9 +281,11 @@ func (me *KeySwitchingKey) GetLWESampleIndex(degree, digit, value int) int {
 	return ((degree*me.L + digit) << me.W) + value
 }
 
+
 func (me *KeySwitchingKey) ExtractLWESample(index int) *LWESample {
 	return me.raw[index]
 }
+*/
 
 func (me *KeySwitchingKey) NumLWESamples() int {
 	return len(me.raw)
