@@ -1,6 +1,6 @@
 package tfhe
 
-func NewCtxt(isAlias bool) *Ctxt {
+func NewCtxt() *Ctxt {
 	param := GetDefaultParam()
 	return &Ctxt{
 		lwe_sample_: NewLWESample(param.lwe_n_),
@@ -10,7 +10,7 @@ func NewCtxt(isAlias bool) *Ctxt {
 func NewCtxtArray(n int) (arr []*Ctxt) {
 	arr = make([]*Ctxt, n)
 	for i := 0; i < n; i++ {
-		arr[i] = NewCtxt(false)
+		arr[i] = NewCtxt()
 	}
 	return
 }

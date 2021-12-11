@@ -233,9 +233,12 @@ func TLWEKeyGen(param *Param) *TLWEKey {
 }
 
 func LWEEncrypt(ct *LWESample, pt Torus, key *LWEKey) {
-	noise_bound := GetDefaultParam().lwe_noise_
-	//std::normal_distribution<double> dist_b(0.0, SDFromBound(noise_bound));
-	d1 := NormalDist(0.0, SDFromBound(noise_bound))
+	//noise_bound := GetDefaultParam().lwe_noise_
+	var M int32 = 8
+	noise_bound := 1.0 / (10.0 * float64(M))
+
+	//d1 := NormalDist(0.0, SDFromBound(noise_bound))
+	d1 := NormalDist(0.0, noise_bound)
 	ct.B = pt + TorusFromDouble(d1.Rand())
 	d2 := UniformDist(math.MinInt32, math.MaxInt32)
 	for i := 0; i < key.N; i++ {
@@ -253,17 +256,27 @@ func LWEEncryptExternalNoise(ct *LWESample, pt Torus, key *LWEKey, noise float64
 	}
 }
 
+func LwePhase(sample *LWESample, key *LWEKey) Torus {
+	var axs Torus = 0
+	for i := 0; i < int(key.N); i++ {
+		axs += sample.A[i] * int32(key.Key[i])
+	}
+	return sample.B - axs
+}
+
 func LWEDecrypt(ct *LWESample, key *LWEKey, space int32) Torus {
 	Assert(ct.N == key.N)
 	err := ct.B
 
-	for i := 0; i < ct.N; i++ {
-		err -= ct.A[i] * int32(key.Key[i])
-	}
-	return err
+	/*
+		for i := 0; i < ct.N; i++ {
+			err -= ct.A[i] * int32(key.Key[i])
+		}
+		return err
+	*/
 
-	//LwePhase(ct, key)
-	//return ApproxPhase(err, space)
+	LwePhase(ct, key)
+	return ApproxPhase(err, space)
 }
 
 func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
@@ -462,5 +475,6 @@ func Decrypt(ptxt *Ptxt, ctxt *Ctxt, pri_key *PriKey) {
 	} else {
 		ptxt.Message = 0
 	}
+
 	//ptxt.message_ = mu > 0 ? 1 : 0;
 }

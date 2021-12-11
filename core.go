@@ -233,67 +233,36 @@ func (sample *TGSWSample) ExtractTLWESample(index int) *TLWESample {
 // KeySwitchingKey
 type KeySwitchingKey struct {
 	// m, l, w
-	A   [][][]*LWESample
-	N   int
-	L   int // decomp size
-	W   int // basebit
-	M   int
-	raw []*LWESample
+	A [][][]*LWESample
+	N int
+	L int // decomp size
+	W int // basebit
+	M int
+	//raw []*LWESample
 }
 
 func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
-
-	/*
-		ksk_: NewKeySwitchingKey(param.lwe_n_,
-			param.keyswitching_decomp_size_,
-			param.keyswitching_decomp_bits_,
-			param.tlwe_n_*param.tlwe_k_),
-	*/
-
-	//size := m * l * (0x1 << w)
-
 	ks := make([][][]*LWESample, m)
-	raw := make([]*LWESample, m*l*(0x1<<w))
-	var c int = 0
 	for i := 0; i < m; i++ {
 		ks[i] = make([][]*LWESample, l)
 		for j := 0; j < l; j++ {
 			ks[i][j] = make([]*LWESample, (0x1 << w))
 			for k := 0; k < (0x1 << w); k++ {
 				ks[i][j][k] = NewLWESample(n)
-				raw[c] = ks[i][j][k]
-				c++
 			}
 		}
 	}
 
 	return &KeySwitchingKey{
-		A: ks, raw: raw, N: n, L: l, W: w, M: m,
+		A: ks, N: n, L: l, W: w, M: m,
 	}
-
 }
-
-/*
-func (me *KeySwitchingKey) GetLWESampleIndex(degree, digit, value int) int {
-	Assert(degree < me.M)
-	Assert(digit < me.L)
-	Assert(value < (0x1 << me.W))
-	return ((degree*me.L + digit) << me.W) + value
-}
-
-
-func (me *KeySwitchingKey) ExtractLWESample(index int) *LWESample {
-	return me.raw[index]
-}
-*/
 
 func (me *KeySwitchingKey) NumLWESamples() int {
-	return len(me.raw)
+	return me.M * me.L * (0x1 << me.W)
 }
 
-// type BootstrappingKey = []TGSWSample
-// TGSWSample
-
+// BootstrappingKey
 type BootstrappingKey struct {
 	bk []*TGSWSample
 	//ks *KeySwitchingKey
