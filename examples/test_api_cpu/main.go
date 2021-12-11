@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 
 	t "github.com/thedonutfactory/go-tfhe"
 )
@@ -26,7 +25,7 @@ func main() {
 
 	correct := true
 	for i := 0; i < kNumTests; i++ {
-		pt[0].Message = uint32(rand.Int31() % t.KPtxtSpace)
+		pt[0].Message = 0 //uint32(rand.Int31() % t.KPtxtSpace)
 		t.Encrypt(ct[0], pt[0], pri_key)
 		t.Decrypt(pt[1], ct[0], pri_key)
 		if pt[1].Message != pt[0].Message {
@@ -44,8 +43,8 @@ func main() {
 	kNumTests = 4
 	correct = true
 	for i := 0; i < kNumTests; i++ {
-		pt[0].Message = uint32(rand.Int31() % t.KPtxtSpace)
-		pt[1].Message = uint32(rand.Int31() % t.KPtxtSpace)
+		pt[0].Message = 1 //uint32(rand.Int31() % t.KPtxtSpace)
+		pt[1].Message = 0 //uint32(rand.Int31() % t.KPtxtSpace)
 		t.Encrypt(ct[0], pt[0], pri_key)
 		t.Encrypt(ct[1], pt[1], pri_key)
 		t.Nand(ct[0], ct[0], ct[1], pub_key)
