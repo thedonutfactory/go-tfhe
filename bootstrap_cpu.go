@@ -61,7 +61,7 @@ func PolyDecomp(out [][]int32, in []Torus, n, bits, l, mask, half, offset int32)
 }
 
 func LWESampleSub(out, in0, in1 *LWESample) {
-	for i := 0; i < out.N; i++ {
+	for i := 0; i <= out.N; i++ {
 		out.A[i] = in0.A[i] - in1.A[i]
 	}
 }
@@ -96,7 +96,7 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 		decomp[i] = make([]int32, tlwe_n) //new int32_t[tlwe_n];
 	}
 
-	bar_b := ModSwitchFromTorus(in.B, n2)
+	bar_b := ModSwitchFromTorus(*in.B, n2)
 	for i := 0; i < tlwe_n; i++ {
 		temp[i] = mu
 	}
@@ -111,7 +111,7 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 			PolyMulPowX(temp, acc.ExtractPoly(j), int(bar_a), tlwe_n)
 			PolySub(temp, temp, acc.ExtractPoly(j), tlwe_n)
 			//PolyDecomp(decomp+j*bk_l, temp, int32(tlwe_n), int32(bk_bits), int32(bk_l), int32(bk_mask), int32(bk_half), int32(bk_offset))
-			PolyDecomp(decomp[j:], temp, int32(tlwe_n), int32(bk_bits), int32(bk_l), int32(bk_mask), int32(bk_half), int32(bk_offset))
+			PolyDecomp(decomp[j*bk_l:], temp, int32(tlwe_n), int32(bk_bits), int32(bk_l), int32(bk_mask), int32(bk_half), int32(bk_offset))
 		}
 		for j := 0; j <= k; j++ {
 			for p := 0; p < kpl; p++ {
@@ -124,13 +124,14 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 
 	var coeff, digit int32
 	//memset(out->data(), 0, out->SizeData());
-
-	out.B = acc.b()[0]
+	//out.A = make([]int32, out.N)
+	out = NewLWESample(lwe_n)
+	*out.B = acc.b()[0]
 	for i := 0; i < k*tlwe_n; i++ {
 		if i == 0 {
-			coeff = acc.a(0)[i]
+			coeff = acc.a(acc.K)[i]
 		} else {
-			coeff = -acc.a(0)[k*tlwe_n-i]
+			coeff = -acc.a(acc.K)[k*tlwe_n-i]
 		}
 		coeff += int32(ksk_offset)
 		for j := 0; j < ksk_l; j++ {

@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+  node:
+    image: ubuntu
+    container_name: node
+    command: tail -f /dev/null
+    volumes:
+      - .:/workspace

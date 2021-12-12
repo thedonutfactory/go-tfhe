@@ -130,18 +130,6 @@ func NewPtxtArray(n int) (arr []*Ptxt) {
 	return
 }
 
-func (ptxt *Ptxt) opEquals(message uint32) {
-	ptxt.Message = message % ptxt.kPtxtSpace
-}
-
-func (ptxt *Ptxt) set(message uint32) {
-	ptxt.Message = message % ptxt.kPtxtSpace
-}
-
-func (ptxt *Ptxt) get() uint32 {
-	return ptxt.Message
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 /*
 std::default_random_engine generator; // @todo Set Seed!
@@ -158,7 +146,8 @@ func SDFromBound(noise_bound float64) float64 {
 
 // Conversions go back to -0.5~0.5 if Torus is int32!
 func TorusFromDouble(d float64) Torus {
-	return Torus(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
+	//return Torus(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
+	return Torus(math.Round(math.Mod(d, 1) * float64(int64(1)<<32)))
 }
 
 func DoubleFromTorus(t Torus) float64 {
@@ -236,26 +225,26 @@ func LWEEncrypt(ct *LWESample, pt Torus, key *LWEKey) {
 	noise_bound := GetDefaultParam().lwe_noise_
 	//std::normal_distribution<double> dist_b(0.0, SDFromBound(noise_bound));
 	d1 := NormalDist(0.0, SDFromBound(noise_bound))
-	ct.B = pt + TorusFromDouble(d1.Rand())
+	*ct.B = pt + TorusFromDouble(d1.Rand())
 	d2 := UniformDist(math.MinInt32, math.MaxInt32)
 	for i := 0; i < key.N; i++ {
 		ct.A[i] = Torus(d2.Rand())
-		ct.B += ct.A[i] * int32(key.Key[i])
+		*ct.B += ct.A[i] * int32(key.Key[i])
 	}
 }
 
 func LWEEncryptExternalNoise(ct *LWESample, pt Torus, key *LWEKey, noise float64) {
-	ct.B = pt + int32(noise)
+	*ct.B = pt + TorusFromDouble(noise)
 	d1 := UniformDist(math.MinInt32, math.MaxInt32)
 	for i := 0; i < key.N; i++ {
 		ct.A[i] = Torus(d1.Rand())
-		ct.B += ct.A[i] * int32(key.Key[i])
+		*ct.B += ct.A[i] * int32(key.Key[i])
 	}
 }
 
 func LWEDecrypt(ct *LWESample, key *LWEKey, space int32) Torus {
 	Assert(ct.N == key.N)
-	err := ct.B
+	err := *ct.B
 
 	for i := 0; i < ct.N; i++ {
 		err -= ct.A[i] * int32(key.Key[i])
@@ -276,18 +265,12 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 	var mu Torus
 	var temp uint32
 	// lwe_sample := NewLWESample(param.lwe_n_)
-
-	//base := int32(1 << basebit)
-	// n=1024, t=8, base=2
-	//sizeks := n * t * (base - 1)
-
-	total := key.M * key.L * (0x1 << key.W)
-
-	//total := key.NumLWESamples()
+	//total := key.M * key.L * (0x1 << key.W)
+	total := key.NumLWESamples()
 	noise := make([]float64, total)
 	var err float64 = 0
-	nd := NormalDist(0.0, SDFromBound(param.lwe_noise_))
 	for i := 0; i < total; i++ {
+		nd := NormalDist(0.0, SDFromBound(param.lwe_noise_))
 		noise[i] = nd.Rand()
 		err += noise[i]
 	}
@@ -311,8 +294,9 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 			*/
 
 			for k := 0; k < looper; k++ {
+				lwe_sample := key.A[i][j][k] //key.ExtractLWESample(key.GetLWESampleIndex(i, j, k))
 				mu = Torus((temp * uint32(k)) * (1 << (32 - (j+1)*key.W)))
-				LWEEncryptExternalNoise(key.A[i][j][k], mu, lwe_key_to, noise[index])
+				LWEEncryptExternalNoise(lwe_sample, mu, lwe_key_to, noise[index])
 				index++
 			}
 		}
@@ -348,10 +332,10 @@ func TLWEEncryptZero(ct *TLWESample, key *TLWEKey) {
 	dist_a := UniformDist(math.MinInt32, math.MaxInt32)
 	for i := 0; i < key.K; i++ {
 		for j := 0; j < key.N; j++ {
-			ct.a(i)[j] = TorusFromDouble(dist_a.Rand())
+			ct.a(i)[j] = Torus(dist_a.Rand())
 		}
 		// PolyMulAddBinary(ct.b(), ct.a(i), key.data(), key.N)
-		PolyMulAddBinary(ct.b(), ct.a(i), key.A[i], key.N)
+		PolyMulAddBinary(ct.b(), ct.A[i], key.A[0], key.N)
 	}
 }
 

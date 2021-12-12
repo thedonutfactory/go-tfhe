@@ -1,6 +1,11 @@
 package tfhe
 
-import "gonum.org/v1/gonum/stat/distuv"
+import (
+	"time"
+
+	"golang.org/x/exp/rand"
+	"gonum.org/v1/gonum/stat/distuv"
+)
 
 type Torus = int32
 type Binary = uint32
@@ -21,16 +26,20 @@ func UniformDist(min, max int) distuv.Uniform {
 }
 
 func UniformDistF(min, max float64) distuv.Uniform {
+	s1 := rand.NewSource(uint64(time.Now().UnixNano()))
 	return distuv.Uniform{
 		Min: min,
 		Max: max,
+		Src: s1,
 	}
 }
 
 func NormalDist(mu, sigma float64) distuv.Normal {
+	s1 := rand.NewSource(uint64(time.Now().UnixNano()))
 	return distuv.Normal{
 		Mu:    mu,
 		Sigma: sigma,
+		Src:   s1,
 	}
 }
 
@@ -42,13 +51,13 @@ func ModSwitchToTorus(mu, space int32) Torus {
 // LWESample
 type LWESample struct {
 	A []Torus
-	B Torus
+	B *Torus
 	N int
 }
 
 func NewLWESample(n int) *LWESample {
-	a := make([]Torus, n)
-	return &LWESample{A: a, B: a[n-1], N: n}
+	a := make([]Torus, n+1)
+	return &LWESample{A: a, B: &a[n], N: n}
 }
 
 func NewLweSampleArray(n, t int) (arr []*LWESample) {
@@ -115,7 +124,9 @@ func NewTLWESample(n, k int) *TLWESample {
 	//arr := NewTorusPolynomialArray(k+1, n)
 	arr := make([][]Torus, k+1)
 	for i := range arr {
-		arr[i] = make([]Torus, n)
+		//arr[i] = make([]Torus, n)
+		arr[i] = make([]Torus, n+1)
+		//return &LWESample{A: a, B: &a[n], N: n}
 	}
 
 	return &TLWESample{
@@ -143,7 +154,7 @@ func (sample *TLWESample) ExtractPoly(index int) []Torus {
 }
 
 func (sample *TLWESample) a(index int) []Torus {
-	Assert(index < sample.K)
+	Assert(index <= sample.K)
 	return sample.ExtractPoly(index)
 }
 
@@ -238,6 +249,7 @@ type KeySwitchingKey struct {
 	L   int // decomp size
 	W   int // basebit
 	M   int
+	T   int
 	raw []*LWESample
 }
 
@@ -250,7 +262,7 @@ func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
 			param.tlwe_n_*param.tlwe_k_),
 	*/
 
-	//size := m * l * (0x1 << w)
+	t := m * l << w
 
 	ks := make([][][]*LWESample, m)
 	raw := make([]*LWESample, m*l*(0x1<<w))
@@ -268,7 +280,7 @@ func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
 	}
 
 	return &KeySwitchingKey{
-		A: ks, raw: raw, N: n, L: l, W: w, M: m,
+		A: ks, raw: raw, N: n, L: l, W: w, M: m, T: t,
 	}
 
 }
@@ -288,14 +300,14 @@ func (me *KeySwitchingKey) ExtractLWESample(index int) *LWESample {
 */
 
 func (me *KeySwitchingKey) NumLWESamples() int {
-	return len(me.raw)
+	return me.T
 }
 
 // type BootstrappingKey = []TGSWSample
 // TGSWSample
 
 type BootstrappingKey struct {
-	bk []*TGSWSample
+	Bk []*TGSWSample
 	//ks *KeySwitchingKey
 	N int
 	K int
@@ -306,7 +318,7 @@ type BootstrappingKey struct {
 
 func NewBootstrappingKey(n, k, l, w, t int) *BootstrappingKey {
 	arr := NewTGSWSampleArray(t, n, k, l, w)
-	return &BootstrappingKey{bk: arr, N: n, K: k, L: l, W: w, T: t}
+	return &BootstrappingKey{Bk: arr, N: n, K: k, L: l, W: w, T: t}
 }
 
 func NewBootstrappingKeyArray(size, n, k, l, w, t int) (arr []*BootstrappingKey) {
@@ -318,5 +330,5 @@ func NewBootstrappingKeyArray(size, n, k, l, w, t int) (arr []*BootstrappingKey)
 }
 
 func (key *BootstrappingKey) ExtractTGSWSample(index int) *TGSWSample {
-	return key.bk[index]
+	return key.Bk[index]
 }
