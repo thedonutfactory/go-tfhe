@@ -123,7 +123,7 @@ func TestAnd(t *testing.T) {
 
 func TestNor(t *testing.T) {
 	Check := func(out, in0, in1 *Ptxt) {
-		out.Message = in0.Message | ^in1.Message
+		out.Message = ^(in0.Message | in1.Message)
 	}
 	pub_key, pri_key := keys()
 	pt := NewPtxtArray(2)
@@ -162,8 +162,8 @@ func TestXnor(t *testing.T) {
 	pub_key, pri_key := keys()
 	pt := NewPtxtArray(2)
 	ct := NewCtxtArray(2)
-	pt[0].Message = uint32(rand.Int31() % KPtxtSpace)
-	pt[1].Message = uint32(rand.Int31() % KPtxtSpace)
+	pt[0].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
 	Encrypt(ct[0], pt[0], pri_key)
 	Encrypt(ct[1], pt[1], pri_key)
 	Xnor(ct[0], ct[0], ct[1], pub_key)
@@ -173,18 +173,16 @@ func TestXnor(t *testing.T) {
 }
 
 func TestNot(t *testing.T) {
-	Check := func(out, in0, in1 *Ptxt) {
+	Check := func(out, in0 *Ptxt) {
 		out.Message = ^in0.Message
 	}
 	_, pri_key := keys()
-	pt := NewPtxtArray(2)
-	ct := NewCtxtArray(2)
-	pt[0].Message = uint32(rand.Int31() % KPtxtSpace)
-	pt[1].Message = uint32(rand.Int31() % KPtxtSpace)
-	Encrypt(ct[0], pt[0], pri_key)
-	Encrypt(ct[1], pt[1], pri_key)
-	Not(ct[0], ct[0])
-	Check(pt[1], pt[0], pt[1])
-	Decrypt(pt[0], ct[0], pri_key)
-	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
+	out, pt := NewPtxt(), NewPtxt()
+	ct := NewCtxt()
+	pt.Message = 1 //uint32(rand.Int31() % KPtxtSpace)
+	Encrypt(ct, pt, pri_key)
+	Not(ct, ct)
+	Check(out, pt)
+	Decrypt(pt, ct, pri_key)
+	assertEqual(t, pt.Message, pt.Message, "plaintext messages not equal")
 }

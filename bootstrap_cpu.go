@@ -85,32 +85,24 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 	ksk_bits := ksk.W
 	ksk_mask := (0x1 << ksk_bits) - 1
 	ksk_offset := 0x1 << (31 - ksk_l*ksk_bits)
-	temp := make([]Torus, tlwe_n) // new Torus[tlwe_n];
+	temp := make([]Torus, tlwe_n)
 	acc := NewTLWESample(bk.N, bk.K)
-	//std::pair<void*, MemoryDeleter> pair = AllocatorCPU::New(acc->SizeMalloc());
-	//acc->set_data((TLWESample::PointerType)pair.first);
-	//MemoryDeleter acc_deleter = pair.second;
-	//int** decomp = new int32_t*[kpl];
 	decomp := make([][]int32, kpl)
 	for i := 0; i < kpl; i++ {
-		decomp[i] = make([]int32, tlwe_n) //new int32_t[tlwe_n];
+		decomp[i] = make([]int32, tlwe_n)
 	}
 
 	bar_b := ModSwitchFromTorus(*in.B, n2)
 	for i := 0; i < tlwe_n; i++ {
 		temp[i] = mu
 	}
-	//memset(acc->data(), 0, acc->SizeData());
 	PolyMulPowX(acc.b(), temp, int(n2-bar_b), tlwe_n)
-
-	//var bar_a Torus
 
 	for i := 0; i < lwe_n; i++ {
 		bar_a := ModSwitchFromTorus(in.A[i], n2)
 		for j := 0; j <= k; j++ {
 			PolyMulPowX(temp, acc.ExtractPoly(j), int(bar_a), tlwe_n)
 			PolySub(temp, temp, acc.ExtractPoly(j), tlwe_n)
-			//PolyDecomp(decomp+j*bk_l, temp, int32(tlwe_n), int32(bk_bits), int32(bk_l), int32(bk_mask), int32(bk_half), int32(bk_offset))
 			PolyDecomp(decomp[j*bk_l:], temp, int32(tlwe_n), int32(bk_bits), int32(bk_l), int32(bk_mask), int32(bk_half), int32(bk_offset))
 		}
 		for j := 0; j <= k; j++ {
@@ -123,8 +115,6 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 	}
 
 	var coeff, digit int32
-	//memset(out->data(), 0, out->SizeData());
-	//out.A = make([]int32, out.N)
 	out = NewLWESample(lwe_n)
 	*out.B = acc.b()[0]
 	for i := 0; i < k*tlwe_n; i++ {
@@ -138,7 +128,6 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 			digit = (coeff >> (32 - (j+1)*ksk_bits)) & int32(ksk_mask)
 			if digit != 0 {
 				ksk_entry := ksk.A[i][j][digit]
-				//ksk_entry := ksk.ExtractLWESample(ksk.GetLWESampleIndex(i, j, int(digit)))
 				LWESampleSub(out, out, ksk_entry)
 			}
 		}

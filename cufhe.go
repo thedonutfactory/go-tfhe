@@ -130,23 +130,12 @@ func NewPtxtArray(n int) (arr []*Ptxt) {
 	return
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/*
-std::default_random_engine generator; // @todo Set Seed!
-
-void RandomGeneratorSetSeed(uint32_t* values, int32_t size = 1) {
-	std::seed_seq seeds(values, values + size);
-	generator.seed(seeds);
-}
-*/
-
 func SDFromBound(noise_bound float64) float64 {
 	return noise_bound * math.Sqrt(2.0/math.Pi)
 }
 
 // Conversions go back to -0.5~0.5 if Torus is int32!
 func TorusFromDouble(d float64) Torus {
-	//return Torus(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
 	return Torus(math.Round(math.Mod(d, 1) * float64(int64(1)<<32)))
 }
 
@@ -155,7 +144,6 @@ func DoubleFromTorus(t Torus) float64 {
 }
 
 func ApproxPhase(phase Torus, msg_space int32) Torus {
-	//interv := (uint64(1) << 63) / msg_space * 2
 	interv := ((uint64(1) << 63) / uint64(msg_space)) * 2 // width of each interval
 	half_interval := interv / 2
 	phase64 := (uint64(phase) << 32) + half_interval
@@ -176,7 +164,6 @@ func PolyMulAddBinary(r, a []Torus, b []Binary, n int) {
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
 func LWEKeyGen(param *Param) *LWEKey {
 	dist := distuv.Uniform{
 		Min: 0,
@@ -185,27 +172,10 @@ func LWEKeyGen(param *Param) *LWEKey {
 
 	key := NewLWEKey(param.lwe_n_)
 	for i := range key.Key {
-		// key.data()[i] = Torus32(math.Round(dist.Rand()))
 		key.Key[i] = uint32(math.Round(dist.Rand()))
 	}
 	return key
 }
-
-/*
-func TLweKeyGen(result *TLweKey) {
-	N := result.params.N
-	k := result.params.K
-	dist := distuv.Uniform{
-		Min: 0,
-		Max: 1,
-	}
-	for i := int32(0); i < k; i++ {
-		for j := int32(0); j < N; j++ {
-			result.key[i].Coefs[j] = Torus32(math.Round(dist.Rand()))
-		}
-	}
-}
-*/
 
 func TLWEKeyGen(param *Param) *TLWEKey {
 	key := NewTLWEKey(param.tlwe_n_, param.tlwe_k_)
@@ -223,7 +193,6 @@ func TLWEKeyGen(param *Param) *TLWEKey {
 
 func LWEEncrypt(ct *LWESample, pt Torus, key *LWEKey) {
 	noise_bound := GetDefaultParam().lwe_noise_
-	//std::normal_distribution<double> dist_b(0.0, SDFromBound(noise_bound));
 	d1 := NormalDist(0.0, SDFromBound(noise_bound))
 	*ct.B = pt + TorusFromDouble(d1.Rand())
 	d2 := UniformDist(math.MinInt32, math.MaxInt32)
@@ -250,9 +219,6 @@ func LWEDecrypt(ct *LWESample, key *LWEKey, space int32) Torus {
 		err -= ct.A[i] * int32(key.Key[i])
 	}
 	return err
-
-	//LwePhase(ct, key)
-	//return ApproxPhase(err, space)
 }
 
 func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
@@ -264,8 +230,6 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 
 	var mu Torus
 	var temp uint32
-	// lwe_sample := NewLWESample(param.lwe_n_)
-	//total := key.M * key.L * (0x1 << key.W)
 	total := key.NumLWESamples()
 	noise := make([]float64, total)
 	var err float64 = 0
@@ -283,18 +247,8 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 	for i := 0; i < key.M; i++ {
 		temp = lwe_key_from.Key[i]
 		for j := 0; j < key.L; j++ {
-			looper := (0x1 << key.W)
-			/*
-				for k := 0; k < looper; k++ {
-					lwe_sample := key.ExtractLWESample(key.GetLWESampleIndex(i, j, k))
-					mu = Torus((temp * uint32(k)) * (1 << (32 - (j+1)*key.W)))
-					LWEEncryptExternalNoise(lwe_sample, mu, lwe_key_to, noise[index])
-					index++
-				}
-			*/
-
-			for k := 0; k < looper; k++ {
-				lwe_sample := key.A[i][j][k] //key.ExtractLWESample(key.GetLWESampleIndex(i, j, k))
+			for k := 0; k < (0x1 << key.W); k++ {
+				lwe_sample := key.A[i][j][k]
 				mu = Torus((temp * uint32(k)) * (1 << (32 - (j+1)*key.W)))
 				LWEEncryptExternalNoise(lwe_sample, mu, lwe_key_to, noise[index])
 				index++
@@ -303,24 +257,6 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 	}
 	return key
 }
-
-/*
-func tLweSymEncryptZero(ct *TLWESample, key *TLWEKey) {
-	N := key.N
-	k := key.K
-
-	for j := 0; j < N; j++ {
-		result.B().CoefsT[j] = gaussian32(0, alpha)
-	}
-
-	for i := int32(0); i < k; i++ {
-		torusPolynomialUniform(&result.A[i])
-		TorusPolynomialAddMulR(result.B(), &key.key[i], &result.A[i])
-	}
-
-	result.CurrentVariance = alpha * alpha
-}
-*/
 
 func TLWEEncryptZero(ct *TLWESample, key *TLWEKey) {
 	noise_bound := GetDefaultParam().tlwe_noise_
@@ -334,17 +270,14 @@ func TLWEEncryptZero(ct *TLWESample, key *TLWEKey) {
 		for j := 0; j < key.N; j++ {
 			ct.a(i)[j] = Torus(dist_a.Rand())
 		}
-		// PolyMulAddBinary(ct.b(), ct.a(i), key.data(), key.N)
 		PolyMulAddBinary(ct.b(), ct.A[i], key.A[0], key.N)
 	}
 }
 
 func TGSWEncryptBinary(ct *TGSWSample, pt Binary, key *TGSWKey) {
-	//param := GetDefaultParam()
 	l := ct.L
 	k := ct.K
 	w := ct.W
-	//tlwe_sample := NewTLWESample(param.tlwe_n_, param.tlwe_k_)
 	for i := 0; i < ct.NumTLWESamples(); i++ {
 		tlwe_sample := ct.ExtractTLWESample(i)
 		TLWEEncryptZero(tlwe_sample, key)
@@ -365,7 +298,6 @@ func BootstrappingKeyGen(
 	tgsw_key *TGSWKey) *BootstrappingKey {
 
 	param := GetDefaultParam()
-	//tgsw_sample := NewTGSWSample(0, 0, 0, 0)
 	key := NewBootstrappingKey(param.tlwe_n_, param.tlwe_k_,
 		param.tgsw_decomp_size_,
 		param.tgsw_decomp_bits_, param.lwe_n_)
@@ -376,40 +308,16 @@ func BootstrappingKeyGen(
 	return key
 }
 
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-void SetSeed(uint32_t seed) {
-	srand(seed);
-	RandomGeneratorSetSeed(&seed, 1);
-}
-*/
-
 func PubKeyGen(pri_key *PriKey) *PubKey {
-	/*
-		param := GetDefaultParam()
-		return &PubKey{
-			bk_: NewBootstrappingKey(param.tlwe_n_, param.tlwe_k_,
-				param.tgsw_decomp_size_,
-				param.tgsw_decomp_bits_, param.lwe_n_),
-			ksk_: NewKeySwitchingKey(param.lwe_n_,
-				param.keyswitching_decomp_size_,
-				param.keyswitching_decomp_bits_,
-				param.tlwe_n_*param.tlwe_k_),
-		}
-	*/
-
 	lwe_key_extract := pri_key.tlwe_key_.ExtractLWEKey()
 	return &PubKey{
 		bk_: BootstrappingKeyGen(pri_key.lwe_key_, pri_key.tlwe_key_),
-		//lwe_key_extract := NewLWEKey()
 		ksk_: KeySwitchingKeyGen(pri_key.lwe_key_,
 			lwe_key_extract),
 	}
 }
 
 func PriKeyGen() *PriKey {
-	//return NewPriKey(false)
 	param := GetDefaultParam()
 	return &PriKey{
 		lwe_key_:  LWEKeyGen(param),
@@ -424,27 +332,19 @@ func KeyGen() (*PubKey, *PriKey) {
 }
 
 func Encrypt(ctxt *Ctxt, ptxt *Ptxt, pri_key *PriKey) {
-	//assert(Find(ptxt, kPtxtSet));
-	//  Torus mu = TorusFromDouble((double)1.0 * ptxt.message_ / Ptxt::kPtxtSpace);
 	one := ModSwitchToTorus(1, 8)
-	//mu := ptxt.message_ ? one : -one;
 	var mu = one
 	if ptxt.Message == 0 {
 		mu = -one
 	}
-
 	LWEEncrypt(ctxt.lwe_sample_, mu, pri_key.lwe_key_)
 }
 
 func Decrypt(ptxt *Ptxt, ctxt *Ctxt, pri_key *PriKey) {
 	mu := LWEDecrypt(ctxt.lwe_sample_, pri_key.lwe_key_, KPtxtSpace)
-	//  ptxt.message_ = (uint32_t)int32_t((Ptxt::kPtxtSpace) * DoubleFromTorus(mu));
-	//  ptxt.message_ %= ptxt.kPtxtSpace;
-
 	if mu > 0 {
 		ptxt.Message = 1
 	} else {
 		ptxt.Message = 0
 	}
-	//ptxt.message_ = mu > 0 ? 1 : 0;
 }
