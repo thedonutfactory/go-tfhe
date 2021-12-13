@@ -40,8 +40,8 @@ func main() {
 	correct := true
 	for i := 0; i < kNumTests; i++ {
 		pt[0].Message = 0 //uint32(rand.Int31() % t.KPtxtSpace)
-		t.Encrypt(ct[0], pt[0], pri_key)
-		t.Decrypt(pt[1], ct[0], pri_key)
+		ct[0] = t.Encrypt(pt[0], pri_key)
+		pt[1] = t.Decrypt(ct[0], pri_key)
 		if pt[1].Message != pt[0].Message {
 			correct = false
 			//break
@@ -59,11 +59,11 @@ func main() {
 	for i := 0; i < kNumTests; i++ {
 		pt[0].Message = 1 //uint32(rand.Int31() % t.KPtxtSpace)
 		pt[1].Message = 0 //uint32(rand.Int31() % t.KPtxtSpace)
-		t.Encrypt(ct[0], pt[0], pri_key)
-		t.Encrypt(ct[1], pt[1], pri_key)
+		ct[0] = t.Encrypt(pt[0], pri_key)
+		ct[1] = t.Encrypt(pt[1], pri_key)
 		t.Or(ct[0], ct[0], ct[1], pub_key)
 		OrCheck(pt[1], pt[0], pt[1])
-		t.Decrypt(pt[0], ct[0], pri_key)
+		pt[0] = t.Decrypt(ct[0], pri_key)
 		if pt[1].Message != pt[0].Message {
 			correct = false
 			break
@@ -81,11 +81,11 @@ func main() {
 	for i := 0; i < kNumTests; i++ {
 		pt[0].Message = 1 //uint32(rand.Int31() % t.KPtxtSpace)
 		pt[1].Message = 0 //uint32(rand.Int31() % t.KPtxtSpace)
-		t.Encrypt(ct[0], pt[0], pri_key)
-		t.Encrypt(ct[1], pt[1], pri_key)
+		ct[0] = t.Encrypt(pt[0], pri_key)
+		ct[1] = t.Encrypt(pt[1], pri_key)
 		t.Nand(ct[0], ct[0], ct[1], pub_key)
 		NandCheck(pt[1], pt[0], pt[1])
-		t.Decrypt(pt[0], ct[0], pri_key)
+		pt[0] = t.Decrypt(ct[0], pri_key)
 		if pt[1].Message != pt[0].Message {
 			correct = false
 			break

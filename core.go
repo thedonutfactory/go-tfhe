@@ -60,10 +60,10 @@ func NewLWESample(n int) *LWESample {
 	return &LWESample{A: a, B: &a[n], N: n}
 }
 
-func NewLweSampleArray(n, t int) (arr []*LWESample) {
-	arr = make([]*LWESample, n)
-	for i := 0; i < n; i++ {
-		arr[i] = NewLWESample(t)
+func NewLweSampleArray(size, n int) (arr []*LWESample) {
+	arr = make([]*LWESample, size)
+	for i := 0; i < size; i++ {
+		arr[i] = NewLWESample(n)
 	}
 	return
 }

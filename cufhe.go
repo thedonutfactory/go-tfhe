@@ -300,20 +300,24 @@ func KeyGen() (*PubKey, *PriKey) {
 	return pub_key, pri_key
 }
 
-func Encrypt(ctxt *Ctxt, ptxt *Ptxt, pri_key *PriKey) {
+func Encrypt(ptxt *Ptxt, pri_key *PriKey) *Ctxt {
 	one := ModSwitchToTorus(1, 8)
 	var mu = one
 	if ptxt.Message == 0 {
 		mu = -one
 	}
+	ctxt := NewCtxt()
 	LWEEncrypt(ctxt.lwe_sample, mu, pri_key.Lwe_key)
+	return ctxt
 }
 
-func Decrypt(ptxt *Ptxt, ctxt *Ctxt, pri_key *PriKey) {
+func Decrypt(ctxt *Ctxt, pri_key *PriKey) *Ptxt {
 	mu := LWEDecrypt(ctxt.lwe_sample, pri_key.Lwe_key, KPtxtSpace)
+	ptxt := NewPtxt()
 	if mu > 0 {
 		ptxt.Message = 1
 	} else {
 		ptxt.Message = 0
 	}
+	return ptxt
 }
