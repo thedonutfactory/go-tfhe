@@ -3,7 +3,7 @@ package tfhe
 func NewCtxt() *Ctxt {
 	param := GetDefaultParam()
 	return &Ctxt{
-		lwe_sample_: NewLWESample(param.lwe_n_),
+		lwe_sample: NewLWESample(param.lwe_n),
 	}
 }
 

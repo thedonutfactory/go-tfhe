@@ -9,59 +9,28 @@ import (
 const KPtxtSpace = 2
 
 type Param struct {
-	lwe_n_                    int
-	tlwe_n_                   int
-	tlwe_k_                   int
-	tgsw_decomp_bits_         int
-	tgsw_decomp_size_         int
-	keyswitching_decomp_bits_ int
-	keyswitching_decomp_size_ int
-	lwe_noise_                float64
-	tlwe_noise_               float64
-}
-
-func NewParam() *Param {
-	return &Param{
-		lwe_n_:                    500,
-		tlwe_n_:                   1024,
-		tlwe_k_:                   1,
-		tgsw_decomp_bits_:         10,
-		tgsw_decomp_size_:         2,
-		keyswitching_decomp_bits_: 2,
-		keyswitching_decomp_size_: 8,
-		lwe_noise_:                math.Pow(2.0, -15),
-		tlwe_noise_:               9.e-9,
-	}
-}
-
-func BuildParam(lwe_n, tlwe_n, tlwe_k, tgsw_decomp_bits,
-	tgsw_decomp_size, keyswitching_decomp_bits,
-	keyswitching_decomp_size int,
-	lwe_noise, tlwe_noise float64) *Param {
-	return &Param{
-		lwe_n_:                    lwe_n,
-		tlwe_n_:                   tlwe_n,
-		tlwe_k_:                   tlwe_k,
-		tgsw_decomp_bits_:         tgsw_decomp_bits,
-		tgsw_decomp_size_:         tgsw_decomp_size,
-		keyswitching_decomp_bits_: keyswitching_decomp_bits,
-		keyswitching_decomp_size_: keyswitching_decomp_size,
-		lwe_noise_:                lwe_noise,
-		tlwe_noise_:               tlwe_noise,
-	}
+	lwe_n                    int
+	tlwe_n                   int
+	tlwe_k                   int
+	tgsw_decomp_bits         int
+	tgsw_decomp_size         int
+	keyswitching_decomp_bits int
+	keyswitching_decomp_size int
+	lwe_noise                float64
+	tlwe_noise               float64
 }
 
 func GetDefaultParam() *Param {
 	return &Param{
-		500,
-		1024,
-		1,
-		10,
-		2,
-		2,
-		8,
-		math.Pow(2.0, -15),
-		9.e-9,
+		lwe_n:                    500,
+		tlwe_n:                   1024,
+		tlwe_k:                   1,
+		tgsw_decomp_bits:         10,
+		tgsw_decomp_size:         2,
+		keyswitching_decomp_bits: 2,
+		keyswitching_decomp_size: 8,
+		lwe_noise:                math.Pow(2.0, -15),
+		tlwe_noise:               9.e-9,
 	}
 }
 
@@ -70,15 +39,15 @@ func GetDefaultParam() *Param {
 * Necessary for encryption/decryption and public key generation.
  */
 type PriKey struct {
-	lwe_key_  *LWEKey
-	tlwe_key_ *TLWEKey
+	Lwe_key  *LWEKey
+	Tlwe_key *TLWEKey
 }
 
 func NewPriKey(isAlias bool) *PriKey {
 	param := GetDefaultParam()
 	return &PriKey{
-		lwe_key_:  NewLWEKey(param.lwe_n_),
-		tlwe_key_: NewTLWEKey(param.tlwe_n_, param.tlwe_k_),
+		Lwe_key:  NewLWEKey(param.lwe_n),
+		Tlwe_key: NewTLWEKey(param.tlwe_n, param.tlwe_k),
 	}
 }
 
@@ -87,27 +56,27 @@ func NewPriKey(isAlias bool) *PriKey {
 * Necessary for a server to perform homomorphic evaluation.
  */
 type PubKey struct {
-	bk_  *BootstrappingKey
-	ksk_ *KeySwitchingKey
+	Bk  *BootstrappingKey
+	Ksk *KeySwitchingKey
 }
 
 func NewPubKey(isAlias bool) *PubKey {
 	param := GetDefaultParam()
 	return &PubKey{
-		bk_: NewBootstrappingKey(param.tlwe_n_, param.tlwe_k_,
-			param.tgsw_decomp_size_,
-			param.tgsw_decomp_bits_, param.lwe_n_),
-		ksk_: NewKeySwitchingKey(param.lwe_n_,
-			param.keyswitching_decomp_size_,
-			param.keyswitching_decomp_bits_,
-			param.tlwe_n_*param.tlwe_k_),
+		Bk: NewBootstrappingKey(param.tlwe_n, param.tlwe_k,
+			param.tgsw_decomp_size,
+			param.tgsw_decomp_bits, param.lwe_n),
+		Ksk: NewKeySwitchingKey(param.lwe_n,
+			param.keyswitching_decomp_size,
+			param.keyswitching_decomp_bits,
+			param.tlwe_n*param.tlwe_k),
 	}
 }
 
 /** Ciphertext. */
 type Ctxt struct {
-	lwe_sample_        *LWESample
-	lwe_sample_device_ *LWESample
+	lwe_sample        *LWESample
+	lwe_sample_device *LWESample
 }
 
 /** Plaintext is in {0, 1}. */
@@ -170,7 +139,7 @@ func LWEKeyGen(param *Param) *LWEKey {
 		Max: 1,
 	}
 
-	key := NewLWEKey(param.lwe_n_)
+	key := NewLWEKey(param.lwe_n)
 	for i := range key.Key {
 		key.Key[i] = uint32(math.Round(dist.Rand()))
 	}
@@ -178,7 +147,7 @@ func LWEKeyGen(param *Param) *LWEKey {
 }
 
 func TLWEKeyGen(param *Param) *TLWEKey {
-	key := NewTLWEKey(param.tlwe_n_, param.tlwe_k_)
+	key := NewTLWEKey(param.tlwe_n, param.tlwe_k)
 	dist := distuv.Uniform{
 		Min: 0,
 		Max: 1,
@@ -192,7 +161,7 @@ func TLWEKeyGen(param *Param) *TLWEKey {
 }
 
 func LWEEncrypt(ct *LWESample, pt Torus, key *LWEKey) {
-	noise_bound := GetDefaultParam().lwe_noise_
+	noise_bound := GetDefaultParam().lwe_noise
 	d1 := NormalDist(0.0, SDFromBound(noise_bound))
 	*ct.B = pt + TorusFromDouble(d1.Rand())
 	d2 := UniformDist(math.MinInt32, math.MaxInt32)
@@ -223,10 +192,10 @@ func LWEDecrypt(ct *LWESample, key *LWEKey, space int32) Torus {
 
 func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 	param := GetDefaultParam()
-	key := NewKeySwitchingKey(param.lwe_n_,
-		param.keyswitching_decomp_size_,
-		param.keyswitching_decomp_bits_,
-		param.tlwe_n_*param.tlwe_k_)
+	key := NewKeySwitchingKey(param.lwe_n,
+		param.keyswitching_decomp_size,
+		param.keyswitching_decomp_bits,
+		param.tlwe_n*param.tlwe_k)
 
 	var mu Torus
 	var temp uint32
@@ -234,7 +203,7 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 	noise := make([]float64, total)
 	var err float64 = 0
 	for i := 0; i < total; i++ {
-		nd := NormalDist(0.0, SDFromBound(param.lwe_noise_))
+		nd := NormalDist(0.0, SDFromBound(param.lwe_noise))
 		noise[i] = nd.Rand()
 		err += noise[i]
 	}
@@ -259,7 +228,7 @@ func KeySwitchingKeyGen(lwe_key_to, lwe_key_from *LWEKey) *KeySwitchingKey {
 }
 
 func TLWEEncryptZero(ct *TLWESample, key *TLWEKey) {
-	noise_bound := GetDefaultParam().tlwe_noise_
+	noise_bound := GetDefaultParam().tlwe_noise
 	dist_b := NormalDist(0.0, SDFromBound(noise_bound))
 	for i := 0; i < key.N; i++ {
 		ct.b()[i] = TorusFromDouble(dist_b.Rand())
@@ -298,9 +267,9 @@ func BootstrappingKeyGen(
 	tgsw_key *TGSWKey) *BootstrappingKey {
 
 	param := GetDefaultParam()
-	key := NewBootstrappingKey(param.tlwe_n_, param.tlwe_k_,
-		param.tgsw_decomp_size_,
-		param.tgsw_decomp_bits_, param.lwe_n_)
+	key := NewBootstrappingKey(param.tlwe_n, param.tlwe_k,
+		param.tgsw_decomp_size,
+		param.tgsw_decomp_bits, param.lwe_n)
 	for i := 0; i < lwe_key.N; i++ {
 		tgsw_sample := key.ExtractTGSWSample(i)
 		TGSWEncryptBinary(tgsw_sample, lwe_key.Key[i], tgsw_key)
@@ -309,10 +278,10 @@ func BootstrappingKeyGen(
 }
 
 func PubKeyGen(pri_key *PriKey) *PubKey {
-	lwe_key_extract := pri_key.tlwe_key_.ExtractLWEKey()
+	lwe_key_extract := pri_key.Tlwe_key.ExtractLWEKey()
 	return &PubKey{
-		bk_: BootstrappingKeyGen(pri_key.lwe_key_, pri_key.tlwe_key_),
-		ksk_: KeySwitchingKeyGen(pri_key.lwe_key_,
+		Bk: BootstrappingKeyGen(pri_key.Lwe_key, pri_key.Tlwe_key),
+		Ksk: KeySwitchingKeyGen(pri_key.Lwe_key,
 			lwe_key_extract),
 	}
 }
@@ -320,8 +289,8 @@ func PubKeyGen(pri_key *PriKey) *PubKey {
 func PriKeyGen() *PriKey {
 	param := GetDefaultParam()
 	return &PriKey{
-		lwe_key_:  LWEKeyGen(param),
-		tlwe_key_: TLWEKeyGen(param),
+		Lwe_key:  LWEKeyGen(param),
+		Tlwe_key: TLWEKeyGen(param),
 	}
 }
 
@@ -337,11 +306,11 @@ func Encrypt(ctxt *Ctxt, ptxt *Ptxt, pri_key *PriKey) {
 	if ptxt.Message == 0 {
 		mu = -one
 	}
-	LWEEncrypt(ctxt.lwe_sample_, mu, pri_key.lwe_key_)
+	LWEEncrypt(ctxt.lwe_sample, mu, pri_key.Lwe_key)
 }
 
 func Decrypt(ptxt *Ptxt, ctxt *Ctxt, pri_key *PriKey) {
-	mu := LWEDecrypt(ctxt.lwe_sample_, pri_key.lwe_key_, KPtxtSpace)
+	mu := LWEDecrypt(ctxt.lwe_sample, pri_key.Lwe_key, KPtxtSpace)
 	if mu > 0 {
 		ptxt.Message = 1
 	} else {

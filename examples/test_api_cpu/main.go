@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	t "github.com/thedonutfactory/go-tfhe"
 )
@@ -14,17 +15,27 @@ func OrCheck(out, in0, in1 *t.Ptxt) {
 }
 
 func main() {
-	kNumTests := 50
 
-	//SetSeed();  // set random seed
+	var (
+		pub_key *t.PubKey
+		pri_key *t.PriKey
+	)
+
+	if _, err := os.Stat("private.key"); err == nil {
+		pri_key, _ = t.OpenPrivKey("private.key")
+		pub_key, _ = t.OpenPubKey("public.key")
+
+	} else {
+		fmt.Println("------ Key Generation ------")
+		pub_key, pri_key = t.KeyGen()
+		t.SavePrivKey(pri_key, "private.key")
+		t.SavePubKey(pub_key, "public.key")
+	}
+
+	kNumTests := 50
 
 	pt := t.NewPtxtArray(2)
 	ct := t.NewCtxtArray(2)
-
-	fmt.Println("------ Key Generation ------")
-	pub_key, pri_key := t.KeyGen()
-
-	//fmt.Printf("%v, %v", pub_key, pri_key)
 
 	correct := true
 	for i := 0; i < kNumTests; i++ {

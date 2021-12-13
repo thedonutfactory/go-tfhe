@@ -78,17 +78,6 @@ func NewLWEKey(n int) *LWEKey {
 	return &LWEKey{Key: make([]Binary, n), N: n}
 }
 
-// LweParams
-type LweParams struct {
-	N        int
-	alphaMin float64
-	alphaMax float64
-}
-
-func NewLweParams(n int, min, max float64) *LweParams {
-	return &LweParams{n, min, max}
-}
-
 // TLWESample
 type TLWESample struct {
 	A [][]Torus
@@ -220,7 +209,7 @@ type KeySwitchingKey struct {
 	W   int // basebit
 	M   int
 	T   int
-	raw []*LWESample
+	Raw []*LWESample
 }
 
 func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
@@ -241,7 +230,7 @@ func NewKeySwitchingKey(n, l, w, m int) *KeySwitchingKey {
 	}
 
 	return &KeySwitchingKey{
-		A: ks, raw: raw, N: n, L: l, W: w, M: m, T: t,
+		A: ks, Raw: raw, N: n, L: l, W: w, M: m, T: t,
 	}
 
 }
