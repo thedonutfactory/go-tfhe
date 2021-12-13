@@ -123,7 +123,7 @@ func TestAnd(t *testing.T) {
 
 func TestNor(t *testing.T) {
 	Check := func(out, in0, in1 *Ptxt) {
-		out.Message = ^(in0.Message | in1.Message)
+		out.Message = 2 + ^(in0.Message | in1.Message)
 	}
 	pub_key, pri_key := keys()
 	pt := NewPtxtArray(2)
