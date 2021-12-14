@@ -115,7 +115,8 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 	}
 
 	var coeff, digit int32
-	out = NewLWESample(lwe_n)
+	//out = NewLWESample(lwe_n)
+	out.A = make([]int32, lwe_n+1)
 	*out.B = acc.b()[0]
 	for i := 0; i < k*tlwe_n; i++ {
 		if i == 0 {

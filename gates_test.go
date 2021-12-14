@@ -76,8 +76,8 @@ func TestNand(t *testing.T) {
 	pub_key, pri_key := keys()
 	pt := NewPtxtArray(2)
 	ct := NewCtxtArray(2)
-	pt[0].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
-	pt[1].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
+	pt[0].Message = uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = uint32(rand.Int31() % KPtxtSpace)
 	Encrypt(ct[0], pt[0], pri_key)
 	Encrypt(ct[1], pt[1], pri_key)
 	Nand(ct[0], ct[0], ct[1], pub_key)
@@ -94,8 +94,8 @@ func TestOr(t *testing.T) {
 	pub_key, pri_key := keys()
 	pt := NewPtxtArray(2)
 	ct := NewCtxtArray(2)
-	pt[0].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
-	pt[1].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
+	pt[0].Message = uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = uint32(rand.Int31() % KPtxtSpace)
 	Encrypt(ct[0], pt[0], pri_key)
 	Encrypt(ct[1], pt[1], pri_key)
 	Or(ct[0], ct[0], ct[1], pub_key)
@@ -111,12 +111,51 @@ func TestMultiOr(t *testing.T) {
 	pub_key, pri_key := keys()
 	pt := NewPtxtArray(2)
 	ct := NewCtxtArray(2)
-	pt[0].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
-	pt[1].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
+	pt[0].Message = 1
+	pt[1].Message = 0
 	Encrypt(ct[0], pt[0], pri_key)
 	Encrypt(ct[1], pt[1], pri_key)
 	r1, r2 := NewCtxt(), NewCtxt()
+
 	Or(r1, ct[0], ct[1], pub_key)
+	Or(r2, ct[0], r1, pub_key)
+	Check(pt[1], pt[0], pt[1])
+	Decrypt(pt[0], r2, pri_key)
+	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
+}
+
+func TestMultiOrAnd(t *testing.T) {
+	Check := func(out, in0, in1 *Ptxt) {
+		out.Message = in0.Message & (in0.Message | in1.Message)
+	}
+	pub_key, pri_key := keys()
+	pt := NewPtxtArray(2)
+	ct := NewCtxtArray(2)
+	pt[0].Message = uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = uint32(rand.Int31() % KPtxtSpace)
+	Encrypt(ct[0], pt[0], pri_key)
+	Encrypt(ct[1], pt[1], pri_key)
+	r1, r2 := NewCtxt(), NewCtxt()
+	And(r1, ct[0], ct[1], pub_key)
+	Or(r2, ct[0], r1, pub_key)
+	Check(pt[1], pt[0], pt[1])
+	Decrypt(pt[0], r2, pri_key)
+	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
+}
+
+func TestMultiAndOr(t *testing.T) {
+	Check := func(out, in0, in1 *Ptxt) {
+		out.Message = in0.Message | (in0.Message & in1.Message)
+	}
+	pub_key, pri_key := keys()
+	pt := NewPtxtArray(2)
+	ct := NewCtxtArray(2)
+	pt[0].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
+	Encrypt(ct[0], pt[0], pri_key)
+	Encrypt(ct[1], pt[1], pri_key)
+	r1, r2 := NewCtxt(), NewCtxt()
+	And(r1, ct[0], ct[1], pub_key)
 	Or(r2, ct[0], r1, pub_key)
 	Check(pt[1], pt[0], pt[1])
 	Decrypt(pt[0], r2, pri_key)
@@ -137,6 +176,25 @@ func TestAnd(t *testing.T) {
 	And(ct[0], ct[0], ct[1], pub_key)
 	Check(pt[1], pt[0], pt[1])
 	Decrypt(pt[0], ct[0], pri_key)
+	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
+}
+
+func TestMultiAnd(t *testing.T) {
+	Check := func(out, in0, in1 *Ptxt) {
+		out.Message = in0.Message & (in0.Message & in1.Message)
+	}
+	pub_key, pri_key := keys()
+	pt := NewPtxtArray(2)
+	ct := NewCtxtArray(2)
+	pt[0].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
+	Encrypt(ct[0], pt[0], pri_key)
+	Encrypt(ct[1], pt[1], pri_key)
+	r1, r2 := NewCtxt(), NewCtxt()
+	And(r1, ct[0], ct[1], pub_key)
+	And(r2, ct[0], r1, pub_key)
+	Check(pt[1], pt[0], pt[1])
+	Decrypt(pt[0], r2, pri_key)
 	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
 }
 
@@ -171,6 +229,25 @@ func TestXor(t *testing.T) {
 	Xor(ct[0], ct[0], ct[1], pub_key)
 	Check(pt[1], pt[0], pt[1])
 	Decrypt(pt[0], ct[0], pri_key)
+	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
+}
+
+func TestMultiXor(t *testing.T) {
+	Check := func(out, in0, in1 *Ptxt) {
+		out.Message = in0.Message ^ (in0.Message ^ in1.Message)
+	}
+	pub_key, pri_key := keys()
+	pt := NewPtxtArray(2)
+	ct := NewCtxtArray(2)
+	pt[0].Message = 1 //uint32(rand.Int31() % KPtxtSpace)
+	pt[1].Message = 0 //uint32(rand.Int31() % KPtxtSpace)
+	Encrypt(ct[0], pt[0], pri_key)
+	Encrypt(ct[1], pt[1], pri_key)
+	r1, r2 := NewCtxt(), NewCtxt()
+	Xor(r1, ct[0], ct[1], pub_key)
+	Xor(r2, ct[0], r1, pub_key)
+	Check(pt[1], pt[0], pt[1])
+	Decrypt(pt[0], r2, pri_key)
 	assertEqual(t, pt[1].Message, pt[0].Message, "plaintext messages not equal")
 }
 
