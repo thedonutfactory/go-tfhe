@@ -2,52 +2,52 @@ package tfhe
 
 import "math"
 
-type TFheGateBootstrappingParameterSet struct {
-	ksT         int32
-	ksBasebit   int32
+type GateBootstrappingParameterSet struct {
+	KsT         int32
+	KsBasebit   int32
 	InOutParams *LweParams
-	tgswParams  *TGswParams
+	TgswParams  *TGswParams
 }
 
-type TFheGateBootstrappingCloudKeySet struct {
-	params *TFheGateBootstrappingParameterSet
-	bk     *LweBootstrappingKey
+type PublicKey struct {
+	Params *GateBootstrappingParameterSet
+	Bk     *LweBootstrappingKey
 	// bkFFT  *LweBootstrappingKeyFFT
 }
 
-type TFheGateBootstrappingSecretKeySet struct {
-	Params  *TFheGateBootstrappingParameterSet
+type PrivateKey struct {
+	Params  *GateBootstrappingParameterSet
 	LweKey  *LweKey
-	tgswKey *TGswKey
-	Cloud   *TFheGateBootstrappingCloudKeySet
+	TgswKey *TGswKey
+	//Cloud   *PublicKey
 }
 
-func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *LweParams, tgswParams *TGswParams) *TFheGateBootstrappingParameterSet {
-	return &TFheGateBootstrappingParameterSet{
-		ksT:         ksT,
-		ksBasebit:   ksBasebit,
+func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *LweParams, tgswParams *TGswParams) *GateBootstrappingParameterSet {
+	return &GateBootstrappingParameterSet{
+		KsT:         ksT,
+		KsBasebit:   ksBasebit,
 		InOutParams: inOutParams,
-		tgswParams:  tgswParams,
+		TgswParams:  tgswParams,
 	}
 }
 
-func NewTFheGateBootstrappingCloudKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey) *TFheGateBootstrappingCloudKeySet {
-	return &TFheGateBootstrappingCloudKeySet{
-		params: params,
-		bk:     bk,
+func NewPublicKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKey) *PublicKey {
+	return &PublicKey{
+		Params: params,
+		Bk:     bk,
 	}
 }
 
-func NewTFheGateBootstrappingSecretKeySet(params *TFheGateBootstrappingParameterSet, bk *LweBootstrappingKey, lweKey *LweKey, tgswKey *TGswKey) *TFheGateBootstrappingSecretKeySet {
-	return &TFheGateBootstrappingSecretKeySet{
+func NewPrivateKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKey, lweKey *LweKey, tgswKey *TGswKey) *PrivateKey {
+	return &PrivateKey{
 		Params:  params,
 		LweKey:  lweKey,
-		tgswKey: tgswKey,
-		Cloud:   NewTFheGateBootstrappingCloudKeySet(params, bk),
+		TgswKey: tgswKey,
+		//Cloud:   NewPublicKey(params, bk),
 	}
 }
 
-func Default80bitGateBootstrappingParameters() *TFheGateBootstrappingParameterSet {
+func Default80bitGateBootstrappingParameters() *GateBootstrappingParameterSet {
 	// These are the historic parameter set provided in 2016,
 	// that were analyzed against lattice enumeration attacks
 	// Currently (in 2020), the security of these parameters is estimated to lambda = **80-bit security**
@@ -73,7 +73,7 @@ func Default80bitGateBootstrappingParameters() *TFheGateBootstrappingParameterSe
 }
 
 // this is the default and recommended parameter set
-func Default128bitGateBootstrappingParameters() *TFheGateBootstrappingParameterSet {
+func Default128bitGateBootstrappingParameters() *GateBootstrappingParameterSet {
 	// These are the parameter set provided in CGGI2019.
 	// Currently (in 2020), the security of these parameters is estimated to lambda = 129-bit security
 	// (w.r.t bkz-sieve model, + additional hybrid attack models)
@@ -98,7 +98,7 @@ func Default128bitGateBootstrappingParameters() *TFheGateBootstrappingParameterS
 	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
 
-func NewDefaultGateBootstrappingParameters(minimumLambda int32) *TFheGateBootstrappingParameterSet {
+func NewDefaultGateBootstrappingParameters(minimumLambda int32) *GateBootstrappingParameterSet {
 	if minimumLambda > 128 {
 		panic("Sorry, for now, the parameters are only implemented for 80bit and 128bit of security!")
 	}
@@ -114,31 +114,30 @@ func NewDefaultGateBootstrappingParameters(minimumLambda int32) *TFheGateBootstr
 	panic("the requested security parameter must be positive (currently, 80 and 128-bits are supported)")
 }
 
-func NewRandomGateBootstrappingSecretKeyset(params *TFheGateBootstrappingParameterSet) *TFheGateBootstrappingSecretKeySet {
+func GenerateKeys(params *GateBootstrappingParameterSet) (*PublicKey, *PrivateKey) {
 	lweKey := NewLweKey(params.InOutParams)
 	LweKeyGen(lweKey)
-	tgswKey := NewTGswKey(params.tgswParams)
+	tgswKey := NewTGswKey(params.TgswParams)
 	TGswKeyGen(tgswKey)
-	bk := NewLweBootstrappingKey(params.ksT, params.ksBasebit, params.InOutParams,
-		params.tgswParams)
+	bk := NewLweBootstrappingKey(params.KsT, params.KsBasebit, params.InOutParams, params.TgswParams)
 	tfheCreateLweBootstrappingKey(bk, lweKey, tgswKey)
-	return NewTFheGateBootstrappingSecretKeySet(params, bk, lweKey, tgswKey)
+	return NewPublicKey(params, bk), NewPrivateKey(params, bk, lweKey, tgswKey)
 }
 
 /** encrypts a boolean */
-func BootsSymEncrypt(result *LweSample, message int32, key *TFheGateBootstrappingSecretKeySet) {
+func BootsSymEncrypt(result *LweSample, message int32, key *PrivateKey) {
 	_1s8 := ModSwitchToTorus32(1, 8)
 	var mu Torus32 = -_1s8
 	if message != 0 {
 		mu = _1s8
 	}
 	//Torus32 mu = message ? _1s8 : -_1s8;
-	alpha := key.Params.InOutParams.alphaMin //TODO: specify noise
+	alpha := key.Params.InOutParams.AlphaMin //TODO: specify noise
 	LweSymEncrypt(result, mu, alpha, key.LweKey)
 }
 
 /** decrypts a boolean */
-func BootsSymDecrypt(sample *LweSample, key *TFheGateBootstrappingSecretKeySet) int32 {
+func BootsSymDecrypt(sample *LweSample, key *PrivateKey) int32 {
 	mu := LwePhase(sample, key.LweKey)
 	/*
 		if mu != 0 {

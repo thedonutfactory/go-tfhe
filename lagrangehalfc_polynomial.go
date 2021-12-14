@@ -16,14 +16,14 @@ func LagrangeHalfCPolynomialClear(p *LagrangeHalfCPolynomial) {
 }
 
 func LagrangeHalfCPolynomialSetTorusConstant(result *LagrangeHalfCPolynomial, mu Torus32) {
-	muc := complex(T32tod(mu), 0.)
+	muc := complex(TorusToDouble(mu), 0.)
 	for j := 0; j < len(result.coefsC); j++ {
 		result.coefsC[j] = muc
 	}
 }
 
 func LagrangeHalfCPolynomialAddTorusConstant(result *LagrangeHalfCPolynomial, mu Torus32) {
-	muc := complex(T32tod(mu), 0.)
+	muc := complex(TorusToDouble(mu), 0.)
 	for j := 0; j < len(result.coefsC); j++ {
 		if j < 10 {
 			//fmt.Printf("Before: (%f, %f)\n", real(result.coefsC[j]), imag(result.coefsC[j]))

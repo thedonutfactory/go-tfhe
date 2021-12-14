@@ -77,7 +77,7 @@ func castTorus(arr []complex128) (res []Torus32) {
 		//res[i] = int32(real(v))
 		//res[i] = Torus32(int(real(v)))
 		//res[i] = int32(int(math.Round(real(v))))
-		res[i] = Dtot32(real(v)) // int32(real(v))
+		res[i] = DoubleToTorus(real(v)) // int32(real(v))
 	}
 	return
 }

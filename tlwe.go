@@ -10,14 +10,14 @@ import (
 type TLweParams struct {
 	N                  int32     ///< a power of 2: degree of the polynomials
 	K                  int32     ///< number of polynomials in the mask
-	alphaMin           double    ///< minimal noise s.t. the sample is secure
-	alphaMax           double    ///< maximal noise s.t. we can decrypt
-	extractedLweparams LweParams ///< lwe params if one extracts
+	AlphaMin           double    ///< minimal noise s.t. the sample is secure
+	AlphaMax           double    ///< maximal noise s.t. we can decrypt
+	ExtractedLweparams LweParams ///< lwe params if one extracts
 }
 
 type TLweKey struct {
-	params *TLweParams     ///< the parameters of the key
-	key    []IntPolynomial ///< the key (i.e k binary polynomials)
+	Params *TLweParams     ///< the parameters of the key
+	Key    []IntPolynomial ///< the key (i.e k binary polynomials)
 }
 
 type TLweSample struct {
@@ -36,9 +36,9 @@ func NewTLweParams(N, k int32, alphaMin, alphaMax double) *TLweParams {
 	return &TLweParams{
 		N:                  N,
 		K:                  k,
-		alphaMin:           alphaMin,
-		alphaMax:           alphaMax,
-		extractedLweparams: LweParams{N * k, alphaMin, alphaMax},
+		AlphaMin:           alphaMin,
+		AlphaMax:           alphaMax,
+		ExtractedLweparams: LweParams{N * k, alphaMin, alphaMax},
 	}
 }
 
@@ -61,7 +61,7 @@ func NewTLweSampleArray(size int32, params *TLweParams) (arr []*TLweSample) {
 }
 
 func NewTLweKey(params *TLweParams) *TLweKey {
-	return &TLweKey{params: params, key: NewIntPolynomialArray(int(params.K), params.N)}
+	return &TLweKey{Params: params, Key: NewIntPolynomialArray(int(params.K), params.N)}
 }
 
 func (s *TLweSample) DebugTLweSample() {
@@ -70,7 +70,7 @@ func (s *TLweSample) DebugTLweSample() {
 		tabs(4, fmt.Sprintf("a.coefs [%d] [", i))
 		// for j := 0; j < len(s.A[i].CoefsT); j++ {
 		for j := 0; j < 5; j++ {
-			v := s.A[i].CoefsT[j]
+			v := s.A[i].Coefs[j]
 			if v != 0 {
 				tabsi(5, v)
 			}
@@ -81,7 +81,7 @@ func (s *TLweSample) DebugTLweSample() {
 	tabs(4, "b.coefs [")
 	// for i := 0; i < len(s.B().CoefsT); i++ {
 	for i := 0; i < 5; i++ {
-		v := s.B().CoefsT[i]
+		v := s.B().Coefs[i]
 		if v != 0 {
 			tabsi(5, v)
 		}
@@ -92,31 +92,31 @@ func (s *TLweSample) DebugTLweSample() {
 }
 
 func TLweKeyGen(result *TLweKey) {
-	N := result.params.N
-	k := result.params.K
+	N := result.Params.N
+	k := result.Params.K
 	dist := distuv.Uniform{
 		Min: 0,
 		Max: 1,
 	}
 	for i := int32(0); i < k; i++ {
 		for j := int32(0); j < N; j++ {
-			result.key[i].Coefs[j] = Torus32(math.Round(dist.Rand()))
+			result.Key[i].Coefs[j] = Torus32(math.Round(dist.Rand()))
 		}
 	}
 }
 
 /*create an homogeneous tlwe sample*/
 func tLweSymEncryptZero(result *TLweSample, alpha double, key *TLweKey) {
-	N := key.params.N
-	k := key.params.K
+	N := key.Params.N
+	k := key.Params.K
 
 	for j := int32(0); j < N; j++ {
-		result.B().CoefsT[j] = gaussian32(0, alpha)
+		result.B().Coefs[j] = gaussian32(0, alpha)
 	}
 
 	for i := int32(0); i < k; i++ {
 		torusPolynomialUniform(&result.A[i])
-		TorusPolynomialAddMulR(result.B(), &key.key[i], &result.A[i])
+		TorusPolynomialAddMulR(result.B(), &key.Key[i], &result.A[i])
 	}
 
 	result.CurrentVariance = alpha * alpha
@@ -124,8 +124,8 @@ func tLweSymEncryptZero(result *TLweSample, alpha double, key *TLweKey) {
 
 func TLweSymEncrypt(result *TLweSample, message *TorusPolynomial, alpha double, key *TLweKey) {
 	tLweSymEncryptZero(result, alpha, key)
-	for j := int32(0); j < key.params.N; j++ {
-		result.B().CoefsT[j] += message.CoefsT[j]
+	for j := int32(0); j < key.Params.N; j++ {
+		result.B().Coefs[j] += message.Coefs[j]
 	}
 }
 
@@ -134,7 +134,7 @@ func TLweSymEncrypt(result *TLweSample, message *TorusPolynomial, alpha double, 
  */
 func TLweSymEncryptT(result *TLweSample, message Torus32, alpha double, key *TLweKey) {
 	tLweSymEncryptZero(result, alpha, key)
-	result.B().CoefsT[0] += message
+	result.B().Coefs[0] += message
 }
 
 /**
@@ -142,8 +142,8 @@ func TLweSymEncryptT(result *TLweSample, message Torus32, alpha double, key *TLw
  */
 func TLwePhase(phase *TorusPolynomial, sample *TLweSample, key *TLweKey) {
 	TorusPolynomialCopy(phase, sample.B()) // phi = b
-	for i := int32(0); i < key.params.K; i++ {
-		TorusPolynomialSubMulR(phase, &key.key[i], &sample.A[i])
+	for i := int32(0); i < key.Params.K; i++ {
+		TorusPolynomialSubMulR(phase, &key.Key[i], &sample.A[i])
 	}
 }
 
@@ -153,19 +153,19 @@ func TLwePhase(phase *TorusPolynomial, sample *TLweSample, key *TLweKey) {
  */
 func TLweApproxPhase(message *TorusPolynomial, phase *TorusPolynomial, Msize, N int32) {
 	for i := int32(0); i < N; i++ {
-		message.CoefsT[i] = approxPhase(phase.CoefsT[i], Msize)
+		message.Coefs[i] = approxPhase(phase.Coefs[i], Msize)
 	}
 }
 
 func TLweSymDecrypt(result *TorusPolynomial, sample *TLweSample, key *TLweKey, Msize int32) {
 	TLwePhase(result, sample, key)
-	TLweApproxPhase(result, result, Msize, key.params.N)
+	TLweApproxPhase(result, result, Msize, key.Params.N)
 }
 
 func TLweSymDecryptT(sample *TLweSample, key *TLweKey, Msize int32) Torus32 {
-	phase := NewTorusPolynomial(key.params.N)
+	phase := NewTorusPolynomial(key.Params.N)
 	TLwePhase(phase, sample, key)
-	result := approxPhase(phase.CoefsT[0], Msize)
+	result := approxPhase(phase.Coefs[0], Msize)
 	return result
 }
 
@@ -183,7 +183,7 @@ func TLweClear(result *TLweSample, params *TLweParams) {
 func TLweCopy(result *TLweSample, sample *TLweSample, params *TLweParams) {
 	for i := int32(0); i <= params.K; i++ {
 		for j := int32(0); j < params.N; j++ {
-			result.A[i].CoefsT[j] = sample.A[i].CoefsT[j]
+			result.A[i].Coefs[j] = sample.A[i].Coefs[j]
 		}
 	}
 	result.CurrentVariance = sample.CurrentVariance
@@ -204,7 +204,7 @@ func TLweNoiselessTrivialT(result *TLweSample, mu Torus32, params *TLweParams) {
 		torusPolynomialClear(&result.A[i])
 	}
 	torusPolynomialClear(result.B())
-	result.B().CoefsT[0] = mu
+	result.B().Coefs[0] = mu
 	result.CurrentVariance = 0.
 }
 
@@ -261,12 +261,12 @@ func TLweMulByXaiMinusOne(result *TLweSample, ai int32, bk *TLweSample, params *
 
 /** result += (0,x) */
 func tLweAddTTo(result *TLweSample, pos int32, x Torus32, params *TLweParams) {
-	result.A[pos].CoefsT[0] += x
+	result.A[pos].Coefs[0] += x
 }
 
 /** result += p*(0,x) */
 func tLweAddRTTo(result *TLweSample, pos int32, p *IntPolynomial, x Torus32, params *TLweParams) {
 	for i := int32(0); i < params.N; i++ {
-		result.A[pos].CoefsT[i] += p.Coefs[i] * x
+		result.A[pos].Coefs[i] += p.Coefs[i] * x
 	}
 }

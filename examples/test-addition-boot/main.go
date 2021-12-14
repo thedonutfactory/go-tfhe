@@ -2,89 +2,90 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
-	tfhe "github.com/thedonutfactory/go-tfhe"
+	t "github.com/thedonutfactory/go-tfhe"
 )
 
-func fullAdderMUX(sum []*tfhe.LweSample, x []*tfhe.LweSample, y []*tfhe.LweSample, nbBits int, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {
-	inOutParams := keyset.Params.InOutParams
+func fullAdderMUX(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
+	inOutParams := priv.Params.InOutParams
 	// carries
-	carry := tfhe.NewLweSampleArray(2, inOutParams)
-	tfhe.BootsSymEncrypt(carry[0], 0, keyset) // first carry initialized to 0
+	carry := t.NewLweSampleArray(2, inOutParams)
+	t.BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
 	// temps
-	temp := tfhe.NewLweSampleArray(2, inOutParams)
+	temp := t.NewLweSampleArray(2, inOutParams)
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		tfhe.BootsXOR(temp[0], x[i], y[i], keyset.Cloud) // temp = xi XOR yi
-		tfhe.BootsXOR(sum[i], temp[0], carry[0], keyset.Cloud)
+		t.BootsXOR(temp[0], x[i], y[i], key) // temp = xi XOR yi
+		t.BootsXOR(sum[i], temp[0], carry[0], key)
 
 		// carry = MUX(xi XOR yi, carry(i-1), xi AND yi)
-		tfhe.BootsAND(temp[1], x[i], y[i], keyset.Cloud) // temp1 = xi AND yi
-		tfhe.BootsMUX(carry[1], temp[0], carry[0], temp[1], keyset.Cloud)
+		t.BootsAND(temp[1], x[i], y[i], key) // temp1 = xi AND yi
+		t.BootsMUX(carry[1], temp[0], carry[0], temp[1], key)
 
-		mess1 := tfhe.BootsSymDecrypt(temp[0], keyset)
-		mess2 := tfhe.BootsSymDecrypt(carry[0], keyset)
-		mess3 := tfhe.BootsSymDecrypt(temp[1], keyset)
-		messmux := tfhe.BootsSymDecrypt(carry[1], keyset)
+		mess1 := t.BootsSymDecrypt(temp[0], priv)
+		mess2 := t.BootsSymDecrypt(carry[0], priv)
+		mess3 := t.BootsSymDecrypt(temp[1], priv)
+		messmux := t.BootsSymDecrypt(carry[1], priv)
 
-		t := mess3
+		tt := mess3
 		if mess1 != 0 {
-			t = mess2
+			tt = mess2
 		}
 
-		if messmux != t {
+		if messmux != tt {
 			fmt.Printf("\tError[fullAdderMUX]: %d - %f - %f - %f - %f\n", i,
-				tfhe.T32tod(tfhe.LwePhase(temp[0], keyset.LweKey)),
-				tfhe.T32tod(tfhe.LwePhase(carry[0], keyset.LweKey)),
-				tfhe.T32tod(tfhe.LwePhase(temp[1], keyset.LweKey)),
-				tfhe.T32tod(tfhe.LwePhase(carry[1], keyset.LweKey)),
+				t.TorusToDouble(t.LwePhase(temp[0], priv.LweKey)),
+				t.TorusToDouble(t.LwePhase(carry[0], priv.LweKey)),
+				t.TorusToDouble(t.LwePhase(temp[1], priv.LweKey)),
+				t.TorusToDouble(t.LwePhase(carry[1], priv.LweKey)),
 			)
 		}
 
-		tfhe.BootsCOPY(carry[0], carry[1], keyset.Cloud)
+		t.BootsCOPY(carry[0], carry[1], key)
 	}
-	tfhe.BootsCOPY(sum[nbBits], carry[1], keyset.Cloud)
+	t.BootsCOPY(sum[nbBits], carry[1], key)
 }
 
-func fullAdder(sum []*tfhe.LweSample, x []*tfhe.LweSample, y []*tfhe.LweSample, nbBits int, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {
-	inOutParams := keyset.Params.InOutParams
+func fullAdder(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
+	inOutParams := priv.Params.InOutParams
 	// carries
-	carry := tfhe.NewLweSampleArray(2, inOutParams)
-	tfhe.BootsSymEncrypt(carry[0], 0, keyset) // first carry initialized to 0
+	carry := t.NewLweSampleArray(2, inOutParams)
+	t.BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
 	// temps
-	temp := tfhe.NewLweSampleArray(3, inOutParams)
+	temp := t.NewLweSampleArray(3, inOutParams)
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		tfhe.BootsXOR(temp[0], x[i], y[i], keyset.Cloud) // temp = xi XOR yi
-		tfhe.BootsXOR(sum[i], temp[0], carry[0], keyset.Cloud)
+		t.BootsXOR(temp[0], x[i], y[i], key) // temp = xi XOR yi
+		t.BootsXOR(sum[i], temp[0], carry[0], key)
 
 		// carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-		tfhe.BootsAND(temp[1], x[i], y[i], keyset.Cloud)        // temp1 = xi AND yi
-		tfhe.BootsAND(temp[2], carry[0], temp[0], keyset.Cloud) // temp2 = carry AND temp
-		tfhe.BootsXOR(carry[1], temp[1], temp[2], keyset.Cloud)
-		tfhe.BootsCOPY(carry[0], carry[1], keyset.Cloud)
+		t.BootsAND(temp[1], x[i], y[i], key)        // temp1 = xi AND yi
+		t.BootsAND(temp[2], carry[0], temp[0], key) // temp2 = carry AND temp
+		t.BootsXOR(carry[1], temp[1], temp[2], key)
+		t.BootsCOPY(carry[0], carry[1], key)
 	}
-	tfhe.BootsCOPY(sum[nbBits], carry[0], keyset.Cloud)
+	t.BootsCOPY(sum[nbBits], carry[0], key)
 }
 
-func comparisonMUX(comp *tfhe.LweSample, x []*tfhe.LweSample, y []*tfhe.LweSample, nbBits int, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {
+func comparisonMUX(comp *t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
 
-	inOutParams := keyset.Params.InOutParams
+	inOutParams := priv.Params.InOutParams
 	// carries
-	carry := tfhe.NewLweSampleArray(2, inOutParams)
-	tfhe.BootsSymEncrypt(carry[0], 1, keyset) // first carry initialized to 1
+	carry := t.NewLweSampleArray(2, inOutParams)
+	t.BootsSymEncrypt(carry[0], 1, priv) // first carry initialized to 1
 	// temps
-	temp := tfhe.NewLweSample(inOutParams)
+	temp := t.NewLweSample(inOutParams)
 
 	for i := 0; i < nbBits; i++ {
-		tfhe.BootsXOR(temp, x[i], y[i], keyset.Cloud) // temp = xi XOR yi
-		tfhe.BootsMUX(carry[1], temp, y[i], carry[0], keyset.Cloud)
-		tfhe.BootsCOPY(carry[0], carry[1], keyset.Cloud)
+		t.BootsXOR(temp, x[i], y[i], key) // temp = xi XOR yi
+		t.BootsMUX(carry[1], temp, y[i], carry[0], key)
+		t.BootsCOPY(carry[0], carry[1], key)
 	}
-	tfhe.BootsCOPY(comp, carry[0], keyset.Cloud)
+	t.BootsCOPY(comp, carry[0], key)
 }
 
 func fromBool(x bool) int32 {
@@ -119,10 +120,10 @@ func toBits(val int) []int {
 	return l
 }
 
-func decryptAndDisplayResult(sum []*tfhe.LweSample, keyset *tfhe.TFheGateBootstrappingSecretKeySet) {
+func decryptAndDisplayResult(sum []*t.LweSample, keyset *t.PrivateKey) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
-		messSum := tfhe.BootsSymDecrypt(sum[i], keyset)
+		messSum := t.BootsSymDecrypt(sum[i], keyset)
 		fmt.Printf("%d ", messSum)
 	}
 	fmt.Println("]")
@@ -135,10 +136,27 @@ func main() {
 	)
 	// generate params
 	var minimumLambda int32 = 100
-	params := tfhe.NewDefaultGateBootstrappingParameters(minimumLambda)
+	params := t.NewDefaultGateBootstrappingParameters(minimumLambda)
 	inOutParams := params.InOutParams
-	// generate the secret keyset
-	keyset := tfhe.NewRandomGateBootstrappingSecretKeyset(params)
+
+	var (
+		pubKey  *t.PublicKey
+		privKey *t.PrivateKey
+	)
+
+	if _, err := os.Stat("private.key"); err == nil {
+		privKey, _ = t.ReadPrivKey("private.key")
+		pubKey, _ = t.ReadPubKey("public.key")
+
+	} else {
+		fmt.Println("------ Key Generation ------")
+		// generate the secret keyset
+		pubKey, privKey = t.GenerateKeys(params)
+		t.WritePrivKey(privKey, "private.key")
+		t.WritePubKey(pubKey, "public.key")
+	}
+
+	//pubKey, privKey = t.GenerateKeys(params)
 
 	for trial := 0; trial < nbTrials; trial++ {
 
@@ -146,24 +164,24 @@ func main() {
 		yBits := toBits(33)
 
 		// generate samples
-		x := tfhe.NewLweSampleArray(nbBits, inOutParams)
-		y := tfhe.NewLweSampleArray(nbBits, inOutParams)
+		x := t.NewLweSampleArray(nbBits, inOutParams)
+		y := t.NewLweSampleArray(nbBits, inOutParams)
 		for i := 0; i < nbBits; i++ {
-			//tfhe.BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
-			//tfhe.BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
-			tfhe.BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
-			tfhe.BootsSymEncrypt(y[i], int32(yBits[i]), keyset)
+			//t.BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
+			//t.BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
+			t.BootsSymEncrypt(x[i], int32(xBits[i]), privKey)
+			t.BootsSymEncrypt(y[i], int32(yBits[i]), privKey)
 		}
 		// output sum
-		sum := tfhe.NewLweSampleArray(nbBits+1, inOutParams)
+		sum := t.NewLweSampleArray(nbBits+1, inOutParams)
 
 		// evaluate the addition circuit
 		fmt.Printf("starting Bootstrapping %d bits addition circuit (FA in MUX version), trial %d\n", nbBits, trial)
 		start := time.Now()
-		fullAdderMUX(sum, x, y, nbBits, keyset)
+		fullAdderMUX(sum, x, y, nbBits, pubKey, privKey)
 		duration := time.Since(start)
 
-		decryptAndDisplayResult(sum, keyset)
+		decryptAndDisplayResult(sum, privKey)
 		// Formatted string, such as "2h3m0.5s" or "4.503μs"
 		fmt.Printf("finished Bootstrapping %d bits addition circuit (FA in MUX version)\n", nbBits)
 		fmt.Printf("total time: %s\n", duration)
@@ -171,15 +189,15 @@ func main() {
 		// verification
 		var messCarry int32 = 0
 		for i := 0; i < nbBits; i++ {
-			messX := tfhe.BootsSymDecrypt(x[i], keyset)
-			messY := tfhe.BootsSymDecrypt(y[i], keyset)
-			messSum := tfhe.BootsSymDecrypt(sum[i], keyset)
+			messX := t.BootsSymDecrypt(x[i], privKey)
+			messY := t.BootsSymDecrypt(y[i], privKey)
+			messSum := t.BootsSymDecrypt(sum[i], privKey)
 
 			if messSum != (messX ^ messY ^ messCarry) {
 				fmt.Printf("\tVerification Error %d, %f - %f - %f\n", i,
-					tfhe.T32tod(tfhe.LwePhase(x[i], keyset.LweKey)),
-					tfhe.T32tod(tfhe.LwePhase(y[i], keyset.LweKey)),
-					tfhe.T32tod(tfhe.LwePhase(sum[i], keyset.LweKey)),
+					t.TorusToDouble(t.LwePhase(x[i], privKey.LweKey)),
+					t.TorusToDouble(t.LwePhase(y[i], privKey.LweKey)),
+					t.TorusToDouble(t.LwePhase(sum[i], privKey.LweKey)),
 				)
 			}
 
@@ -191,7 +209,7 @@ func main() {
 
 			//messCarry = messCarry ? (messX || messY) : (messX && messY);
 		}
-		messSum := tfhe.BootsSymDecrypt(sum[nbBits], keyset)
+		messSum := t.BootsSymDecrypt(sum[nbBits], privKey)
 		if messSum != messCarry {
 			fmt.Printf("\tVerification Error - %d, %d bits\n", trial, nbBits)
 		}
@@ -199,9 +217,9 @@ func main() {
 		// evaluate the addition circuit
 		fmt.Printf("Starting Bootstrapping %d bits addition circuit (FA)...trial %d\n", nbBits, trial)
 		start = time.Now()
-		fullAdder(sum, x, y, nbBits, keyset)
+		fullAdder(sum, x, y, nbBits, pubKey, privKey)
 		duration = time.Since(start)
-		decryptAndDisplayResult(sum, keyset)
+		decryptAndDisplayResult(sum, privKey)
 		fmt.Printf("finished Bootstrappings %d bits addition circuit (FA)\n", nbBits)
 		fmt.Printf("total time: %s\n", duration)
 
@@ -209,9 +227,9 @@ func main() {
 		{
 			var messCarry int32 = 0
 			for i := 0; i < nbBits; i++ {
-				messX := tfhe.BootsSymDecrypt(x[i], keyset)
-				messY := tfhe.BootsSymDecrypt(y[i], keyset)
-				messSum := tfhe.BootsSymDecrypt(sum[i], keyset)
+				messX := t.BootsSymDecrypt(x[i], privKey)
+				messY := t.BootsSymDecrypt(y[i], privKey)
+				messSum := t.BootsSymDecrypt(sum[i], privKey)
 
 				if messSum != (messX ^ messY ^ messCarry) {
 					fmt.Printf("\tVerification Error - %d, %d\n", trial, i)
@@ -224,17 +242,17 @@ func main() {
 				}
 				//messCarry = messCarry ? (messX || messY) : (messX && messY);
 			}
-			messSum := tfhe.BootsSymDecrypt(sum[nbBits], keyset)
+			messSum := t.BootsSymDecrypt(sum[nbBits], privKey)
 			if messSum != messCarry {
 				fmt.Printf("\tVerification Error - %d, %d\n", trial, nbBits)
 			}
 		}
 
-		comp := tfhe.NewLweSample(inOutParams)
+		comp := t.NewLweSample(inOutParams)
 		// evaluate the addition circuit
 		fmt.Printf("starting Bootstrapping %d bits comparison, trial %d\n", nbBits, trial)
 		start = time.Now()
-		comparisonMUX(comp, x, y, nbBits, keyset)
+		comparisonMUX(comp, x, y, nbBits, pubKey, privKey)
 		duration = time.Since(start)
 		fmt.Printf("finished Bootstrappings %d bits comparison\n", nbBits)
 		fmt.Printf("total time: %s\n", duration)
@@ -243,8 +261,8 @@ func main() {
 		{
 			var messCarry int32 = 1
 			for i := 0; i < nbBits; i++ {
-				messX := tfhe.BootsSymDecrypt(x[i], keyset)
-				messY := tfhe.BootsSymDecrypt(y[i], keyset)
+				messX := t.BootsSymDecrypt(x[i], privKey)
+				messY := t.BootsSymDecrypt(y[i], privKey)
 
 				if messX^messY != 0 {
 					messCarry = messY
@@ -252,7 +270,7 @@ func main() {
 
 				//messCarry = (messX ^ messY) ? messY : messCarry;
 			}
-			messComp := tfhe.BootsSymDecrypt(comp, keyset)
+			messComp := t.BootsSymDecrypt(comp, privKey)
 			if messComp != messCarry {
 				fmt.Printf("\tVerification Error %d, %d\n", trial, nbBits)
 			}

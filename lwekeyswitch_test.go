@@ -33,16 +33,16 @@ func TestLweCreateKeySwitchKeyFromArray(tt *testing.T) {
 		message Torus32,
 		alpha double,
 		key *LweKey) {
-		LweNoiselessTrivial(result, message, key.params)
+		LweNoiselessTrivial(result, message, key.Params)
 		result.CurrentVariance = alpha * alpha
 	}
 
 	test := NewLweKeySwitchKey(300, 14, 2, params500_1em5)
 	alpha := 1e-5
-	N := test.n
-	t := test.t
-	basebit := test.basebit
-	base := test.base
+	N := test.N
+	t := test.T
+	basebit := test.Basebit
+	base := test.Base
 	inKey := make([]int32, N)
 	for i := int32(0); i < N; i++ {
 		if UniformTorus32Dist()%2 == 0 {
@@ -51,11 +51,11 @@ func TestLweCreateKeySwitchKeyFromArray(tt *testing.T) {
 			inKey[i] = 0
 		}
 	}
-	lweCreateKeySwitchKeyFromArray(test.ks, key500, alpha, inKey, N, t, basebit)
+	lweCreateKeySwitchKeyFromArray(test.Ks, key500, alpha, inKey, N, t, basebit)
 	for i := int32(0); i < N; i++ {
 		for j := int32(0); j < t; j++ {
 			for k := int32(0); k < base; k++ {
-				ksIjk := test.ks[i][j][k]
+				ksIjk := test.Ks[i][j][k]
 				assert.EqualValues(alpha*alpha, ksIjk.CurrentVariance)
 				//fmt.Printf("%d, %d\n", k*inKey[i]*1<<(32-(j+1)*basebit), ksIjk.B)
 				assert.EqualValues(k*inKey[i]*1<<(32-(j+1)*basebit), ksIjk.B)

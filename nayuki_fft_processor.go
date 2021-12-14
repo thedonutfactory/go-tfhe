@@ -113,11 +113,11 @@ func intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
 }
 
 func torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	result.coefsC = fp1024Nayuki.executeReverseTorus32(p.CoefsT)
+	result.coefsC = fp1024Nayuki.executeReverseTorus32(p.Coefs)
 }
 
 func torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	result.CoefsT = fp1024Nayuki.executeDirectTorus32(p.coefsC)
+	result.Coefs = fp1024Nayuki.executeDirectTorus32(p.coefsC)
 }
 
 func fftInit(n int64) *FftTables {

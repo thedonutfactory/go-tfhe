@@ -55,7 +55,7 @@ func tfheBlindRotateAndExtract(result *LweSample,
 	bkParams *TGswParams) {
 
 	accumParams := bkParams.TlweParams
-	extractParams := &accumParams.extractedLweparams
+	extractParams := &accumParams.ExtractedLweparams
 	N := accumParams.N
 	_2N := 2 * N
 
@@ -80,9 +80,9 @@ func tfheBlindRotateAndExtract(result *LweSample,
 * @param x The input sample
  */
 func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
-	bkParams := bk.bkParams
-	accumParams := bk.accumParams
-	inParams := bk.inOutParams
+	bkParams := bk.BkParams
+	accumParams := bk.AccumParams
+	inParams := bk.InOutParams
 	N := accumParams.N
 	Nx2 := 2 * N
 	n := inParams.N
@@ -94,9 +94,9 @@ func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x
 	}
 	//the initial testvec = [mu,mu,mu,...,mu]
 	for i := int32(0); i < N; i++ {
-		testvect.CoefsT[i] = mu
+		testvect.Coefs[i] = mu
 	}
-	tfheBlindRotateAndExtract(result, testvect, bk.bk, barb, bara, n, bkParams)
+	tfheBlindRotateAndExtract(result, testvect, bk.Bk, barb, bara, n, bkParams)
 }
 
 /**
@@ -107,33 +107,33 @@ func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x
 * @param x The input sample
  */
 func tfheBootstrap(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
-	u := NewLweSample(&bk.accumParams.extractedLweparams)
+	u := NewLweSample(&bk.AccumParams.ExtractedLweparams)
 	tfheBootstrapWoKS(u, bk, mu, x)
 	// Key Switching
-	lweKeySwitch(result, bk.ks, u)
+	lweKeySwitch(result, bk.Ks, u)
 }
 
 func tfheCreateLweBootstrappingKey(bk *LweBootstrappingKey, keyIn *LweKey, rgswKey *TGswKey) {
-	Assert(bk.bkParams == rgswKey.params)
-	Assert(bk.inOutParams == keyIn.params)
+	Assert(bk.BkParams == rgswKey.Params)
+	Assert(bk.InOutParams == keyIn.Params)
 
-	inOutParams := bk.inOutParams
-	bkParams := bk.bkParams
+	inOutParams := bk.InOutParams
+	bkParams := bk.BkParams
 	accumParams := bkParams.TlweParams
-	extractParams := &accumParams.extractedLweparams
+	extractParams := &accumParams.ExtractedLweparams
 
 	//LweKeySwitchKey* ks; ///< the keyswitch key (s'.s)
 	accumKey := &rgswKey.TlweKey
 	extractedKey := NewLweKey(extractParams)
 	tLweExtractKey(extractedKey, accumKey)
-	lweCreateKeySwitchKey(bk.ks, extractedKey, keyIn)
+	lweCreateKeySwitchKey(bk.Ks, extractedKey, keyIn)
 
 	//TGswSample* bk; ///< the bootstrapping key (s.s")
-	kin := keyIn.key
-	alpha := accumParams.alphaMin
+	kin := keyIn.Key
+	alpha := accumParams.AlphaMin
 	n := inOutParams.N
 
 	for i := int32(0); i < n; i++ {
-		TGswSymEncryptInt(bk.bk[i], kin[i], alpha, rgswKey)
+		TGswSymEncryptInt(bk.Bk[i], kin[i], alpha, rgswKey)
 	}
 }

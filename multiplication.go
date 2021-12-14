@@ -46,7 +46,7 @@ func torusPolynomialMultNaive(result *TorusPolynomial, poly1 *IntPolynomial, pol
 	N := poly1.N
 	Assert(result != poly2)
 	Assert(poly2.N == N && result.N == N)
-	torusPolynomialMultNaiveAux(result.CoefsT, poly1.Coefs, poly2.CoefsT, N)
+	torusPolynomialMultNaiveAux(result.Coefs, poly1.Coefs, poly2.Coefs, N)
 }
 
 /**
@@ -112,13 +112,13 @@ func torusPolynomialMultKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial,
 
 	// Karatsuba
 	//result.CoefsT = karatsubaAux(poly1.Coefs, poly2.CoefsT)
-	karatsubaAux(R, poly1.Coefs, poly2.CoefsT, N)
+	karatsubaAux(R, poly1.Coefs, poly2.Coefs, N)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
-		result.CoefsT[i] = R[i] - R[N+i]
+		result.Coefs[i] = R[i] - R[N+i]
 	}
-	result.CoefsT[N-1] = R[N-1]
+	result.Coefs[N-1] = R[N-1]
 }
 
 // poly1, poly2 and result are polynomials mod X^N+1
@@ -128,14 +128,14 @@ func torusPolynomialAddMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomi
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	karatsubaAux(R, poly1.Coefs, poly2.CoefsT, N)
+	karatsubaAux(R, poly1.Coefs, poly2.Coefs, N)
 	//R := karatsubaAux(poly1.Coefs, poly2.CoefsT)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
-		result.CoefsT[i] += R[i] - R[N+i]
+		result.Coefs[i] += R[i] - R[N+i]
 	}
-	result.CoefsT[N-1] += R[N-1]
+	result.Coefs[N-1] += R[N-1]
 }
 
 // poly1, poly2 and result are polynomials mod X^N+1
@@ -145,12 +145,12 @@ func torusPolynomialSubMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomi
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
-	karatsubaAux(R, poly1.Coefs, poly2.CoefsT, N)
+	karatsubaAux(R, poly1.Coefs, poly2.Coefs, N)
 	//R = karatsubaAux(poly1.Coefs, poly2.CoefsT)
 
 	// reduction mod X^N+1
 	for i := int32(0); i < N-1; i++ {
-		result.CoefsT[i] -= R[i] - R[N+i]
+		result.Coefs[i] -= R[i] - R[N+i]
 	}
-	result.CoefsT[N-1] -= R[N-1]
+	result.Coefs[N-1] -= R[N-1]
 }

@@ -12,9 +12,9 @@ const NB_BITS = 4
 // generate params
 var (
 	minimumLambda int32 = 100
-	// generate the secret keyset
-	keyset            = NewRandomGateBootstrappingSecretKeyset(NewDefaultGateBootstrappingParameters(minimumLambda))
-	ops    Operations = &CipheredOperations{bk: keyset.Cloud}
+	// generate the keys
+	pubKey, priKey            = GenerateKeys(NewDefaultGateBootstrappingParameters(minimumLambda))
+	ops            Operations = &CipheredOperations{bk: pubKey}
 )
 
 func to4Bits(val int) []int {
@@ -32,9 +32,9 @@ func toCiphertext(nums ...int) [][]*LweSample {
 	nbBits := int32(NB_BITS)
 	for _, num := range nums {
 		xBits := to4Bits(num)
-		x := NewLweSampleArray(nbBits, keyset.Params.InOutParams)
+		x := NewLweSampleArray(nbBits, pubKey.Params.InOutParams)
 		for i := int32(0); i < nbBits; i++ {
-			BootsSymEncrypt(x[i], int32(xBits[i]), keyset)
+			BootsSymEncrypt(x[i], int32(xBits[i]), priKey)
 		}
 		r = append(r, x)
 	}
@@ -59,7 +59,7 @@ func toPlaintext(ciphers ...[]*LweSample) []int {
 	for ci, c := range ciphers {
 		var current int = 0
 		for i := 0; i < len(c); i++ {
-			message := BootsSymDecrypt(c[i], keyset)
+			message := BootsSymDecrypt(c[i], priKey)
 			fmt.Printf("%d ", message)
 			if message == 1 {
 				current |= (1 << i)
@@ -74,7 +74,7 @@ func toPlaintext(ciphers ...[]*LweSample) []int {
 func decryptAndDisplayResult(sum []*LweSample, tt *testing.T) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
-		messSum := BootsSymDecrypt(sum[i], keyset)
+		messSum := BootsSymDecrypt(sum[i], priKey)
 		fmt.Printf("%d ", messSum)
 	}
 	fmt.Print("]")
@@ -91,19 +91,19 @@ func TestToPlaintext(tt *testing.T) {
 func TestCompareBit(tt *testing.T) {
 	//assert := assert.New(tt)
 
-	a := NewLweSample(keyset.Params.InOutParams)
-	BootsSymEncrypt(a, 1, keyset)
+	a := NewLweSample(pubKey.Params.InOutParams)
+	BootsSymEncrypt(a, 1, priKey)
 
-	b := NewLweSample(keyset.Params.InOutParams)
-	BootsSymEncrypt(a, 1, keyset)
+	b := NewLweSample(pubKey.Params.InOutParams)
+	BootsSymEncrypt(a, 1, priKey)
 
-	carry := NewLweSample(keyset.Params.InOutParams)
-	tmp := NewLweSample(keyset.Params.InOutParams)
+	carry := NewLweSample(pubKey.Params.InOutParams)
+	tmp := NewLweSample(pubKey.Params.InOutParams)
 
 	result := ops.CompareBit(a, b, carry, tmp)
 
-	carryBit := BootsSymDecrypt(carry, keyset)
-	bBit := BootsSymDecrypt(b, keyset)
+	carryBit := BootsSymDecrypt(carry, priKey)
+	bBit := BootsSymDecrypt(b, priKey)
 
 	fmt.Println(carryBit)
 	fmt.Println(bBit)
@@ -115,7 +115,7 @@ func TestEqual(tt *testing.T) {
 	v := toCiphertext(3, 3)
 	result := ops.Equals(v[0], v[1], NB_BITS)
 	decryptAndDisplayResult(result, tt)
-	equalityBit := BootsSymDecrypt(result[0], keyset)
+	equalityBit := BootsSymDecrypt(result[0], priKey)
 	assert.EqualValues(1, equalityBit)
 }
 
@@ -124,7 +124,7 @@ func TestNotEqual(tt *testing.T) {
 	v := toCiphertext(2, 3)
 	result := ops.Equals(v[0], v[1], NB_BITS)
 	decryptAndDisplayResult(result, tt)
-	equalityBit := BootsSymDecrypt(result[0], keyset)
+	equalityBit := BootsSymDecrypt(result[0], priKey)
 	assert.EqualValues(0, equalityBit)
 }
 
@@ -135,10 +135,10 @@ func TestMinimum(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 3 -> 0011
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(3, r[0])
@@ -151,10 +151,10 @@ func TestMaximum(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 4 -> 0100
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(4, r[0])
@@ -167,10 +167,10 @@ func TestAddition(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 3 -> 0011
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(3, r[0])
@@ -183,10 +183,10 @@ func TestSubtraction(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 3 -> 0011
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(3, r[0])
@@ -199,10 +199,10 @@ func TestMultiply(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 6 -> 0110
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(6, r[0])
@@ -215,10 +215,10 @@ func TestGte(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be true(1) -> 0001
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(1, r[0])
@@ -231,10 +231,10 @@ func TestGteCheckFalse(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be false(0) -> 0000
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(0, r[0])
@@ -247,10 +247,10 @@ func TestGteCheckEquality(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be true(1) -> 0001
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(1, r[0])
@@ -263,10 +263,10 @@ func TestShiftLeft(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0001 << 1 = 0010
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(2, r[0])
@@ -279,10 +279,10 @@ func TestShiftLeftByTwo(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0001 << 2 = 0100
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(4, r[0])
@@ -295,10 +295,10 @@ func TestShiftRight(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0100 >> 1 = 0010
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(2, r[0])
@@ -311,10 +311,10 @@ func TestShiftRightByTwo(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0100 >> 2 = 0001
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(1, r[0])
@@ -327,10 +327,10 @@ func TestUshiftLeft(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0001 << 1 = 0010
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(2, r[0])
@@ -343,10 +343,10 @@ func TestUshiftLeftByTwo(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0001 << 2 = 0100
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(4, r[0])
@@ -359,10 +359,10 @@ func TestUshiftRight(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0100 >> 1 = 0010
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(2, r[0])
@@ -375,10 +375,10 @@ func TestUshiftRightByTwo(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 0100 >> 2 = 0001
-	assert.EqualValues(1, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(1, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 }
 
 func TestDivide(tt *testing.T) {
@@ -388,10 +388,10 @@ func TestDivide(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 2 -> 0010
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[3], priKey))
 }
 
 func TestPow(tt *testing.T) {
@@ -401,10 +401,10 @@ func TestPow(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 8 -> 1000
-	assert.EqualValues(0, BootsSymDecrypt(result[0], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[1], keyset))
-	assert.EqualValues(0, BootsSymDecrypt(result[2], keyset))
-	assert.EqualValues(1, BootsSymDecrypt(result[3], keyset))
+	assert.EqualValues(0, BootsSymDecrypt(result[0], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[1], priKey))
+	assert.EqualValues(0, BootsSymDecrypt(result[2], priKey))
+	assert.EqualValues(1, BootsSymDecrypt(result[3], priKey))
 
 	r := toPlaintext(result)
 	assert.EqualValues(8, r[0])

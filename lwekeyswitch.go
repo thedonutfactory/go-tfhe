@@ -5,14 +5,14 @@ import (
 )
 
 type LweKeySwitchKey struct {
-	n         int32      ///< length of the input key: s'
-	t         int32      ///< decomposition length
-	basebit   int32      ///< log_2(base)
-	base      int32      ///< decomposition base: a power of 2
-	outParams *LweParams ///< params of the output key s
+	N         int32      ///< length of the input key: s'
+	T         int32      ///< decomposition length
+	Basebit   int32      ///< log_2(base)
+	Base      int32      ///< decomposition base: a power of 2
+	OutParams *LweParams ///< params of the output key s
 	//ks0Raw    []LweSample // array which contains all Lwe samples of size nlbase
 	//ks1Raw    [][]*LweSample   // of size nl points to a ks0Raw array whose cells are spaced at base positions
-	ks [][][]*LweSample ///< the keyswitch elements: a n.l.base matrix
+	Ks [][][]*LweSample ///< the keyswitch elements: a n.l.base matrix
 	// of size n points to ks1 an array whose cells are spaced by ell positions
 }
 
@@ -33,12 +33,12 @@ func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitch
 		}
 	}
 	return &LweKeySwitchKey{
-		n:         n,
-		t:         t,
-		basebit:   basebit,
-		base:      base,
-		outParams: outParams,
-		ks:        ks,
+		N:         n,
+		T:         t,
+		Basebit:   basebit,
+		Base:      base,
+		OutParams: outParams,
+		Ks:        ks,
 	}
 }
 
@@ -55,9 +55,9 @@ Renormalization of KS
  * compute the error of the KS that has been generated and translate the ks to recenter the gaussian in 0
 */
 func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
-	n := int32(ks.n)
-	basebit := ks.basebit
-	t := int32(ks.t)
+	n := int32(ks.N)
+	basebit := ks.Basebit
+	t := int32(ks.T)
 	base := int32(1 << basebit)
 	var err Torus32
 
@@ -66,7 +66,7 @@ func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
 		for j := int32(0); j < t; j++ {
 			for h := int32(1); h < base; h++ { // pas le terme en 0
 				// compute the phase
-				phase := LwePhase(ks.ks[i][j][h], outKey)
+				phase := LwePhase(ks.Ks[i][j][h], outKey)
 				// compute the error
 				x := (inKey[i] * h) * (1 << (32 - (j+1)*basebit))
 				tempErr := phase - x
@@ -76,13 +76,13 @@ func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
 		}
 	}
 	nb := n * t * (base - 1)
-	err = Dtot32(T32tod(err) / double(nb))
+	err = DoubleToTorus(TorusToDouble(err) / double(nb))
 
 	// relinearize
 	for i := int32(0); i < n; i++ {
 		for j := int32(0); j < t; j++ {
 			for h := int32(1); h < base; h++ { // pas le terme en 0
-				ks.ks[i][j][h].B -= err
+				ks.Ks[i][j][h].B -= err
 			}
 		}
 	}
@@ -156,11 +156,11 @@ Create the key switching key: normalize the error in the beginning
 */
 func lweCreateKeySwitchKey(result *LweKeySwitchKey, inKey *LweKey, outKey *LweKey) {
 
-	n := result.n
-	t := result.t
-	basebit := result.basebit
+	n := result.N
+	t := result.T
+	basebit := result.Basebit
 	base := int32(1 << basebit)
-	alpha := outKey.params.alphaMin
+	alpha := outKey.Params.AlphaMin
 	sizeks := n * t * (base - 1)
 	var err double = 0
 
@@ -185,11 +185,11 @@ func lweCreateKeySwitchKey(result *LweKeySwitchKey, inKey *LweKey, outKey *LweKe
 	for i := int32(0); i < n; i++ {
 		for j := int32(0); j < t; j++ {
 			// term h=0 as trivial encryption of 0 (it will not be used in the KeySwitching)
-			LweNoiselessTrivial(result.ks[i][j][0], 0, outKey.params)
+			LweNoiselessTrivial(result.Ks[i][j][0], 0, outKey.Params)
 
 			for h := int32(1); h < base; h++ { // pas le terme en 0
-				mess := (inKey.key[i] * h) * (1 << (32 - (j+1)*basebit))
-				LweSymEncryptWithExternalNoise(result.ks[i][j][h], mess, noise[index], alpha, outKey)
+				mess := (inKey.Key[i] * h) * (1 << (32 - (j+1)*basebit))
+				LweSymEncryptWithExternalNoise(result.Ks[i][j][h], mess, noise[index], alpha, outKey)
 				index += 1
 			}
 		}
@@ -198,13 +198,13 @@ func lweCreateKeySwitchKey(result *LweKeySwitchKey, inKey *LweKey, outKey *LweKe
 
 //sample=(a',b')
 func lweKeySwitch(result *LweSample, ks *LweKeySwitchKey, sample *LweSample) {
-	params := ks.outParams
-	n := ks.n
-	basebit := ks.basebit
-	t := ks.t
+	params := ks.OutParams
+	n := ks.N
+	basebit := ks.Basebit
+	t := ks.T
 
 	LweNoiselessTrivial(result, sample.B, params)
 	lweKeySwitchTranslateFromArray(result,
-		ks.ks, params,
+		ks.Ks, params,
 		sample.A, n, t, basebit)
 }

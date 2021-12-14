@@ -10,12 +10,12 @@ const two32 int64 = int64(1) << 32 // 2^32
 var two32Double double = math.Pow(2, 32)
 
 // from double to Torus32 - float64 to int32 conversion
-func Dtot32(d double) Torus32 {
+func DoubleToTorus(d double) Torus32 {
 	return Torus32(math.Round(math.Mod(d, 1) * math.Pow(2, 32)))
 }
 
 // from Torus32 to double
-func T32tod(x Torus32) double {
+func TorusToDouble(x Torus32) double {
 	return double(x) / math.Pow(2, 32)
 }
 
@@ -80,7 +80,7 @@ func gaussian32(message Torus32, sigma double) Torus32 {
 				z[i] = dist.Rand()
 			}
 	*/
-	return message + Dtot32(dist.Rand())
+	return message + DoubleToTorus(dist.Rand())
 }
 
 // Used to approximate the phase to the nearest message possible in the message space

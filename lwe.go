@@ -7,8 +7,8 @@ import (
 )
 
 type LweKey struct {
-	params *LweParams
-	key    []int32
+	Params *LweParams
+	Key    []int32
 }
 
 //this structure contains Lwe parameters
@@ -17,8 +17,8 @@ type LweKey struct {
 //to all the Lwe keys that use these params.
 type LweParams struct {
 	N        int32
-	alphaMin double //le plus petit bruit tq sur
-	alphaMax double //le plus gd bruit qui permet le déchiffrement
+	AlphaMin double //le plus petit bruit tq sur
+	AlphaMax double //le plus gd bruit qui permet le déchiffrement
 }
 
 type LweSample struct {
@@ -36,7 +36,7 @@ func NewLweParams(n int32, min, max double) *LweParams {
 }
 
 func NewLweKey(params *LweParams) *LweKey {
-	return &LweKey{params: params, key: make([]int32, params.N)}
+	return &LweKey{Params: params, Key: make([]int32, params.N)}
 }
 
 func NewLweSample(params *LweParams) *LweSample {
@@ -52,7 +52,7 @@ func NewLweSampleArray(size int32, params *LweParams) (arr []*LweSample) {
 }
 
 /** generate a new unititialized ciphertext array of length nbelems */
-func NewGateBootstrappingCiphertextArray(nbelems int, params *TFheGateBootstrappingParameterSet) (arr []*LweSample) {
+func NewGateBootstrappingCiphertextArray(nbelems int, params *GateBootstrappingParameterSet) (arr []*LweSample) {
 	return NewLweSampleArray(int32(nbelems), params.InOutParams)
 }
 
@@ -67,12 +67,12 @@ func LweKeyGen(result *LweKey) {
 		Max: 1,
 	}
 
-	z := make([]int32, result.params.N)
+	z := make([]int32, result.Params.N)
 	// Generate some random numbers from standard normal distribution
 	for i := range z {
 		z[i] = Torus32(math.Round(dist.Rand()))
 	}
-	result.key = z
+	result.Key = z
 }
 
 // variablize for use with test mocking
@@ -85,9 +85,9 @@ var LweSymEncrypt = LweSymEncryptImpl
  */
 func LweSymEncryptImpl(result *LweSample, message Torus32, alpha double, key *LweKey) {
 	result.B = gaussian32(message, alpha)
-	for i := 0; i < int(key.params.N); i++ {
+	for i := 0; i < int(key.Params.N); i++ {
 		result.A[i] = UniformTorus32Dist()
-		result.B += result.A[i] * key.key[i]
+		result.B += result.A[i] * key.Key[i]
 	}
 	result.CurrentVariance = alpha * alpha
 }
@@ -97,9 +97,9 @@ func LweSymEncryptImpl(result *LweSample, message Torus32, alpha double, key *Lw
  */
 func LweSymEncryptWithExternalNoise(result *LweSample, message Torus32, noise double, alpha double, key *LweKey) {
 	result.B = message + int32(noise)
-	for i := 0; i < int(key.params.N); i++ {
+	for i := 0; i < int(key.Params.N); i++ {
 		result.A[i] = UniformTorus32Dist()
-		result.B += result.A[i] * key.key[i]
+		result.B += result.A[i] * key.Key[i]
 	}
 
 	result.CurrentVariance = alpha * alpha
@@ -110,8 +110,8 @@ func LweSymEncryptWithExternalNoise(result *LweSample, message Torus32, noise do
  */
 func LwePhase(sample *LweSample, key *LweKey) Torus32 {
 	var axs Torus32 = 0
-	for i := 0; i < int(key.params.N); i++ {
-		axs += sample.A[i] * key.key[i]
+	for i := 0; i < int(key.Params.N); i++ {
+		axs += sample.A[i] * key.Key[i]
 	}
 	return sample.B - axs
 }
@@ -205,13 +205,13 @@ func tLweExtractLweSampleIndex(result *LweSample, x *TLweSample, index int32, pa
 
 	for i := int32(0); i < k; i++ {
 		for j := int32(0); j <= index; j++ {
-			result.A[i*N+j] = x.A[i].CoefsT[index-j]
+			result.A[i*N+j] = x.A[i].Coefs[index-j]
 		}
 		for j := index + 1; j < N; j++ {
-			result.A[i*N+j] = -x.A[i].CoefsT[N+index-j]
+			result.A[i*N+j] = -x.A[i].Coefs[N+index-j]
 		}
 	}
-	result.B = x.B().CoefsT[index]
+	result.B = x.B().Coefs[index]
 }
 
 func tLweExtractLweSample(result *LweSample, x *TLweSample, params *LweParams, rparams *TLweParams) {
@@ -219,12 +219,12 @@ func tLweExtractLweSample(result *LweSample, x *TLweSample, params *LweParams, r
 }
 
 func tLweExtractKey(result *LweKey, key *TLweKey) {
-	N := key.params.N
-	k := key.params.K
-	Assert(result.params.N == k*N)
+	N := key.Params.N
+	k := key.Params.K
+	Assert(result.Params.N == k*N)
 	for i := int32(0); i < k; i++ {
 		for j := int32(0); j < N; j++ {
-			result.key[i*N+j] = key.key[i].Coefs[j]
+			result.Key[i*N+j] = key.Key[i].Coefs[j]
 		}
 	}
 }
