@@ -132,5 +132,4 @@ func Bootstrap(out, in *LWESample, mu Torus, bk *BootstrappingKey, ksk *KeySwitc
 			}
 		}
 	}
-
 }

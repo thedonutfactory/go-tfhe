@@ -85,6 +85,7 @@ func Not(out, in *Ctxt) {
 	for i := 0; i <= in.lwe_sample.N; i++ {
 		out.lwe_sample.A[i] = -in.lwe_sample.A[i]
 	}
+	*out.lwe_sample.B = -*in.lwe_sample.B
 }
 
 // Homomorphic bootstrapped COPY gate (doesn't need to be bootstrapped)
@@ -94,6 +95,7 @@ func Copy(out, in *Ctxt) {
 	for i := 0; i <= in.lwe_sample.N; i++ {
 		out.lwe_sample.A[i] = in.lwe_sample.A[i]
 	}
+	*out.lwe_sample.B = *in.lwe_sample.B
 }
 
 // Homomorphic Trivial Constant gate (doesn't need to be bootstrapped)
@@ -101,14 +103,10 @@ func Copy(out, in *Ctxt) {
 // Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
 func Constant(out *Ctxt, value int32) {
 	fix := ModSwitchToTorus(1, 8)
-	var mu = -fix
-	if value != 0 {
-		mu = fix
-	}
 	for i := 0; i <= out.lwe_sample.N; i++ {
 		out.lwe_sample.A[i] += 0
 	}
-	out.lwe_sample.B = &mu
+	*out.lwe_sample.B = fix
 }
 
 // Homomorphic bootstrapped AndNY Gate: not(a) and b

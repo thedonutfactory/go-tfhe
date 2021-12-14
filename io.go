@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func SavePubKey(key *PubKey, filename string) error {
+func WritePubKey(key *PubKey, filename string) error {
 	file, _ := os.Create(filename)
 	defer file.Close()
 	encoder := gob.NewEncoder(file)
@@ -18,7 +18,7 @@ func SavePubKey(key *PubKey, filename string) error {
 	return nil
 }
 
-func OpenPubKey(filename string) (*PubKey, error) {
+func ReadPubKey(filename string) (*PubKey, error) {
 	var key PubKey
 	dataFile, err := os.Open(filename)
 	if err != nil {
@@ -35,7 +35,7 @@ func OpenPubKey(filename string) (*PubKey, error) {
 	return &key, nil
 }
 
-func SavePrivKey(key *PriKey, filename string) error {
+func WritePrivKey(key *PriKey, filename string) error {
 	file, _ := os.Create(filename)
 	defer file.Close()
 	encoder := gob.NewEncoder(file)
@@ -47,7 +47,7 @@ func SavePrivKey(key *PriKey, filename string) error {
 	return nil
 }
 
-func OpenPrivKey(filename string) (*PriKey, error) {
+func ReadPrivKey(filename string) (*PriKey, error) {
 	var key PriKey
 	dataFile, err := os.Open(filename)
 	if err != nil {

@@ -91,6 +91,13 @@ func NewPtxt() *Ptxt {
 	}
 }
 
+func NewPtxtInit(message uint32) *Ptxt {
+	return &Ptxt{
+		kPtxtSpace: 2,
+		Message:    message,
+	}
+}
+
 func NewPtxtArray(n int) (arr []*Ptxt) {
 	arr = make([]*Ptxt, n)
 	for i := 0; i < n; i++ {
@@ -300,24 +307,20 @@ func KeyGen() (*PubKey, *PriKey) {
 	return pub_key, pri_key
 }
 
-func Encrypt(ptxt *Ptxt, pri_key *PriKey) *Ctxt {
+func Encrypt(ctxt *Ctxt, ptxt *Ptxt, pri_key *PriKey) {
 	one := ModSwitchToTorus(1, 8)
 	var mu = one
 	if ptxt.Message == 0 {
 		mu = -one
 	}
-	ctxt := NewCtxt()
 	LWEEncrypt(ctxt.lwe_sample, mu, pri_key.Lwe_key)
-	return ctxt
 }
 
-func Decrypt(ctxt *Ctxt, pri_key *PriKey) *Ptxt {
+func Decrypt(ptxt *Ptxt, ctxt *Ctxt, pri_key *PriKey) {
 	mu := LWEDecrypt(ctxt.lwe_sample, pri_key.Lwe_key, KPtxtSpace)
-	ptxt := NewPtxt()
 	if mu > 0 {
 		ptxt.Message = 1
 	} else {
 		ptxt.Message = 0
 	}
-	return ptxt
 }
