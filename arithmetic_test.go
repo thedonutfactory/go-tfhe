@@ -29,22 +29,21 @@ func TestConversion(t *testing.T) {
 	assert := assert.New(t)
 	// conversion from double to Torus32
 	// conversion from Torus32 to double
-	assert.EqualValues(int32(0), Dtot32(0))
-	assert.EqualValues(1<<31, Dtot32(0.5))
-	assert.EqualValues(1<<31, Dtot32(-0.5))
-	assert.EqualValues(1<<30, Dtot32(0.25))
-	assert.EqualValues(0xC0000000, Dtot32(-0.25))
+	assert.EqualValues(int32(0), DoubleToTorus(0))
+	assert.EqualValues(1<<31, DoubleToTorus(0.5))
+	assert.EqualValues(1<<31, DoubleToTorus(-0.5))
+	assert.EqualValues(1<<30, DoubleToTorus(0.25))
+	assert.EqualValues(0xC0000000, DoubleToTorus(-0.25))
 }
 
 //  Used to approximate the phase to the nearest multiple of  1/Msize
 func TestApproxPhase(t *testing.T) {
 	assert := assert.New(t)
 	for i := int32(2); i < 200; i++ {
-		// Torus32 v = uniformTorus32_distrib(generator);
 		v := UniformTorus32Dist()
 		w := approxPhase(v, i)
-		dv := T32tod(v)
-		dw := T32tod(w)
+		dv := TorusToDouble(v)
+		dw := TorusToDouble(w)
 		fmt.Printf("%d, %f, %f, %f \n", i, dv, dw, float64(i)*dw)
 		assert.LessOrEqual(absfrac(dv-dw), 1./(2.*float64(i))+1e-40)
 		assert.LessOrEqual(absfrac(float64(i)*dw), float64(i)*1e-9)
@@ -57,7 +56,7 @@ func TestModSwitchFromTorus32(t *testing.T) {
 	for i := 2; i < 200; i++ {
 		v := UniformTorus32Dist()
 		w := ModSwitchFromTorus32(v, int32(i))
-		dv := T32tod(v)
+		dv := TorusToDouble(v)
 		dw := double(w) / double(i)
 		assert.LessOrEqual(absfrac(dv-dw), 1./(2.*float64(i))+1e-40)
 	}
@@ -69,7 +68,7 @@ func TestModSwitchToTorus32(t *testing.T) {
 	for i := int32(2); i < 200; i++ {
 		j := UniformTorus32Dist() % i
 		v := ModSwitchToTorus32(j, i)
-		dv := T32tod(v)
+		dv := TorusToDouble(v)
 		//printf("%d, %d, %lf, %lf\n", j, i, dv, double(j)/i);
 		assert.LessOrEqual(absfrac(dv-double(j)/double(i)), 1./(2.*float64(i))+1e-40)
 	}

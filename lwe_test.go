@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	params500  *LweParams = &LweParams{N: 500, alphaMin: 0, alphaMax: 1}
-	params750  *LweParams = &LweParams{N: 750, alphaMin: 0, alphaMax: 1}
-	params1024 *LweParams = &LweParams{N: 1024, alphaMin: 0, alphaMax: 1}
+	params500  *LweParams = &LweParams{N: 500, AlphaMin: 0, AlphaMax: 1}
+	params750  *LweParams = &LweParams{N: 750, AlphaMin: 0, AlphaMax: 1}
+	params1024 *LweParams = &LweParams{N: 1024, AlphaMin: 0, AlphaMax: 1}
 
 	key500  *LweKey = newRandomLweKey(params500)
 	key750  *LweKey = newRandomLweKey(params750)
@@ -25,12 +25,9 @@ var (
 //a deadlock mode on static const initializers
 func newRandomLweKey(params *LweParams) *LweKey {
 
-	key := &LweKey{params: params, key: make([]int32, params.N)} // new_LweKey(params);
+	key := &LweKey{Params: params, Key: make([]int32, params.N)}
 	for i := int32(0); i < params.N; i++ {
-		//v := rand.Int31() % 2
-		//fmt.Println(v)
-		//key.key = append(key.key, rand.Int31()%2)
-		key.key[i] = rand.Int31() % 2 //rand() % 2
+		key.Key[i] = rand.Int31() % 2
 	}
 	return key
 }
@@ -39,11 +36,11 @@ func TestLweKeyGen(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, params := range allParams {
-		key := &LweKey{params: params}
+		key := &LweKey{Params: params}
 		LweKeyGen(key)
-		assert.Equal(params, key.params, "Params and key.params should be the same.")
-		n := key.params.N
-		s := key.key
+		assert.Equal(params, key.Params, "Params and key.params should be the same.")
+		n := key.Params.N
+		s := key.Key
 		//verify that the key is binary and kind-of random
 		var count int32 = 0
 		for i := int32(0); i < n; i++ {
@@ -58,23 +55,23 @@ func TestLweKeyGen(t *testing.T) {
 func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 	assert := assert.New(t)
 
-	var NB_SAMPLES int32 = 10
+	var nbSamples int32 = 10
 	var M int32 = 8
 	alpha := 1.0 / (10.0 * double(M))
 
 	for _, key := range allKeys {
-		params := key.params
-		samples := NewLweSampleArray(NB_SAMPLES, params)
+		params := key.Params
+		samples := NewLweSampleArray(nbSamples, params)
 		// fmt.Println(samples)
 
 		//verify correctness of the decryption
-		for trial := int32(0); trial < NB_SAMPLES; trial++ {
+		for trial := int32(0); trial < nbSamples; trial++ {
 			message := ModSwitchToTorus32(trial, M)
-			LweSymEncrypt(&samples[trial], message, alpha, key)
-			phase := LwePhase(&samples[trial], key)
-			decrypt := LweSymDecrypt(&samples[trial], key, M)
-			dmessage := T32tod(message)
-			dphase := T32tod(phase)
+			LweSymEncrypt(samples[trial], message, alpha, key)
+			phase := LwePhase(samples[trial], key)
+			decrypt := LweSymDecrypt(samples[trial], key, M)
+			dmessage := TorusToDouble(message)
+			dphase := TorusToDouble(phase)
 			assert.Equal(message, decrypt)
 			assert.LessOrEqual(absfrac(dmessage-dphase), 10.*alpha)
 			assert.Equal(alpha*alpha, samples[trial].CurrentVariance)
@@ -84,11 +81,11 @@ func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 		for i := int32(0); i < n; i++ {
 			testset := make(map[Torus32]bool)
 			//set < Torus32 > testset
-			for trial := int32(0); trial < NB_SAMPLES; trial++ {
+			for trial := int32(0); trial < nbSamples; trial++ {
 				testset[samples[trial].A[i]] = true
 				//testset.insert(samples[trial].A[i])
 			}
-			assert.GreaterOrEqual(float32(len(testset)), 0.9*float32(NB_SAMPLES))
+			assert.GreaterOrEqual(float32(len(testset)), 0.9*float32(nbSamples))
 		}
 	}
 
@@ -109,7 +106,7 @@ func fillRandom(result *LweSample, params *LweParams) {
 func TestLweClear(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allKeys {
-		params := key.params
+		params := key.Params
 		n := params.N
 		sample := NewLweSample(params)
 		fillRandom(sample, params)
@@ -127,7 +124,7 @@ func TestLweNoiselessTrivial(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allKeys {
 		message := UniformTorus32Dist()
-		params := key.params
+		params := key.Params
 		n := params.N
 		sample := NewLweSample(params)
 		fillRandom(sample, params)
@@ -153,7 +150,7 @@ func copySample(result *LweSample, sample *LweSample, params *LweParams) {
 func TestLweAddTo(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allKeys {
-		params := key.params
+		params := key.Params
 		n := params.N
 		a := NewLweSample(params)
 		b := NewLweSample(params)
@@ -174,7 +171,7 @@ func TestLweAddTo(t *testing.T) {
 func TestLweSubTo(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allKeys {
-		params := key.params
+		params := key.Params
 		n := params.N
 		a := NewLweSample(params)
 		b := NewLweSample(params)
@@ -195,7 +192,7 @@ func TestLweAddMulTo(t *testing.T) {
 	assert := assert.New(t)
 	const p int32 = 3
 	for _, key := range allKeys {
-		params := key.params
+		params := key.Params
 		n := params.N
 		a := NewLweSample(params)
 		b := NewLweSample(params)
@@ -216,7 +213,7 @@ func TestLweSubMulTo(t *testing.T) {
 	assert := assert.New(t)
 	const p int32 = 3
 	for _, key := range allKeys {
-		params := key.params
+		params := key.Params
 		n := params.N
 		a := NewLweSample(params)
 		b := NewLweSample(params)
