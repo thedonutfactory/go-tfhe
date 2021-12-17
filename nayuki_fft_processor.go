@@ -3,8 +3,6 @@ package tfhe
 import (
 	"fmt"
 	"math"
-
-	"github.com/mjibson/go-dsp/fft"
 )
 
 var fp1024Nayuki *NayukiFFTProcessor = NewNayukiFFTProcessor(1024)
@@ -83,41 +81,6 @@ func (p *NayukiFFTProcessor) checkConjugateCplx() {
 			Assert(math.Abs(a-b) < toler)
 		}
 	}
-}
-
-func (p *NayukiFFTProcessor) executeReverseTorus32(a []Torus32) (res []complex128) {
-	res = fft.IFFT(castComplex(a))
-	return
-}
-
-func (p *NayukiFFTProcessor) executeReverseInt(a []int32) (res []complex128) {
-	res = fft.IFFT(castComplex(a))
-	return
-}
-
-func (p *NayukiFFTProcessor) executeDirectTorus32(a []complex128) (res []Torus32) {
-	res = castTorus(fft.FFT(a))
-	for i := 0; i < int(p.Ns2); i++ {
-		res = append(res, 0)
-	}
-	return
-
-}
-
-/**
- * FFT functions
- */
-
-func intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
-	result.coefsC = fp1024Nayuki.executeReverseInt(p.Coefs)
-}
-
-func torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	result.coefsC = fp1024Nayuki.executeReverseTorus32(p.Coefs)
-}
-
-func torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	result.Coefs = fp1024Nayuki.executeDirectTorus32(p.coefsC)
 }
 
 func fftInit(n int64) *FftTables {

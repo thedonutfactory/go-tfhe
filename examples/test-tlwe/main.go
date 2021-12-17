@@ -46,8 +46,8 @@ func main() {
 	mu := tfhe.NewTorusPolynomial(N)
 	for i := int32(0); i < N; i++ {
 		temp := unift.Int32() // distribution(generator);
-		mu.CoefsT[i] = tfhe.ModSwitchToTorus32(temp, Msize)
-		//cout << mu.coefsT[i] << endl;
+		mu.Coefs[i] = tfhe.ModSwitchToTorus32(temp, Msize)
+		//cout << mu.Coefs[i] << endl;
 	}
 	// PHASE, DECRYPTION
 	phi := tfhe.NewTorusPolynomial(N)
@@ -60,8 +60,8 @@ func main() {
 
 	fmt.Println("Test LweSymDecrypt :")
 	for i := int32(0); i < N; i++ {
-		if dechif.CoefsT[i] != mu.CoefsT[i] {
-			fmt.Printf("%d - %d =? %d error!!!\n", i, dechif.CoefsT[i], mu.CoefsT[i])
+		if dechif.Coefs[i] != mu.Coefs[i] {
+			fmt.Printf("%d - %d =? %d error!!!\n", i, dechif.Coefs[i], mu.Coefs[i])
 		}
 	}
 	fmt.Println("----------------------")
@@ -99,12 +99,12 @@ func main() {
 	mu0 := tfhe.NewTorusPolynomial(N)
 	for i := int32(0); i < N; i++ {
 		temp := unift.Int32()
-		mu0.CoefsT[i] = tfhe.ModSwitchToTorus32(temp, Msize)
+		mu0.Coefs[i] = tfhe.ModSwitchToTorus32(temp, Msize)
 	}
 	mu1 := tfhe.NewTorusPolynomial(N)
 	for i := int32(0); i < N; i++ {
 		temp := unift.Int32()
-		mu1.CoefsT[i] = tfhe.ModSwitchToTorus32(temp, Msize)
+		mu1.Coefs[i] = tfhe.ModSwitchToTorus32(temp, Msize)
 	}
 	var p int32 = 1
 	poly := tfhe.NewIntPolynomial(N)
@@ -128,8 +128,8 @@ func main() {
 
 		fmt.Printf("Test tLweAddTo Trial : %d\n", trial)
 		for i := int32(0); i < N; i++ {
-			decInt = tfhe.ModSwitchFromTorus32(dechif.CoefsT[i], Msize)
-			muInt = tfhe.ModSwitchFromTorus32(mu.CoefsT[i], Msize)
+			decInt = tfhe.ModSwitchFromTorus32(dechif.Coefs[i], Msize)
+			muInt = tfhe.ModSwitchFromTorus32(mu.Coefs[i], Msize)
 			if decInt != muInt {
 				fmt.Printf("%d =? %d error !!!\n", decInt, muInt)
 			}
@@ -145,8 +145,8 @@ func main() {
 
 		fmt.Printf("Test tLweSubTo Trial : %d\n", trial)
 		for i := int32(0); i < N; i++ {
-			decInt = tfhe.ModSwitchFromTorus32(dechif.CoefsT[i], Msize)
-			muInt = tfhe.ModSwitchFromTorus32(mu.CoefsT[i], Msize)
+			decInt = tfhe.ModSwitchFromTorus32(dechif.Coefs[i], Msize)
+			muInt = tfhe.ModSwitchFromTorus32(mu.Coefs[i], Msize)
 			if decInt != muInt {
 				fmt.Printf("%d =? %d error !!!\n", decInt, muInt)
 			}
@@ -162,8 +162,8 @@ func main() {
 
 		fmt.Printf("Test tLweAddMulTo Trial : %d\n", trial)
 		for i := int32(0); i < N; i++ {
-			decInt = tfhe.ModSwitchFromTorus32(dechif.CoefsT[i], Msize)
-			muInt = tfhe.ModSwitchFromTorus32(mu.CoefsT[i], Msize)
+			decInt = tfhe.ModSwitchFromTorus32(dechif.Coefs[i], Msize)
+			muInt = tfhe.ModSwitchFromTorus32(mu.Coefs[i], Msize)
 			if decInt != muInt {
 				fmt.Printf("%d =? %d error !!!\n", decInt, muInt)
 			}
@@ -179,8 +179,8 @@ func main() {
 
 		fmt.Printf("Test tLweSubMulTo Trial : %d\n", trial)
 		for i := int32(0); i < N; i++ {
-			decInt = tfhe.ModSwitchFromTorus32(dechif.CoefsT[i], Msize)
-			muInt = tfhe.ModSwitchFromTorus32(mu.CoefsT[i], Msize)
+			decInt = tfhe.ModSwitchFromTorus32(dechif.Coefs[i], Msize)
+			muInt = tfhe.ModSwitchFromTorus32(mu.Coefs[i], Msize)
 			if decInt != muInt {
 				fmt.Printf("%d =? %d error !!!\n", decInt, muInt)
 			}

@@ -5,7 +5,7 @@ package tfhe
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsNAND(result, ca, cb *LweSample, bk *PublicKey) {
+func Nand(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -27,7 +27,7 @@ func BootsNAND(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsOR(result, ca, cb *LweSample, bk *PublicKey) {
+func Or(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -49,7 +49,7 @@ func BootsOR(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsAND(result, ca, cb *LweSample, bk *PublicKey) {
+func And(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -71,7 +71,7 @@ func BootsAND(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsXOR(result, ca, cb *LweSample, bk *PublicKey) {
+func Xor(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -93,7 +93,7 @@ func BootsXOR(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsXNOR(result, ca, cb *LweSample, bk *PublicKey) {
+func Xnor(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -115,7 +115,7 @@ func BootsXNOR(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsNOT(result, ca *LweSample, bk *PublicKey) {
+func Not(result, ca *LweSample, bk *PublicKey) {
 	inOutParams := bk.Params.InOutParams
 	LweNegate(result, ca, inOutParams)
 }
@@ -125,7 +125,7 @@ func BootsNOT(result, ca *LweSample, bk *PublicKey) {
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsCOPY(result, ca *LweSample, bk *PublicKey) {
+func Copy(result, ca *LweSample, bk *PublicKey) {
 	inOutParams := bk.Params.InOutParams
 	LweCopy(result, ca, inOutParams)
 }
@@ -135,7 +135,7 @@ func BootsCOPY(result, ca *LweSample, bk *PublicKey) {
  * Takes a boolean value)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsCONSTANT(result *LweSample, value int32, bk *PublicKey) {
+func Constant(result *LweSample, value int32, bk *PublicKey) {
 	inOutParams := bk.Params.InOutParams
 	MU := ModSwitchToTorus32(1, 8)
 	var muValue = -MU
@@ -150,7 +150,7 @@ func BootsCONSTANT(result *LweSample, value int32, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsNOR(result, ca, cb *LweSample, bk *PublicKey) {
+func Nor(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -172,7 +172,7 @@ func BootsNOR(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsANDNY(result, ca, cb *LweSample, bk *PublicKey) {
+func AndNY(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -194,7 +194,7 @@ func BootsANDNY(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsANDYN(result, ca, cb *LweSample, bk *PublicKey) {
+func AndYN(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -216,7 +216,7 @@ func BootsANDYN(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsORNY(result, ca, cb *LweSample, bk *PublicKey) {
+func OrNY(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -238,7 +238,7 @@ func BootsORNY(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsORYN(result, ca, cb *LweSample, bk *PublicKey) {
+func OrYN(result, ca, cb *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -260,7 +260,7 @@ func BootsORYN(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 3 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func BootsMUX(result, a, b, c *LweSample, bk *PublicKey) {
+func Mux(result, a, b, c *LweSample, bk *PublicKey) {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	extractedParams := &bk.Params.TgswParams.TlweParams.ExtractedLweparams

@@ -68,7 +68,7 @@ func (s *TLweSample) DebugTLweSample() {
 	tabs(3, "TLweSample {")
 	for i := 0; i < len(s.A); i++ {
 		tabs(4, fmt.Sprintf("a.coefs [%d] [", i))
-		// for j := 0; j < len(s.A[i].CoefsT); j++ {
+		// for j := 0; j < len(s.A[i].Coefs); j++ {
 		for j := 0; j < 5; j++ {
 			v := s.A[i].Coefs[j]
 			if v != 0 {
@@ -79,7 +79,7 @@ func (s *TLweSample) DebugTLweSample() {
 	}
 
 	tabs(4, "b.coefs [")
-	// for i := 0; i < len(s.B().CoefsT); i++ {
+	// for i := 0; i < len(s.B().Coefs); i++ {
 	for i := 0; i < 5; i++ {
 		v := s.B().Coefs[i]
 		if v != 0 {

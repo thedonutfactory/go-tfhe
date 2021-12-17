@@ -60,11 +60,11 @@ func main() {
 	fmt.Println("Test decompH on TorusPolynomial")
 	muBDecH := tfhe.NewIntPolynomialArray(l, N)
 	for i := int32(0); i < N; i++ {
-		muB.CoefsT[i] = unift.Int32() //tfhe.UniformTorus32Dist()
+		muB.Coefs[i] = unift.Int32() //tfhe.UniformTorus32Dist()
 	}
 	tfhe.TGswTorus32PolynomialDecompH(muBDecH, muB, rgswParams)
 	for i := int32(0); i < N; i++ {
-		expected := muB.CoefsT[i]
+		expected := muB.Coefs[i]
 		var actual int32 = 0
 		for j := 0; j < l; j++ {
 			actual += muBDecH[j].Coefs[i] * rgswParams.H[j]
@@ -78,8 +78,8 @@ func main() {
 
 	for i := int32(0); i < N; i++ {
 		temp := unift.Int32()
-		muB.CoefsT[i] = tfhe.ModSwitchToTorus32(temp, Msize)
-		// fmt.Println(muB.CoefsT[i])
+		muB.Coefs[i] = tfhe.ModSwitchToTorus32(temp, Msize)
+		// fmt.Println(muB.Coefs[i])
 	}
 	//MESSAGE RLwe
 	muA := tfhe.NewIntPolynomial(N)
@@ -102,8 +102,8 @@ func main() {
 	fmt.Printf(" variance: %f\n", cipherB.CurrentVariance)
 	tfhe.TLweSymDecrypt(dechifB, cipherB, rlweKey, Msize) // DECRYPTION
 	for i := int32(0); i < N; i++ {
-		expected := tfhe.ModSwitchFromTorus32(muB.CoefsT[i], int(Msize))
-		actual := tfhe.ModSwitchFromTorus32(dechifB.CoefsT[i], int(Msize))
+		expected := tfhe.ModSwitchFromTorus32(muB.Coefs[i], Msize)
+		actual := tfhe.ModSwitchFromTorus32(dechifB.Coefs[i], Msize)
 		if expected != actual {
 			fmt.Printf("tlwe decryption error %d: %d != %d\n", i, actual, expected)
 		}
@@ -115,7 +115,7 @@ func main() {
 	tfhe.TGswTLweDecompH(cipherBDecH, cipherB, rgswParams)
 	for p := int32(0); p <= k; p++ {
 		for i := int32(0); i < N; i++ {
-			expected := cipherB.A[p].CoefsT[i]
+			expected := cipherB.A[p].Coefs[i]
 			var actual int32 = 0
 			for j := int32(0); j < int32(l); j++ {
 				x := int32(l)*p + j
@@ -145,8 +145,8 @@ func main() {
 	fmt.Println("Test cipher after product 3.5 H*muB:")
 	for p := int32(0); p <= k; p++ {
 		for i := int32(0); i < N; i++ {
-			expected := cipherB.A[p].CoefsT[i]
-			actual := cipherAB.A[p].CoefsT[i]
+			expected := cipherB.A[p].Coefs[i]
+			actual := cipherAB.A[p].Coefs[i]
 			if tfhe.Abs(expected-actual) > 10 {
 				fmt.Printf("decompH error (p,i)=(%d,%d): %d != %d\n", p, i, actual, expected)
 			}
@@ -161,8 +161,8 @@ func main() {
 	fmt.Println("Test LweSymDecrypt after product 3.5 H*muB:")
 	fmt.Printf(" variance: %f", cipherAB.CurrentVariance)
 	for i := int32(0); i < N; i++ {
-		expected := tfhe.ModSwitchFromTorus32(muB.CoefsT[i], int(Msize))
-		actual := tfhe.ModSwitchFromTorus32(dechifAB.CoefsT[i], int(Msize))
+		expected := tfhe.ModSwitchFromTorus32(muB.Coefs[i], int(Msize))
+		actual := tfhe.ModSwitchFromTorus32(dechifAB.Coefs[i], int(Msize))
 		if expected != actual {
 			fmt.Printf("tlwe decryption error %d: %d != %d\n", i, actual, expected)
 		}
@@ -175,9 +175,9 @@ func main() {
 	tfhe.TLwePhase(dechifB, cipherA.BlocSample[k][0], rlweKey)
 	fmt.Println("manual decryption test: ")
 	for i := int32(0); i < N; i++ {
-		//fmt.Printf("muA->c[i]: %d, dechifB->c[i]: %d\n", muA.Coefs[i], dechifB.CoefsT[i])
+		//fmt.Printf("muA->c[i]: %d, dechifB->c[i]: %d\n", muA.Coefs[i], dechifB.Coefs[i])
 		expected := muA.Coefs[i]
-		actual := tfhe.ModSwitchFromTorus32(-512*dechifB.CoefsT[i], 2)
+		actual := tfhe.ModSwitchFromTorus32(-512*dechifB.Coefs[i], 2)
 		if expected != actual {
 			fmt.Printf("tgsw encryption error %d: %d != %d\n", i, actual, expected)
 		}
@@ -200,8 +200,8 @@ func main() {
 	fmt.Println("Test LweSymDecrypt after product 3.5:")
 	fmt.Printf(" variance: %f", cipherAB.CurrentVariance)
 	for i := int32(0); i < N; i++ {
-		expected := tfhe.ModSwitchFromTorus32(muAB.CoefsT[i], int(Msize))
-		actual := tfhe.ModSwitchFromTorus32(dechifAB.CoefsT[i], int(Msize))
+		expected := tfhe.ModSwitchFromTorus32(muAB.Coefs[i], int(Msize))
+		actual := tfhe.ModSwitchFromTorus32(dechifAB.Coefs[i], int(Msize))
 		if expected != actual {
 			fmt.Printf("tlwe decryption error %d: %d != %d\n", i, actual, expected)
 		}

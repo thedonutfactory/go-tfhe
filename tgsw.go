@@ -46,7 +46,7 @@ func TGswAddH(result *TGswSample, params *TGswParams) {
 	// compute result += H
 	for bloc := int32(0); bloc <= k; bloc++ {
 		for i := int32(0); i < l; i++ {
-			result.BlocSample[bloc][i].A[bloc].CoefsT[0] += h[i]
+			result.BlocSample[bloc][i].A[bloc].Coefs[0] += h[i]
 		}
 	}
 }

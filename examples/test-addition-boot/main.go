@@ -18,12 +18,12 @@ func fullAdderMUX(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		t.BootsXOR(temp[0], x[i], y[i], key) // temp = xi XOR yi
-		t.BootsXOR(sum[i], temp[0], carry[0], key)
+		t.Xor(temp[0], x[i], y[i], key) // temp = xi XOR yi
+		t.Xor(sum[i], temp[0], carry[0], key)
 
 		// carry = MUX(xi XOR yi, carry(i-1), xi AND yi)
-		t.BootsAND(temp[1], x[i], y[i], key) // temp1 = xi AND yi
-		t.BootsMUX(carry[1], temp[0], carry[0], temp[1], key)
+		t.And(temp[1], x[i], y[i], key) // temp1 = xi AND yi
+		t.Mux(carry[1], temp[0], carry[0], temp[1], key)
 
 		mess1 := t.BootsSymDecrypt(temp[0], priv)
 		mess2 := t.BootsSymDecrypt(carry[0], priv)
@@ -44,9 +44,9 @@ func fullAdderMUX(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits
 			)
 		}
 
-		t.BootsCOPY(carry[0], carry[1], key)
+		t.Copy(carry[0], carry[1], key)
 	}
-	t.BootsCOPY(sum[nbBits], carry[1], key)
+	t.Copy(sum[nbBits], carry[1], key)
 }
 
 func fullAdder(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
@@ -59,16 +59,16 @@ func fullAdder(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits in
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		t.BootsXOR(temp[0], x[i], y[i], key) // temp = xi XOR yi
-		t.BootsXOR(sum[i], temp[0], carry[0], key)
+		t.Xor(temp[0], x[i], y[i], key) // temp = xi XOR yi
+		t.Xor(sum[i], temp[0], carry[0], key)
 
 		// carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-		t.BootsAND(temp[1], x[i], y[i], key)        // temp1 = xi AND yi
-		t.BootsAND(temp[2], carry[0], temp[0], key) // temp2 = carry AND temp
-		t.BootsXOR(carry[1], temp[1], temp[2], key)
-		t.BootsCOPY(carry[0], carry[1], key)
+		t.And(temp[1], x[i], y[i], key)        // temp1 = xi AND yi
+		t.And(temp[2], carry[0], temp[0], key) // temp2 = carry AND temp
+		t.Xor(carry[1], temp[1], temp[2], key)
+		t.Copy(carry[0], carry[1], key)
 	}
-	t.BootsCOPY(sum[nbBits], carry[0], key)
+	t.Copy(sum[nbBits], carry[0], key)
 }
 
 func comparisonMUX(comp *t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
@@ -81,11 +81,11 @@ func comparisonMUX(comp *t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits
 	temp := t.NewLweSample(inOutParams)
 
 	for i := 0; i < nbBits; i++ {
-		t.BootsXOR(temp, x[i], y[i], key) // temp = xi XOR yi
-		t.BootsMUX(carry[1], temp, y[i], carry[0], key)
-		t.BootsCOPY(carry[0], carry[1], key)
+		t.Xor(temp, x[i], y[i], key) // temp = xi XOR yi
+		t.Mux(carry[1], temp, y[i], carry[0], key)
+		t.Copy(carry[0], carry[1], key)
 	}
-	t.BootsCOPY(comp, carry[0], key)
+	t.Copy(comp, carry[0], key)
 }
 
 func fromBool(x bool) int32 {
@@ -145,12 +145,13 @@ func main() {
 	)
 
 	if _, err := os.Stat("private.key"); err == nil {
+		fmt.Println("------ Reading keys from file ------")
 		privKey, _ = t.ReadPrivKey("private.key")
 		pubKey, _ = t.ReadPubKey("public.key")
 
 	} else {
 		fmt.Println("------ Key Generation ------")
-		// generate the secret keyset
+		// generate the keys
 		pubKey, privKey = t.GenerateKeys(params)
 		t.WritePrivKey(privKey, "private.key")
 		t.WritePubKey(pubKey, "public.key")

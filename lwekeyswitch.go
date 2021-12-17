@@ -19,16 +19,13 @@ type LweKeySwitchKey struct {
 func NewLweKeySwitchKey(n, t, basebit int32, outParams *LweParams) *LweKeySwitchKey {
 
 	base := int32(1 << basebit)
-	ks0Raw := NewLweSampleArray(n*t*base, outParams)
 	ks := make([][][]*LweSample, n)
-	var c int = 0
 	for i := int32(0); i < n; i++ {
-		ks[i] = make([][]*LweSample, n)
+		ks[i] = make([][]*LweSample, t)
 		for j := int32(0); j < t; j++ {
-			ks[i][j] = make([]*LweSample, t)
+			ks[i][j] = make([]*LweSample, base)
 			for k := int32(0); k < base; k++ {
-				ks[i][j][k] = ks0Raw[c]
-				c++
+				ks[i][j][k] = NewLweSample(outParams) //ks0Raw[c]
 			}
 		}
 	}

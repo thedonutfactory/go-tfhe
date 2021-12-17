@@ -159,7 +159,7 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 				testset := make(map[Torus32]bool)
 				//set<Torus32> testset
 				for trial := 0; trial < nbSamples; trial++ {
-					//testset.insert(samples[trial].a[i].CoefsT[j])
+					//testset.insert(samples[trial].a[i].Coefs[j])
 					testset[samples[trial].A[i].Coefs[j]] = true
 				}
 				assert.GreaterOrEqual(double(len(testset)), 0.9*nbSamples) // >=
