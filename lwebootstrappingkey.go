@@ -1,11 +1,31 @@
 package tfhe
 
 type LweBootstrappingKey struct {
-	in_out_params  *LweParams       ///< paramètre de l'input et de l'output. key: s
-	bk_params      *TGswParams      ///< params of the Gsw elems in bk. key: s"
-	accum_params   *TLweParams      ///< params of the accum variable key: s"
-	extract_params *LweParams       ///< params after extraction: key: s'
-	bk             *TGswSample      ///< the bootstrapping key (s->s")
-	ks             *LweKeySwitchKey ///< the keyswitch key (s'->s)
+	InOutParams   *LweParams       ///< paramètre de l'input et de l'output. key: s
+	BkParams      *TGswParams      ///< params of the Gsw elems in bk. key: s"
+	AccumParams   *TLweParams      ///< params of the accum variable key: s"
+	ExtractParams *LweParams       ///< params after extraction: key: s'
+	Bk            []*TGswSample    ///< the bootstrapping key (s.s")
+	Ks            *LweKeySwitchKey ///< the keyswitch key (s'.s)
 }
 
+func NewLweBootstrappingKey(ksT, ksBasebit int32, inOutParams *LweParams,
+	bkParams *TGswParams) *LweBootstrappingKey {
+
+	accumParams := bkParams.TlweParams
+	extractParams := &accumParams.ExtractedLweparams
+	n := inOutParams.N
+	N := extractParams.N
+
+	bk := NewTGswSampleArray(n, bkParams)
+	ks := NewLweKeySwitchKey(N, ksT, ksBasebit, inOutParams)
+
+	return &LweBootstrappingKey{
+		InOutParams:   inOutParams,
+		BkParams:      bkParams,
+		AccumParams:   accumParams,
+		ExtractParams: extractParams,
+		Bk:            bk,
+		Ks:            ks,
+	}
+}
