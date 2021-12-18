@@ -5,7 +5,7 @@ package tfhe
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Nand(result, ca, cb *LweSample, bk *PublicKey) {
+func Nand(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -18,8 +18,8 @@ func Nand(result, ca, cb *LweSample, bk *PublicKey) {
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
-	//tfheBootstrap(result, bk.Bk, MU, tempResult)
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	//return tfheBootstrap(bk.Bkw.Bk, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 	// tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult)
 }
 
@@ -28,7 +28,7 @@ func Nand(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Or(result, ca, cb *LweSample, bk *PublicKey) {
+func Or(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -42,7 +42,7 @@ func Or(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -50,7 +50,7 @@ func Or(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func And(result, ca, cb *LweSample, bk *PublicKey) {
+func And(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -64,7 +64,7 @@ func And(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -72,7 +72,7 @@ func And(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Xor(result, ca, cb *LweSample, bk *PublicKey) {
+func Xor(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -86,7 +86,7 @@ func Xor(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -94,7 +94,7 @@ func Xor(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Xnor(result, ca, cb *LweSample, bk *PublicKey) {
+func Xnor(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -108,7 +108,7 @@ func Xnor(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -116,9 +116,11 @@ func Xnor(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Not(result, ca *LweSample, bk *PublicKey) {
+func Not(ca *LweSample, bk *PublicKey) *LweSample {
 	inOutParams := bk.Params.InOutParams
+	result := NewLweSample(inOutParams)
 	LweNegate(result, ca, inOutParams)
+	return result
 }
 
 /*
@@ -126,9 +128,11 @@ func Not(result, ca *LweSample, bk *PublicKey) {
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Copy(result, ca *LweSample, bk *PublicKey) {
+func Copy(ca *LweSample, bk *PublicKey) *LweSample {
 	inOutParams := bk.Params.InOutParams
+	result := NewLweSample(inOutParams)
 	LweCopy(result, ca, inOutParams)
+	return result
 }
 
 /*
@@ -136,14 +140,16 @@ func Copy(result, ca *LweSample, bk *PublicKey) {
  * Takes a boolean value)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Constant(result *LweSample, value int32, bk *PublicKey) {
+func Constant(value bool, bk *PublicKey) *LweSample {
 	inOutParams := bk.Params.InOutParams
 	MU := ModSwitchToTorus32(1, 8)
 	var muValue = -MU
-	if value != 0 {
+	if value == true {
 		muValue = MU
 	}
+	result := NewLweSample(inOutParams)
 	LweNoiselessTrivial(result, muValue, inOutParams)
+	return result
 }
 
 /*
@@ -151,7 +157,7 @@ func Constant(result *LweSample, value int32, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Nor(result, ca, cb *LweSample, bk *PublicKey) {
+func Nor(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -165,7 +171,7 @@ func Nor(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -173,7 +179,7 @@ func Nor(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func AndNY(result, ca, cb *LweSample, bk *PublicKey) {
+func AndNY(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -187,7 +193,7 @@ func AndNY(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -195,7 +201,7 @@ func AndNY(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func AndYN(result, ca, cb *LweSample, bk *PublicKey) {
+func AndYN(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -209,7 +215,7 @@ func AndYN(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -217,7 +223,7 @@ func AndYN(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func OrNY(result, ca, cb *LweSample, bk *PublicKey) {
+func OrNY(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -231,7 +237,7 @@ func OrNY(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -239,7 +245,7 @@ func OrNY(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func OrYN(result, ca, cb *LweSample, bk *PublicKey) {
+func OrYN(ca, cb *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	tempResult := NewLweSample(inOutParams)
@@ -253,7 +259,7 @@ func OrYN(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
+	return tfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -261,7 +267,7 @@ func OrYN(result, ca, cb *LweSample, bk *PublicKey) {
  * Takes in input 3 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func Mux(result, a, b, c *LweSample, bk *PublicKey) {
+func Mux(a, b, c *LweSample, bk *PublicKey) *LweSample {
 	MU := ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	extractedParams := &bk.Params.TgswParams.TlweParams.ExtractedLweparams
@@ -295,5 +301,5 @@ func Mux(result, a, b, c *LweSample, bk *PublicKey) {
 	LweAddTo(tempResult1, u2, extractedParams)
 	// Key switching
 	//lweKeySwitch(result, bk.bkFFT.ks, tempResult1)
-	lweKeySwitch(result, bk.Bkw.BkFFT.Ks, tempResult1)
+	return lweKeySwitch(bk.Bkw.BkFFT.Ks, tempResult1)
 }

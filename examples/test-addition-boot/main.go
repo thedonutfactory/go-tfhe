@@ -8,8 +8,9 @@ import (
 	t "github.com/thedonutfactory/go-tfhe"
 )
 
-func fullAdderMUX(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
+func fullAdderMUX(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) []*t.LweSample {
 	inOutParams := priv.Params.InOutParams
+	sum := t.NewLweSampleArray(int32(nbBits)+1, inOutParams)
 	// carries
 	carry := t.NewLweSampleArray(2, inOutParams)
 	t.BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
@@ -18,12 +19,12 @@ func fullAdderMUX(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		t.Xor(temp[0], x[i], y[i], key) // temp = xi XOR yi
-		t.Xor(sum[i], temp[0], carry[0], key)
+		temp[0] = t.Xor(x[i], y[i], key) // temp = xi XOR yi
+		sum[i] = t.Xor(temp[0], carry[0], key)
 
 		// carry = MUX(xi XOR yi, carry(i-1), xi AND yi)
-		t.And(temp[1], x[i], y[i], key) // temp1 = xi AND yi
-		t.Mux(carry[1], temp[0], carry[0], temp[1], key)
+		temp[1] = t.And(x[i], y[i], key) // temp1 = xi AND yi
+		carry[1] = t.Mux(temp[0], carry[0], temp[1], key)
 
 		mess1 := t.BootsSymDecrypt(temp[0], priv)
 		mess2 := t.BootsSymDecrypt(carry[0], priv)
@@ -44,13 +45,15 @@ func fullAdderMUX(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits
 			)
 		}
 
-		t.Copy(carry[0], carry[1], key)
+		carry[0] = t.Copy(carry[1], key)
 	}
-	t.Copy(sum[nbBits], carry[1], key)
+	sum[nbBits] = t.Copy(carry[1], key)
+	return sum
 }
 
-func fullAdder(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
+func fullAdder(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) []*t.LweSample {
 	inOutParams := priv.Params.InOutParams
+	sum := t.NewLweSampleArray(int32(nbBits)+1, inOutParams)
 	// carries
 	carry := t.NewLweSampleArray(2, inOutParams)
 	t.BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
@@ -59,37 +62,36 @@ func fullAdder(sum []*t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits in
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		t.Xor(temp[0], x[i], y[i], key) // temp = xi XOR yi
-		t.Xor(sum[i], temp[0], carry[0], key)
+		temp[0] = t.Xor(x[i], y[i], key) // temp = xi XOR yi
+		sum[i] = t.Xor(temp[0], carry[0], key)
 
 		// carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-		t.And(temp[1], x[i], y[i], key)        // temp1 = xi AND yi
-		t.And(temp[2], carry[0], temp[0], key) // temp2 = carry AND temp
-		t.Xor(carry[1], temp[1], temp[2], key)
-		t.Copy(carry[0], carry[1], key)
+		temp[1] = t.And(x[i], y[i], key)        // temp1 = xi AND yi
+		temp[2] = t.And(carry[0], temp[0], key) // temp2 = carry AND temp
+		carry[1] = t.Xor(temp[1], temp[2], key)
+		carry[0] = t.Copy(carry[1], key)
 	}
-	t.Copy(sum[nbBits], carry[0], key)
+	sum[nbBits] = t.Copy(carry[0], key)
+	return sum
 }
 
-func comparisonMUX(comp *t.LweSample, x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) {
+func comparisonMUX(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) *t.LweSample {
 
 	inOutParams := priv.Params.InOutParams
 	// carries
 	carry := t.NewLweSampleArray(2, inOutParams)
 	t.BootsSymEncrypt(carry[0], 1, priv) // first carry initialized to 1
-	// temps
-	temp := t.NewLweSample(inOutParams)
 
 	for i := 0; i < nbBits; i++ {
-		t.Xor(temp, x[i], y[i], key) // temp = xi XOR yi
-		t.Mux(carry[1], temp, y[i], carry[0], key)
-		t.Copy(carry[0], carry[1], key)
+		temp := t.Xor(x[i], y[i], key) // temp = xi XOR yi
+		carry[1] = t.Mux(temp, y[i], carry[0], key)
+		carry[0] = t.Copy(carry[1], key)
 	}
-	t.Copy(comp, carry[0], key)
+	return t.Copy(carry[0], key)
 }
 
 func fromBool(x bool) int32 {
-	if x == false {
+	if !x {
 		return 0
 	} else {
 		return 1
@@ -160,8 +162,8 @@ func main() {
 
 	for trial := 0; trial < nbTrials; trial++ {
 
-		xBits := toBits(22)
-		yBits := toBits(33)
+		xBits := toBits(2)
+		yBits := toBits(3)
 
 		// generate samples
 		x := t.NewLweSampleArray(nbBits, inOutParams)
@@ -173,12 +175,12 @@ func main() {
 			t.BootsSymEncrypt(y[i], int32(yBits[i]), privKey)
 		}
 		// output sum
-		sum := t.NewLweSampleArray(nbBits+1, inOutParams)
+		//sum := t.NewLweSampleArray(nbBits+1, inOutParams)
 
 		// evaluate the addition circuit
 		fmt.Printf("starting Bootstrapping %d bits addition circuit (FA in MUX version), trial %d\n", nbBits, trial)
 		start := time.Now()
-		fullAdderMUX(sum, x, y, nbBits, pubKey, privKey)
+		sum := fullAdderMUX(x, y, nbBits, pubKey, privKey)
 		duration := time.Since(start)
 
 		decryptAndDisplayResult(sum, privKey)
@@ -214,7 +216,7 @@ func main() {
 		// evaluate the addition circuit
 		fmt.Printf("Starting Bootstrapping %d bits addition circuit (FA)...trial %d\n", nbBits, trial)
 		start = time.Now()
-		fullAdder(sum, x, y, nbBits, pubKey, privKey)
+		sum = fullAdder(x, y, nbBits, pubKey, privKey)
 		duration = time.Since(start)
 		decryptAndDisplayResult(sum, privKey)
 		fmt.Printf("finished Bootstrappings %d bits addition circuit (FA)\n", nbBits)
@@ -244,11 +246,10 @@ func main() {
 			}
 		}
 
-		comp := t.NewLweSample(inOutParams)
 		// evaluate the addition circuit
 		fmt.Printf("starting Bootstrapping %d bits comparison, trial %d\n", nbBits, trial)
 		start = time.Now()
-		comparisonMUX(comp, x, y, nbBits, pubKey, privKey)
+		comp := comparisonMUX(x, y, nbBits, pubKey, privKey)
 		duration = time.Since(start)
 		fmt.Printf("finished Bootstrappings %d bits comparison\n", nbBits)
 		fmt.Printf("total time: %s\n", duration)
