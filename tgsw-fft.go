@@ -114,7 +114,6 @@ func tGswFFTExternMulToTLwe(accum *TLweSample, gsw *TGswSampleFFT, params *TGswP
 	l := params.L
 	kpl := params.Kpl
 	N := tlwe_params.N
-	//TODO attention, improve these new/delete...
 	deca := NewIntPolynomialArray(int(kpl), N)         //decomposed accumulator
 	decaFFT := NewLagrangeHalfCPolynomialArray(kpl, N) //fft version
 	tmpa := NewTLweSampleFFT(tlwe_params)
