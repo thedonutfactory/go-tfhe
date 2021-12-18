@@ -64,13 +64,10 @@ func NewTGswSample(params *TGswParams) *TGswSample {
 	k := params.TlweParams.K
 	l := params.L
 	kpl := params.Kpl
-	//h := params.H
-
 	allSamples := make([]TLweSample, kpl)
 	for i := range allSamples {
 		allSamples[i] = *NewTLweSample(params.TlweParams)
 	}
-
 	var c int = 0
 	blocSamples := make([][]*TLweSample, k+1)
 	for i := range blocSamples {
@@ -80,16 +77,6 @@ func NewTGswSample(params *TGswParams) *TGswSample {
 			c++
 		}
 	}
-	/*
-		blocSamples := make([][]TLweSample, k+1)
-		for i := range blocSamples {
-			blocSamples[i] = make([]TLweSample, l)
-			for j := range blocSamples[i] {
-				blocSamples[i][j] = *NewTLweSample(params.tlweParams)
-			}
-		}
-	*/
-
 	return &TGswSample{
 		AllSample:  allSamples,
 		BlocSample: blocSamples,

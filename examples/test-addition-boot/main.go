@@ -129,21 +129,9 @@ func decryptAndDisplayResult(sum []*t.LweSample, keyset *t.PrivateKey) {
 	fmt.Println("]")
 }
 
-func main() {
-	const (
-		nbBits   = 8
-		nbTrials = 1
-	)
-	// generate params
-	var minimumLambda int32 = 100
-	params := t.NewDefaultGateBootstrappingParameters(minimumLambda)
-	inOutParams := params.InOutParams
-
-	var (
-		pubKey  *t.PublicKey
-		privKey *t.PrivateKey
-	)
-
+func keys(params *t.GateBootstrappingParameterSet) (*t.PublicKey, *t.PrivateKey) {
+	var pubKey *t.PublicKey
+	var privKey *t.PrivateKey
 	if _, err := os.Stat("private.key"); err == nil {
 		fmt.Println("------ Reading keys from file ------")
 		privKey, _ = t.ReadPrivKey("private.key")
@@ -156,8 +144,19 @@ func main() {
 		t.WritePrivKey(privKey, "private.key")
 		t.WritePubKey(pubKey, "public.key")
 	}
+	return pubKey, privKey
+}
 
-	//pubKey, privKey = t.GenerateKeys(params)
+func main() {
+	const (
+		nbBits   = 8
+		nbTrials = 1
+	)
+	// generate params
+	var minimumLambda int32 = 100
+	params := t.NewDefaultGateBootstrappingParameters(minimumLambda)
+	inOutParams := params.InOutParams
+	pubKey, privKey := keys(params)
 
 	for trial := 0; trial < nbTrials; trial++ {
 
@@ -201,14 +200,11 @@ func main() {
 					t.TorusToDouble(t.LwePhase(sum[i], privKey.LweKey)),
 				)
 			}
-
 			if messCarry != 0 {
 				messCarry = fromBool(toBool(messX) || toBool(messY))
 			} else {
 				messCarry = fromBool(toBool(messX) && toBool(messY))
 			}
-
-			//messCarry = messCarry ? (messX || messY) : (messX && messY);
 		}
 		messSum := t.BootsSymDecrypt(sum[nbBits], privKey)
 		if messSum != messCarry {
@@ -241,7 +237,6 @@ func main() {
 				} else {
 					messCarry = fromBool(toBool(messX) && toBool(messY))
 				}
-				//messCarry = messCarry ? (messX || messY) : (messX && messY);
 			}
 			messSum := t.BootsSymDecrypt(sum[nbBits], privKey)
 			if messSum != messCarry {
@@ -264,12 +259,9 @@ func main() {
 			for i := 0; i < nbBits; i++ {
 				messX := t.BootsSymDecrypt(x[i], privKey)
 				messY := t.BootsSymDecrypt(y[i], privKey)
-
 				if messX^messY != 0 {
 					messCarry = messY
 				}
-
-				//messCarry = (messX ^ messY) ? messY : messCarry;
 			}
 			messComp := t.BootsSymDecrypt(comp, privKey)
 			if messComp != messCarry {

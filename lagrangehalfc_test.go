@@ -16,7 +16,7 @@ func printTorusPolynomial(t *TorusPolynomial) {
 
 func printLagrange(p *LagrangeHalfCPolynomial) {
 	for i := 0; i < 10; i++ {
-		fmt.Printf("(%f, %f i), ", real(p.coefsC[i]), imag(p.coefsC[i]))
+		fmt.Printf("(%f, %f i), ", real(p.Coefs[i]), imag(p.Coefs[i]))
 	}
 	fmt.Printf("\n")
 }

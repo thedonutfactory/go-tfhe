@@ -1,5 +1,21 @@
 package tfhe
 
+type LweBootstrappingKeyWrapper struct {
+	Bk    *LweBootstrappingKey
+	BkFFT *LweBootstrappingKeyFFT
+}
+
+func NewLweBootstrappingKeyWrapper(ksT, ksBasebit int32, inOutParams *LweParams,
+	bkParams *TGswParams, lweKey *LweKey, tgswKey *TGswKey) *LweBootstrappingKeyWrapper {
+	bk := newLweBootstrappingKey(ksT, ksBasebit, inOutParams, bkParams)
+	tfheCreateLweBootstrappingKey(bk, lweKey, tgswKey)
+	bkfft := InitLweBootstrappingKeyFFT(bk)
+	return &LweBootstrappingKeyWrapper{
+		Bk:    bk,
+		BkFFT: bkfft,
+	}
+}
+
 type LweBootstrappingKey struct {
 	InOutParams   *LweParams       ///< paramètre de l'input et de l'output. key: s
 	BkParams      *TGswParams      ///< params of the Gsw elems in bk. key: s"
@@ -9,7 +25,7 @@ type LweBootstrappingKey struct {
 	Ks            *LweKeySwitchKey ///< the keyswitch key (s'.s)
 }
 
-func NewLweBootstrappingKey(ksT, ksBasebit int32, inOutParams *LweParams,
+func newLweBootstrappingKey(ksT, ksBasebit int32, inOutParams *LweParams,
 	bkParams *TGswParams) *LweBootstrappingKey {
 
 	accumParams := bkParams.TlweParams
