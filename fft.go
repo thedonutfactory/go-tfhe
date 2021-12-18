@@ -165,24 +165,8 @@ func executeDirectTorus32(res []Torus32, a []complex128) {
 		cplxInout[_2N-1-2*i] = complex(real(a[i]), -imag(a[i]))
 	}
 	z := fft.FFT(cplxInout)
-
-	/*
-		res = make([]Torus32, N)
-		for i := 0; i < N; i++ {
-			res[i] = int32(int64(real(z[i]) * _1sN * _2p32))
-			//res[i] = int32(int64(DoubleToTorus(real(out[i]))))
-			//res[i] = DoubleToTorus(real(out[i]))
-			//t := real(out[i] - out[N+i])
-			//res[i] = int32(int64(t * _1sN * _2p32))
-		}
-	*/
-
-	//res = make([]Torus32, N)
 	res[0] = int32(int64(real(z[0]) * _1sN * _2p32))
 	for i := 1; i < N; i++ {
-		//t := real(z[i] - z[N+i])
-		//res[i] = int32(t * _1sN * _2p32)
-		//res[i] = int32(real(z[i]) * _1sN * _2p32)
 		res[i] = -int32(int64(real(z[N-i]) * _1sN * _2p32))
 	}
 }
