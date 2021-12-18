@@ -18,7 +18,8 @@ func Nand(result, ca, cb *LweSample, bk *PublicKey) {
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	//tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 	// tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult)
 }
 
@@ -41,7 +42,7 @@ func Or(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -63,7 +64,7 @@ func And(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -85,7 +86,7 @@ func Xor(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -107,7 +108,7 @@ func Xnor(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -164,7 +165,7 @@ func Nor(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -186,7 +187,7 @@ func AndNY(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -208,7 +209,7 @@ func AndYN(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -230,7 +231,7 @@ func OrNY(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -252,7 +253,7 @@ func OrYN(result, ca, cb *LweSample, bk *PublicKey) {
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	tfheBootstrap(result, bk.Bk, MU, tempResult)
+	tfheBootstrapFFT(result, bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -277,7 +278,7 @@ func Mux(result, a, b, c *LweSample, bk *PublicKey) {
 	LweAddTo(tempResult, b, inOutParams)
 	// Bootstrap without KeySwitch
 	// tfheBootstrapWoKS_FFT(u1, bk.bkFFT, MU, tempResult);
-	tfheBootstrapWoKS(u1, bk.Bk, MU, tempResult)
+	tfheBootstrapWoKSFFT(u1, bk.Bkw.BkFFT, MU, tempResult)
 
 	//compute "AND(not(a),c)": (0,-1/8) - a + c
 	LweNoiselessTrivial(tempResult, AndConst, inOutParams)
@@ -285,7 +286,7 @@ func Mux(result, a, b, c *LweSample, bk *PublicKey) {
 	LweAddTo(tempResult, c, inOutParams)
 	// Bootstrap without KeySwitch
 	//tfheBootstrapWoKS_FFT(u2, bk.bkFFT, MU, tempResult);
-	tfheBootstrapWoKS(u2, bk.Bk, MU, tempResult)
+	tfheBootstrapWoKSFFT(u2, bk.Bkw.BkFFT, MU, tempResult)
 
 	// Add u1=u1+u2
 	MuxConst := ModSwitchToTorus32(1, 8)
@@ -294,5 +295,5 @@ func Mux(result, a, b, c *LweSample, bk *PublicKey) {
 	LweAddTo(tempResult1, u2, extractedParams)
 	// Key switching
 	//lweKeySwitch(result, bk.bkFFT.ks, tempResult1)
-	lweKeySwitch(result, bk.Bk.Ks, tempResult1)
+	lweKeySwitch(result, bk.Bkw.BkFFT.Ks, tempResult1)
 }

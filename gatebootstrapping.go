@@ -11,8 +11,9 @@ type GateBootstrappingParameterSet struct {
 
 type PublicKey struct {
 	Params *GateBootstrappingParameterSet
-	Bk     *LweBootstrappingKey
-	// bkFFT  *LweBootstrappingKeyFFT
+	Bkw    *LweBootstrappingKeyWrapper
+	//Bk     *LweBootstrappingKey
+	//BkFFT *LweBootstrappingKeyFFT
 }
 
 type PrivateKey struct {
@@ -31,14 +32,15 @@ func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *Lwe
 	}
 }
 
-func NewPublicKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKey) *PublicKey {
+func NewPublicKey(params *GateBootstrappingParameterSet, bkw *LweBootstrappingKeyWrapper) *PublicKey {
+
 	return &PublicKey{
 		Params: params,
-		Bk:     bk,
+		Bkw:    bkw,
 	}
 }
 
-func NewPrivateKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKey, lweKey *LweKey, tgswKey *TGswKey) *PrivateKey {
+func NewPrivateKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKeyWrapper, lweKey *LweKey, tgswKey *TGswKey) *PrivateKey {
 	return &PrivateKey{
 		Params:  params,
 		LweKey:  lweKey,
@@ -119,9 +121,9 @@ func GenerateKeys(params *GateBootstrappingParameterSet) (*PublicKey, *PrivateKe
 	LweKeyGen(lweKey)
 	tgswKey := NewTGswKey(params.TgswParams)
 	TGswKeyGen(tgswKey)
-	bk := NewLweBootstrappingKey(params.KsT, params.KsBasebit, params.InOutParams, params.TgswParams)
-	tfheCreateLweBootstrappingKey(bk, lweKey, tgswKey)
-	return NewPublicKey(params, bk), NewPrivateKey(params, bk, lweKey, tgswKey)
+	bkw := NewLweBootstrappingKeyWrapper(params.KsT, params.KsBasebit, params.InOutParams, params.TgswParams, lweKey, tgswKey)
+	//tfheCreateLweBootstrappingKey(bkw.Bk, lweKey, tgswKey)
+	return NewPublicKey(params, bkw), NewPrivateKey(params, bkw, lweKey, tgswKey)
 }
 
 /** encrypts a boolean */
