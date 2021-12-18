@@ -24,7 +24,6 @@ func printLagrange(p *LagrangeHalfCPolynomial) {
 //TEST(LagrangeHalfcTest, fftIsBijective) {
 func TestFftIsBijective(t *testing.T) {
 	assert := assert.New(t)
-
 	NBTRIALS := 1
 	toler := 1e-9
 	var N int32 = 1024
@@ -110,7 +109,7 @@ func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 	var N int32 = 1024
 	toler := 1e-9
 	for trials := 0; trials < NBTRIALS; trials++ {
-		var mu int32 = 42424242 //UniformTorus32Dist()
+		var mu int32 = UniformTorus32Dist()
 		a := NewTorusPolynomial(N)
 		aPlusCste := NewTorusPolynomial(N)
 		b := NewTorusPolynomial(N)
@@ -142,6 +141,8 @@ func TestTorusPolynomialMultFFT(t *testing.T) {
 			a.Coefs[i] = UniformTorus32Dist()%1000 - 500
 		}
 		torusPolynomialUniform(b)
+		//a.Coefs = []int32{9, -10, 7, 6}
+		//b.Coefs = []int32{-5, 4, 0, -2}
 		torusPolynomialMultKaratsuba(aBref, a, b)
 		torusPolynomialMultFFT(aB, a, b)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
@@ -180,7 +181,6 @@ func TestTorusPolynomialSubMulRFFT(t *testing.T) {
 		b := NewTorusPolynomial(N)
 		aB := NewTorusPolynomial(N)
 		aBref := NewTorusPolynomial(N)
-
 		for i := int32(0); i < N; i++ {
 			a.Coefs[i] = UniformTorus32Dist()%1000 - 500
 		}
