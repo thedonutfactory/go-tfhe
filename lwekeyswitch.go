@@ -194,14 +194,13 @@ func lweCreateKeySwitchKey(result *LweKeySwitchKey, inKey *LweKey, outKey *LweKe
 }
 
 //sample=(a',b')
-func lweKeySwitch(result *LweSample, ks *LweKeySwitchKey, sample *LweSample) {
+func lweKeySwitch(ks *LweKeySwitchKey, sample *LweSample) *LweSample {
 	params := ks.OutParams
 	n := ks.N
 	basebit := ks.Basebit
 	t := ks.T
-
+	result := NewLweSample(ks.OutParams)
 	LweNoiselessTrivial(result, sample.B, params)
-	lweKeySwitchTranslateFromArray(result,
-		ks.Ks, params,
-		sample.A, n, t, basebit)
+	lweKeySwitchTranslateFromArray(result, ks.Ks, params, sample.A, n, t, basebit)
+	return result
 }

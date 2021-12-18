@@ -179,12 +179,11 @@ func tfheBootstrapWoKSFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu Toru
  * @param mu The output message (if phase(x)>0)
  * @param x The input sample
  */
-func tfheBootstrapFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu Torus32, x *LweSample) {
+func tfheBootstrapFFT(bk *LweBootstrappingKeyFFT, mu Torus32, x *LweSample) *LweSample {
 
 	u := NewLweSample(&bk.AccumParams.ExtractedLweparams)
 
 	tfheBootstrapWoKSFFT(u, bk, mu, x)
 	// Key switching
-	lweKeySwitch(result, bk.Ks, u)
-
+	return lweKeySwitch(bk.Ks, u)
 }

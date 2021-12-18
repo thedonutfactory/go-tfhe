@@ -141,19 +141,9 @@ func BootsSymEncrypt(result *LweSample, message int32, key *PrivateKey) {
 /** decrypts a boolean */
 func BootsSymDecrypt(sample *LweSample, key *PrivateKey) int32 {
 	mu := LwePhase(sample, key.LweKey)
-	/*
-		if mu != 0 {
-			return 1
-		} else {
-			return 0
-		}
-	*/
-
 	if mu > 0 {
 		return 1
 	} else {
 		return 0
 	}
-
-	//return (mu > 0 ? 1 : 0); //we have to do that because of the C binding
 }

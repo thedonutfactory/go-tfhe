@@ -4,6 +4,28 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
+var fftProc FftProcessorInterface = &DefaultFftProcessor{}
+
+type FftProcessorInterface interface {
+	intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial)
+	torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial)
+	torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial)
+}
+
+type DefaultFftProcessor struct{}
+
+func (proc *DefaultFftProcessor) intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
+	executeReverseInt(result.Coefs, p.Coefs)
+}
+
+func (proc *DefaultFftProcessor) torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
+	executeReverseTorus32(result.Coefs, p.Coefs)
+}
+
+func (proc *DefaultFftProcessor) torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
+	executeDirectTorus32(result.Coefs, p.Coefs)
+}
+
 func Mulfft(a []complex128) []complex128 {
 	n := len(a)
 	for i := 0; i < n; i++ {
@@ -104,10 +126,10 @@ func Multiply(a, b []int32) []int32 {
 	poly2.Coefs = b
 	result := NewTorusPolynomial(N)
 	j, k, l := NewLagrangeHalfCPolynomial(N), NewLagrangeHalfCPolynomial(N), NewLagrangeHalfCPolynomial(N)
-	intPolynomialIfft(j, poly1)
-	torusPolynomialIfft(k, poly2)
+	fftProc.intPolynomialIfft(j, poly1)
+	fftProc.torusPolynomialIfft(k, poly2)
 	LagrangeHalfCPolynomialMul(l, j, k)
-	torusPolynomialFft(result, l)
+	fftProc.torusPolynomialFft(result, l)
 	return result.Coefs
 }
 
@@ -169,20 +191,4 @@ func executeDirectTorus32(res []Torus32, a []complex128) {
 	for i := 1; i < N; i++ {
 		res[i] = -int32(int64(real(z[N-i]) * _1sN * _2p32))
 	}
-}
-
-/**
- * FFT functions
- */
-
-func intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
-	executeReverseInt(result.Coefs, p.Coefs)
-}
-
-func torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	executeReverseTorus32(result.Coefs, p.Coefs)
-}
-
-func torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	executeDirectTorus32(result.Coefs, p.Coefs)
 }

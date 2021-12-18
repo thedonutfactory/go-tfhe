@@ -106,11 +106,11 @@ func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x
 * @param mu The output message (if phase(x)>0)
 * @param x The input sample
  */
-func tfheBootstrap(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
+func tfheBootstrap(bk *LweBootstrappingKey, mu Torus32, x *LweSample) *LweSample {
 	u := NewLweSample(&bk.AccumParams.ExtractedLweparams)
 	tfheBootstrapWoKS(u, bk, mu, x)
 	// Key Switching
-	lweKeySwitch(result, bk.Ks, u)
+	return lweKeySwitch(bk.Ks, u)
 }
 
 func tfheCreateLweBootstrappingKey(bk *LweBootstrappingKey, keyIn *LweKey, rgswKey *TGswKey) {

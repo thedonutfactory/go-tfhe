@@ -25,6 +25,7 @@ func NewTLweSampleFFTArray(size int32, params *TLweParams) []*TLweSampleFFT {
 	return arr
 }
 
+/*
 func InitTLweSampleFFT(obj *TLweSampleFFT, params *TLweParams) {
 	//a is a table of k+1 polynomials, b is an alias for &a[k]
 	k := params.K
@@ -36,12 +37,13 @@ func InitTLweSampleFFT(obj *TLweSampleFFT, params *TLweParams) {
 		CurrentVariance: 0.,
 	}
 }
+*/
 
 // Computes the inverse FFT of the coefficients of the TLWE sample
 func tLweToFFTConvert(result *TLweSampleFFT, source *TLweSample, params *TLweParams) {
 	k := params.K
 	for i := int32(0); i <= k; i++ {
-		torusPolynomialIfft(result.A[i], &source.A[i])
+		fftProc.torusPolynomialIfft(result.A[i], &source.A[i])
 	}
 	result.CurrentVariance = source.CurrentVariance
 }
@@ -50,7 +52,7 @@ func tLweToFFTConvert(result *TLweSampleFFT, source *TLweSample, params *TLwePar
 func tLweFromFFTConvert(result *TLweSample, source *TLweSampleFFT, params *TLweParams) {
 	k := params.K
 	for i := int32(0); i <= k; i++ {
-		torusPolynomialFft(&result.A[i], source.A[i])
+		fftProc.torusPolynomialFft(&result.A[i], source.A[i])
 	}
 	result.CurrentVariance = source.CurrentVariance
 }
