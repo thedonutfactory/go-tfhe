@@ -136,7 +136,7 @@ func LweClear(result *LweSample, params *LweParams) {
 }
 
 /** result = sample */
-func LweCopy(result *LweSample, sample *LweSample, params *LweParams) {
+func LweCopy(result, sample *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] = sample.A[i]
 	}
@@ -145,7 +145,7 @@ func LweCopy(result *LweSample, sample *LweSample, params *LweParams) {
 }
 
 /** result = -sample */
-func LweNegate(result *LweSample, sample *LweSample, params *LweParams) {
+func LweNegate(result, sample *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] = -sample.A[i]
 	}
@@ -163,7 +163,7 @@ func LweNoiselessTrivial(result *LweSample, mu Torus32, params *LweParams) {
 }
 
 /** result = result + sample */
-func LweAddTo(result *LweSample, sample *LweSample, params *LweParams) {
+func LweAddTo(result, sample *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] += sample.A[i]
 	}
@@ -172,7 +172,7 @@ func LweAddTo(result *LweSample, sample *LweSample, params *LweParams) {
 }
 
 /** result = result - sample */
-func LweSubTo(result *LweSample, sample *LweSample, params *LweParams) {
+func LweSubTo(result, sample *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] -= sample.A[i]
 	}

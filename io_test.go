@@ -1,25 +1,19 @@
 package tfhe
 
 import (
-	"fmt"
 	"os"
 	"testing"
 )
 
-func TestWritePublicKey(t *testing.T) {
+func TestWriteKeys(t *testing.T) {
 	// generate params
-	var minimumLambda int32 = 100
-	params := NewDefaultGateBootstrappingParameters(minimumLambda)
+	params := NewDefaultGateBootstrappingParameters(100)
 
 	pubKey, privKey := GenerateKeys(params)
 	defer func() {
 		os.Remove("private.key")
 		os.Remove("public.key")
 	}()
-
-	fmt.Printf("%+v\n", pubKey.Bk.Bk)
-	fmt.Printf("%+v\n", pubKey.Bk.AccumParams)
-	fmt.Printf("%+v\n", pubKey.Bk.Ks)
 
 	err := WritePrivKey(privKey, "private.key")
 	if err != nil {

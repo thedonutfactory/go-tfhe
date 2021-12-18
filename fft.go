@@ -176,13 +176,13 @@ func executeDirectTorus32(res []Torus32, a []complex128) {
  */
 
 func intPolynomialIfft(result *LagrangeHalfCPolynomial, p *IntPolynomial) {
-	executeReverseInt(result.coefsC, p.Coefs)
+	executeReverseInt(result.Coefs, p.Coefs)
 }
 
 func torusPolynomialIfft(result *LagrangeHalfCPolynomial, p *TorusPolynomial) {
-	executeReverseTorus32(result.coefsC, p.Coefs)
+	executeReverseTorus32(result.Coefs, p.Coefs)
 }
 
 func torusPolynomialFft(result *TorusPolynomial, p *LagrangeHalfCPolynomial) {
-	executeDirectTorus32(result.Coefs, p.coefsC)
+	executeDirectTorus32(result.Coefs, p.Coefs)
 }
