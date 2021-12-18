@@ -43,7 +43,7 @@ func InitTLweSampleFFT(obj *TLweSampleFFT, params *TLweParams) {
 func tLweToFFTConvert(result *TLweSampleFFT, source *TLweSample, params *TLweParams) {
 	k := params.K
 	for i := int32(0); i <= k; i++ {
-		fftProc.torusPolynomialIfft(result.A[i], &source.A[i])
+		torusPolynomialIfft(result.A[i], &source.A[i])
 	}
 	result.CurrentVariance = source.CurrentVariance
 }
@@ -52,7 +52,7 @@ func tLweToFFTConvert(result *TLweSampleFFT, source *TLweSample, params *TLwePar
 func tLweFromFFTConvert(result *TLweSample, source *TLweSampleFFT, params *TLweParams) {
 	k := params.K
 	for i := int32(0); i <= k; i++ {
-		fftProc.torusPolynomialFft(&result.A[i], source.A[i])
+		torusPolynomialFft(&result.A[i], source.A[i])
 	}
 	result.CurrentVariance = source.CurrentVariance
 }
