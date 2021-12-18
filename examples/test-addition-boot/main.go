@@ -162,8 +162,8 @@ func main() {
 
 	for trial := 0; trial < nbTrials; trial++ {
 
-		xBits := toBits(2)
-		yBits := toBits(3)
+		xBits := toBits(22)
+		yBits := toBits(33)
 
 		// generate samples
 		x := t.NewLweSampleArray(nbBits, inOutParams)

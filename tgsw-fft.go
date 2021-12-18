@@ -123,7 +123,7 @@ func tGswFFTExternMulToTLwe(accum *TLweSample, gsw *TGswSampleFFT, params *TGswP
 		TGswTorus32PolynomialDecompH(deca[i*l:], &accum.A[i], params)
 	}
 	for p := int32(0); p < kpl; p++ {
-		fftProc.intPolynomialIfft(decaFFT[p], &deca[p])
+		intPolynomialIfft(decaFFT[p], &deca[p])
 	}
 
 	tLweFFTClear(tmpa, tlwe_params)

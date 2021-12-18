@@ -41,11 +41,11 @@ func TestFftIsBijective(t *testing.T) {
 		fmt.Printf("torusPolynomialCopy(acopy, a):")
 		printTorusPolynomial(acopy)
 
-		fftProc.torusPolynomialIfft(afft, a)
+		torusPolynomialIfft(afft, a)
 		fmt.Printf("torusPolynomialIfft(afft, a):")
 		printLagrange(afft)
 
-		fftProc.torusPolynomialFft(b, afft)
+		torusPolynomialFft(b, afft)
 		fmt.Printf("torusPolynomialFft(b, afft):")
 		printTorusPolynomial(b)
 
@@ -72,7 +72,7 @@ func TestLagrangeHalfCPolynomialClear(t *testing.T) {
 		LagrangeHalfCPolynomialClear(afft)
 		torusPolynomialUniform(a)
 		torusPolynomialClear(zero)
-		fftProc.torusPolynomialFft(a, afft)
+		torusPolynomialFft(a, afft)
 		assert.EqualValues(torusPolynomialNormInftyDist(zero, a), 0)
 	}
 }
@@ -92,7 +92,7 @@ func TestLagrangeHalfCPolynomialSetTorusConstant(t *testing.T) {
 
 		//tested function
 		LagrangeHalfCPolynomialSetTorusConstant(afft, mu)
-		fftProc.torusPolynomialFft(a, afft)
+		torusPolynomialFft(a, afft)
 
 		//expected result
 		torusPolynomialClear(cste)
@@ -116,9 +116,9 @@ func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 		afft := NewLagrangeHalfCPolynomial(N)
 
 		//torusPolynomialUniform(a)
-		fftProc.torusPolynomialIfft(afft, a)
+		torusPolynomialIfft(afft, a)
 		LagrangeHalfCPolynomialAddTorusConstant(afft, mu)
-		fftProc.torusPolynomialFft(b, afft)
+		torusPolynomialFft(b, afft)
 
 		TorusPolynomialCopy(aPlusCste, a)
 		aPlusCste.Coefs[0] += mu
@@ -225,11 +225,11 @@ func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
 		afft := NewLagrangeHalfCPolynomial(N)
 		bfft := NewLagrangeHalfCPolynomial(N)
 		torusPolynomialUniform(a)
-		fftProc.torusPolynomialIfft(afft, a)
+		torusPolynomialIfft(afft, a)
 		torusPolynomialUniform(b)
-		fftProc.torusPolynomialIfft(bfft, b)
+		torusPolynomialIfft(bfft, b)
 		LagrangeHalfCPolynomialAddTo(afft, bfft)
-		fftProc.torusPolynomialFft(aPlusBbis, afft)
+		torusPolynomialFft(aPlusBbis, afft)
 		TorusPolynomialAdd(aPlusB, b, a)
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aPlusBbis, aPlusB), toler)
 	}
