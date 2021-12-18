@@ -318,7 +318,6 @@ func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial
 	// Max between the coefficients of abs(poly1-poly2)
 	for i := int32(0); i < N; i++ {
 		r := math.Abs(TorusToDouble(poly1.Coefs[i] - poly2.Coefs[i]))
-		fmt.Printf("%d, %d => %f \n", poly1.Coefs[i], poly2.Coefs[i], r)
 		if r > norm {
 			norm = r
 		}
