@@ -2,7 +2,7 @@ module github.com/thedonutfactory/examples
 
 go 1.15
 
-replace github.com/thedonutfactory/go-tfhe => ../../../go-tfhe
+replace github.com/thedonutfactory/go-tfhe => ../../
 
 require (
 	github.com/badgerodon/collections v0.0.0-20130729185459-604e922904d3 // indirect

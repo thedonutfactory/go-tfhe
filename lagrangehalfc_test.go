@@ -234,3 +234,23 @@ func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
 		assert.LessOrEqual(torusPolynomialNormInftyDist(aPlusBbis, aPlusB), toler)
 	}
 }
+
+func TestTorusPolynomialSmallMultCuda(t *testing.T) {
+	assert := assert.New(t)
+	NBTRIALS := 1
+	var N int32 = 4
+	toler := 1e-9
+	for trials := 0; trials < NBTRIALS; trials++ {
+		a := NewIntPolynomial(N)
+		b := NewTorusPolynomial(N)
+		aB := NewTorusPolynomial(N)
+		aBref := NewTorusPolynomial(N)
+		a.Coefs = []int32{9, -10, 7, 6}
+		b.Coefs = []int32{-5, 4, 0, -2}
+		torusPolynomialMultKaratsuba(aBref, a, b)
+		torusPolynomialMultCuda(aB, a, b)
+		fmt.Println(aBref)
+		fmt.Println(aB)
+		assert.LessOrEqual(torusPolynomialNormInftyDist(aB, aBref), toler)
+	}
+}
