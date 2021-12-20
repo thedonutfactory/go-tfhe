@@ -5,31 +5,34 @@ import (
 	"os"
 	"time"
 
-	t "github.com/thedonutfactory/go-tfhe"
+	. "github.com/thedonutfactory/go-tfhe/core"
+	. "github.com/thedonutfactory/go-tfhe/gates"
+	. "github.com/thedonutfactory/go-tfhe/io"
+	. "github.com/thedonutfactory/go-tfhe/types"
 )
 
-func fullAdderMUX(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) []*t.LweSample {
+func fullAdderMUX(x []*LweSample, y []*LweSample, nbBits int, key *PublicKey, priv *PrivateKey) []*LweSample {
 	inOutParams := priv.Params.InOutParams
-	sum := t.NewLweSampleArray(int32(nbBits)+1, inOutParams)
+	sum := NewLweSampleArray(int32(nbBits)+1, inOutParams)
 	// carries
-	carry := t.NewLweSampleArray(2, inOutParams)
-	t.BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
+	carry := NewLweSampleArray(2, inOutParams)
+	BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
 	// temps
-	temp := t.NewLweSampleArray(2, inOutParams)
+	temp := NewLweSampleArray(2, inOutParams)
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		temp[0] = t.Xor(x[i], y[i], key) // temp = xi XOR yi
-		sum[i] = t.Xor(temp[0], carry[0], key)
+		temp[0] = Xor(x[i], y[i], key) // temp = xi XOR yi
+		sum[i] = Xor(temp[0], carry[0], key)
 
 		// carry = MUX(xi XOR yi, carry(i-1), xi AND yi)
-		temp[1] = t.And(x[i], y[i], key) // temp1 = xi AND yi
-		carry[1] = t.Mux(temp[0], carry[0], temp[1], key)
+		temp[1] = And(x[i], y[i], key) // temp1 = xi AND yi
+		carry[1] = Mux(temp[0], carry[0], temp[1], key)
 
-		mess1 := t.BootsSymDecrypt(temp[0], priv)
-		mess2 := t.BootsSymDecrypt(carry[0], priv)
-		mess3 := t.BootsSymDecrypt(temp[1], priv)
-		messmux := t.BootsSymDecrypt(carry[1], priv)
+		mess1 := BootsSymDecrypt(temp[0], priv)
+		mess2 := BootsSymDecrypt(carry[0], priv)
+		mess3 := BootsSymDecrypt(temp[1], priv)
+		messmux := BootsSymDecrypt(carry[1], priv)
 
 		tt := mess3
 		if mess1 != 0 {
@@ -38,56 +41,56 @@ func fullAdderMUX(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicK
 
 		if messmux != tt {
 			fmt.Printf("\tError[fullAdderMUX]: %d - %f - %f - %f - %f\n", i,
-				t.TorusToDouble(t.LwePhase(temp[0], priv.LweKey)),
-				t.TorusToDouble(t.LwePhase(carry[0], priv.LweKey)),
-				t.TorusToDouble(t.LwePhase(temp[1], priv.LweKey)),
-				t.TorusToDouble(t.LwePhase(carry[1], priv.LweKey)),
+				TorusToDouble(LwePhase(temp[0], priv.LweKey)),
+				TorusToDouble(LwePhase(carry[0], priv.LweKey)),
+				TorusToDouble(LwePhase(temp[1], priv.LweKey)),
+				TorusToDouble(LwePhase(carry[1], priv.LweKey)),
 			)
 		}
 
-		carry[0] = t.Copy(carry[1], key)
+		carry[0] = Copy(carry[1], key)
 	}
-	sum[nbBits] = t.Copy(carry[1], key)
+	sum[nbBits] = Copy(carry[1], key)
 	return sum
 }
 
-func fullAdder(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) []*t.LweSample {
+func fullAdder(x []*LweSample, y []*LweSample, nbBits int, key *PublicKey, priv *PrivateKey) []*LweSample {
 	inOutParams := priv.Params.InOutParams
-	sum := t.NewLweSampleArray(int32(nbBits)+1, inOutParams)
+	sum := NewLweSampleArray(int32(nbBits)+1, inOutParams)
 	// carries
-	carry := t.NewLweSampleArray(2, inOutParams)
-	t.BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
+	carry := NewLweSampleArray(2, inOutParams)
+	BootsSymEncrypt(carry[0], 0, priv) // first carry initialized to 0
 	// temps
-	temp := t.NewLweSampleArray(3, inOutParams)
+	temp := NewLweSampleArray(3, inOutParams)
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
-		temp[0] = t.Xor(x[i], y[i], key) // temp = xi XOR yi
-		sum[i] = t.Xor(temp[0], carry[0], key)
+		temp[0] = Xor(x[i], y[i], key) // temp = xi XOR yi
+		sum[i] = Xor(temp[0], carry[0], key)
 
 		// carry = (xi AND yi) XOR (carry(i-1) AND (xi XOR yi))
-		temp[1] = t.And(x[i], y[i], key)        // temp1 = xi AND yi
-		temp[2] = t.And(carry[0], temp[0], key) // temp2 = carry AND temp
-		carry[1] = t.Xor(temp[1], temp[2], key)
-		carry[0] = t.Copy(carry[1], key)
+		temp[1] = And(x[i], y[i], key)        // temp1 = xi AND yi
+		temp[2] = And(carry[0], temp[0], key) // temp2 = carry AND temp
+		carry[1] = Xor(temp[1], temp[2], key)
+		carry[0] = Copy(carry[1], key)
 	}
-	sum[nbBits] = t.Copy(carry[0], key)
+	sum[nbBits] = Copy(carry[0], key)
 	return sum
 }
 
-func comparisonMUX(x []*t.LweSample, y []*t.LweSample, nbBits int, key *t.PublicKey, priv *t.PrivateKey) *t.LweSample {
+func comparisonMUX(x []*LweSample, y []*LweSample, nbBits int, key *PublicKey, priv *PrivateKey) *LweSample {
 
 	inOutParams := priv.Params.InOutParams
 	// carries
-	carry := t.NewLweSampleArray(2, inOutParams)
-	t.BootsSymEncrypt(carry[0], 1, priv) // first carry initialized to 1
+	carry := NewLweSampleArray(2, inOutParams)
+	BootsSymEncrypt(carry[0], 1, priv) // first carry initialized to 1
 
 	for i := 0; i < nbBits; i++ {
-		temp := t.Xor(x[i], y[i], key) // temp = xi XOR yi
-		carry[1] = t.Mux(temp, y[i], carry[0], key)
-		carry[0] = t.Copy(carry[1], key)
+		temp := Xor(x[i], y[i], key) // temp = xi XOR yi
+		carry[1] = Mux(temp, y[i], carry[0], key)
+		carry[0] = Copy(carry[1], key)
 	}
-	return t.Copy(carry[0], key)
+	return Copy(carry[0], key)
 }
 
 func fromBool(x bool) int32 {
@@ -122,29 +125,29 @@ func toBits(val int) []int {
 	return l
 }
 
-func decryptAndDisplayResult(sum []*t.LweSample, keyset *t.PrivateKey) {
+func decryptAndDisplayResult(sum []*LweSample, keyset *PrivateKey) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
-		messSum := t.BootsSymDecrypt(sum[i], keyset)
+		messSum := BootsSymDecrypt(sum[i], keyset)
 		fmt.Printf("%d ", messSum)
 	}
 	fmt.Println("]")
 }
 
-func keys(params *t.GateBootstrappingParameterSet) (*t.PublicKey, *t.PrivateKey) {
-	var pubKey *t.PublicKey
-	var privKey *t.PrivateKey
+func keys(params *GateBootstrappingParameterSet) (*PublicKey, *PrivateKey) {
+	var pubKey *PublicKey
+	var privKey *PrivateKey
 	if _, err := os.Stat("private.key"); err == nil {
 		fmt.Println("------ Reading keys from file ------")
-		privKey, _ = t.ReadPrivKey("private.key")
-		pubKey, _ = t.ReadPubKey("public.key")
+		privKey, _ = ReadPrivKey("private.key")
+		pubKey, _ = ReadPubKey("public.key")
 
 	} else {
 		fmt.Println("------ Key Generation ------")
 		// generate the keys
-		pubKey, privKey = t.GenerateKeys(params)
-		t.WritePrivKey(privKey, "private.key")
-		t.WritePubKey(pubKey, "public.key")
+		pubKey, privKey = GenerateKeys(params)
+		WritePrivKey(privKey, "private.key")
+		WritePubKey(pubKey, "public.key")
 	}
 	return pubKey, privKey
 }
@@ -156,7 +159,7 @@ func main() {
 	)
 	// generate params
 	var minimumLambda int32 = 100
-	params := t.NewDefaultGateBootstrappingParameters(minimumLambda)
+	params := NewDefaultGateBootstrappingParameters(minimumLambda)
 	inOutParams := params.InOutParams
 	pubKey, privKey := keys(params)
 
@@ -166,16 +169,16 @@ func main() {
 		yBits := toBits(33)
 
 		// generate samples
-		x := t.NewLweSampleArray(nbBits, inOutParams)
-		y := t.NewLweSampleArray(nbBits, inOutParams)
+		x := NewLweSampleArray(nbBits, inOutParams)
+		y := NewLweSampleArray(nbBits, inOutParams)
 		for i := 0; i < nbBits; i++ {
-			//t.BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
-			//t.BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
-			t.BootsSymEncrypt(x[i], int32(xBits[i]), privKey)
-			t.BootsSymEncrypt(y[i], int32(yBits[i]), privKey)
+			//BootsSymEncrypt(x[i], rand.Int31()%2, keyset)
+			//BootsSymEncrypt(y[i], rand.Int31()%2, keyset)
+			BootsSymEncrypt(x[i], int32(xBits[i]), privKey)
+			BootsSymEncrypt(y[i], int32(yBits[i]), privKey)
 		}
 		// output sum
-		//sum := t.NewLweSampleArray(nbBits+1, inOutParams)
+		//sum := NewLweSampleArray(nbBits+1, inOutParams)
 
 		// evaluate the addition circuit
 		fmt.Printf("starting Bootstrapping %d bits addition circuit (FA in MUX version), trial %d\n", nbBits, trial)
@@ -191,15 +194,15 @@ func main() {
 		// verification
 		var messCarry int32 = 0
 		for i := 0; i < nbBits; i++ {
-			messX := t.BootsSymDecrypt(x[i], privKey)
-			messY := t.BootsSymDecrypt(y[i], privKey)
-			messSum := t.BootsSymDecrypt(sum[i], privKey)
+			messX := BootsSymDecrypt(x[i], privKey)
+			messY := BootsSymDecrypt(y[i], privKey)
+			messSum := BootsSymDecrypt(sum[i], privKey)
 
 			if messSum != (messX ^ messY ^ messCarry) {
 				fmt.Printf("\tVerification Error %d, %f - %f - %f\n", i,
-					t.TorusToDouble(t.LwePhase(x[i], privKey.LweKey)),
-					t.TorusToDouble(t.LwePhase(y[i], privKey.LweKey)),
-					t.TorusToDouble(t.LwePhase(sum[i], privKey.LweKey)),
+					TorusToDouble(LwePhase(x[i], privKey.LweKey)),
+					TorusToDouble(LwePhase(y[i], privKey.LweKey)),
+					TorusToDouble(LwePhase(sum[i], privKey.LweKey)),
 				)
 			}
 			if messCarry != 0 {
@@ -208,7 +211,7 @@ func main() {
 				messCarry = fromBool(toBool(messX) && toBool(messY))
 			}
 		}
-		messSum := t.BootsSymDecrypt(sum[nbBits], privKey)
+		messSum := BootsSymDecrypt(sum[nbBits], privKey)
 		if messSum != messCarry {
 			fmt.Printf("\tVerification Error - %d, %d bits\n", trial, nbBits)
 		}
@@ -226,9 +229,9 @@ func main() {
 		{
 			var messCarry int32 = 0
 			for i := 0; i < nbBits; i++ {
-				messX := t.BootsSymDecrypt(x[i], privKey)
-				messY := t.BootsSymDecrypt(y[i], privKey)
-				messSum := t.BootsSymDecrypt(sum[i], privKey)
+				messX := BootsSymDecrypt(x[i], privKey)
+				messY := BootsSymDecrypt(y[i], privKey)
+				messSum := BootsSymDecrypt(sum[i], privKey)
 
 				if messSum != (messX ^ messY ^ messCarry) {
 					fmt.Printf("\tVerification Error - %d, %d\n", trial, i)
@@ -240,7 +243,7 @@ func main() {
 					messCarry = fromBool(toBool(messX) && toBool(messY))
 				}
 			}
-			messSum := t.BootsSymDecrypt(sum[nbBits], privKey)
+			messSum := BootsSymDecrypt(sum[nbBits], privKey)
 			if messSum != messCarry {
 				fmt.Printf("\tVerification Error - %d, %d\n", trial, nbBits)
 			}
@@ -258,13 +261,13 @@ func main() {
 		{
 			var messCarry int32 = 1
 			for i := 0; i < nbBits; i++ {
-				messX := t.BootsSymDecrypt(x[i], privKey)
-				messY := t.BootsSymDecrypt(y[i], privKey)
+				messX := BootsSymDecrypt(x[i], privKey)
+				messY := BootsSymDecrypt(y[i], privKey)
 				if messX^messY != 0 {
 					messCarry = messY
 				}
 			}
-			messComp := t.BootsSymDecrypt(comp, privKey)
+			messComp := BootsSymDecrypt(comp, privKey)
 			if messComp != messCarry {
 				fmt.Printf("\tVerification Error %d, %d\n", trial, nbBits)
 			}
