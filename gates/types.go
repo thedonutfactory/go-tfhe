@@ -14,12 +14,27 @@ type Int64 = [64]*LweSample
 
 type Int = []*LweSample
 
+type Ctxt = []*LweSample
+type Ptxt = []bool
+
 func (p *GateBootstrappingParameterSet) Int(size int) Int {
 	return NewInt(size, p.InOutParams)
 }
 
 func NewInt(size int, params *LweParams) Int {
-	var s Int = NewLweSampleArray(int32(size), params)
+	var s Ctxt = NewLweSampleArray(int32(size), params)
+	for i := 0; i < size; i++ {
+		s[i] = NewLweSample(params)
+	}
+	return s
+}
+
+func (p *GateBootstrappingParameterSet) Ctxt(size int) Ctxt {
+	return NewInt(size, p.InOutParams)
+}
+
+func NewCtxt(size int, params *LweParams) Ctxt {
+	var s Ctxt = NewLweSampleArray(int32(size), params)
 	for i := 0; i < size; i++ {
 		s[i] = NewLweSample(params)
 	}
