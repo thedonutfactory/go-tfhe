@@ -1,9 +1,9 @@
-package core
+package gates
 
 import (
 	"math"
 
-	. "github.com/thedonutfactory/go-tfhe/types"
+	. "github.com/thedonutfactory/go-tfhe/core"
 )
 
 type GateBootstrappingParameterSet struct {
@@ -16,15 +16,17 @@ type GateBootstrappingParameterSet struct {
 type PublicKey struct {
 	Params *GateBootstrappingParameterSet
 	Bkw    *LweBootstrappingKeyWrapper
-	//Bk     *LweBootstrappingKey
-	//BkFFT *LweBootstrappingKeyFFT
 }
 
 type PrivateKey struct {
 	Params  *GateBootstrappingParameterSet
 	LweKey  *LweKey
 	TgswKey *TGswKey
-	//Cloud   *PublicKey
+}
+
+/** generate a new uninitialized ciphertext array of length nbelems */
+func NewGateBootstrappingCiphertextArray(nbelems int, params *GateBootstrappingParameterSet) (arr []*LweSample) {
+	return NewLweSampleArray(int32(nbelems), params.InOutParams)
 }
 
 func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *LweParams, tgswParams *TGswParams) *GateBootstrappingParameterSet {
@@ -104,7 +106,7 @@ func Default128bitGateBootstrappingParameters() *GateBootstrappingParameterSet {
 	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
 
-func NewDefaultGateBootstrappingParameters(minimumLambda int32) *GateBootstrappingParameterSet {
+func DefaultGateBootstrappingParameters(minimumLambda int32) *GateBootstrappingParameterSet {
 	if minimumLambda > 128 {
 		panic("Sorry, for now, the parameters are only implemented for 80bit and 128bit of security!")
 	}
@@ -120,7 +122,7 @@ func NewDefaultGateBootstrappingParameters(minimumLambda int32) *GateBootstrappi
 	panic("the requested security parameter must be positive (currently, 80 and 128-bits are supported)")
 }
 
-func GenerateKeys(params *GateBootstrappingParameterSet) (*PublicKey, *PrivateKey) {
+func (params *GateBootstrappingParameterSet) GenerateKeys() (*PublicKey, *PrivateKey) {
 	lweKey := NewLweKey(params.InOutParams)
 	LweKeyGen(lweKey)
 	tgswKey := NewTGswKey(params.TgswParams)
@@ -128,26 +130,4 @@ func GenerateKeys(params *GateBootstrappingParameterSet) (*PublicKey, *PrivateKe
 	bkw := NewLweBootstrappingKeyWrapper(params.KsT, params.KsBasebit, params.InOutParams, params.TgswParams, lweKey, tgswKey)
 	//tfheCreateLweBootstrappingKey(bkw.Bk, lweKey, tgswKey)
 	return NewPublicKey(params, bkw), NewPrivateKey(params, bkw, lweKey, tgswKey)
-}
-
-/** encrypts a boolean */
-func BootsSymEncrypt(result *LweSample, message int32, key *PrivateKey) {
-	_1s8 := ModSwitchToTorus32(1, 8)
-	var mu Torus32 = -_1s8
-	if message != 0 {
-		mu = _1s8
-	}
-	//Torus32 mu = message ? _1s8 : -_1s8;
-	alpha := key.Params.InOutParams.AlphaMin //TODO: specify noise
-	LweSymEncrypt(result, mu, alpha, key.LweKey)
-}
-
-/** decrypts a boolean */
-func BootsSymDecrypt(sample *LweSample, key *PrivateKey) int32 {
-	mu := LwePhase(sample, key.LweKey)
-	if mu > 0 {
-		return 1
-	} else {
-		return 0
-	}
 }

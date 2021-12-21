@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/gates"
 )
 
-func WritePubKey(key *core.PublicKey, filename string) error {
+func WritePubKey(key *gates.PublicKey, filename string) error {
 	file, _ := os.Create(filename)
 	defer file.Close()
 	encoder := gob.NewEncoder(file)
@@ -20,8 +20,8 @@ func WritePubKey(key *core.PublicKey, filename string) error {
 	return nil
 }
 
-func ReadPubKey(filename string) (*core.PublicKey, error) {
-	var key core.PublicKey
+func ReadPubKey(filename string) (*gates.PublicKey, error) {
+	var key gates.PublicKey
 	dataFile, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
@@ -37,7 +37,7 @@ func ReadPubKey(filename string) (*core.PublicKey, error) {
 	return &key, nil
 }
 
-func WritePrivKey(key *core.PrivateKey, filename string) error {
+func WritePrivKey(key *gates.PrivateKey, filename string) error {
 	file, _ := os.Create(filename)
 	defer file.Close()
 	encoder := gob.NewEncoder(file)
@@ -49,8 +49,8 @@ func WritePrivKey(key *core.PrivateKey, filename string) error {
 	return nil
 }
 
-func ReadPrivKey(filename string) (*core.PrivateKey, error) {
-	var key core.PrivateKey
+func ReadPrivKey(filename string) (*gates.PrivateKey, error) {
+	var key gates.PrivateKey
 	dataFile, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
