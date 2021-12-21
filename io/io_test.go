@@ -4,14 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/gates"
 )
 
 func TestWriteKeys(t *testing.T) {
 	// generate params
-	params := core.NewDefaultGateBootstrappingParameters(100)
+	params := gates.DefaultGateBootstrappingParameters(100)
 
-	pubKey, privKey := core.GenerateKeys(params)
+	pubKey, privKey := gates.GenerateKeys(params)
 	defer func() {
 		os.Remove("private.key")
 		os.Remove("public.key")

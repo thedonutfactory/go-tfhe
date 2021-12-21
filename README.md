@@ -11,30 +11,39 @@ TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme develo
 The following snippet is a simple fully homomorphic 8-bit integer addition circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
 
 ```golang
+package main
+
 import (
-  "fmt"
-  "github.com/thedonutfactory/go-tfhe"
+	"fmt"
+
+	. "github.com/thedonutfactory/go-tfhe/gates"
 )
 
-func fullAdder(sum []*LweSample, x []*LweSample, y []*LweSample, nbBits int, 
-               keyset *TFheGateBootstrappingSecretKeySet) {
-  inOutParams := keyset.Params.InOutParams
-  // carry bit
-  carry := NewLweSampleArray(2, inOutParams)
-  BootsSymEncrypt(carry[0], 0, keyset)
-  temp := NewLweSampleArray(3, inOutParams)
-  for i := 0; i < nbBits; i++ {
-    //sum[i] = x[i] XOR y[i] XOR carry(i-1)
-    BootsXOR(temp[0], x[i], y[i], keyset.Cloud) // temp = xi XOR yi
-    BootsXOR(sum[i], temp[0], carry[0], keyset.Cloud)
-    
-    // carry = (x[i] AND y[i]) XOR (carry(i-1) AND (x[i] XOR y[i]))
-    BootsAND(temp[1], x[i], y[i], keyset.Cloud)        // temp1 = xi AND yi
-    BootsAND(temp[2], carry[0], temp[0], keyset.Cloud) // temp2 = carry AND temp
-    BootsXOR(carry[1], temp[1], temp[2], keyset.Cloud)
-    BootsCOPY(carry[0], carry[1], keyset.Cloud)
-  }
-  BootsCOPY(sum[nbBits], carry[0], keyset.Cloud)
+func main() {
+	// generate public and private keys
+	ctx := DefaultGateBootstrappingParameters(100)
+	pub, prv := keys(ctx)
+
+	// encrypt 2 8-bit ciphertexts
+	x := prv.Encrypt(int8(22))
+	y := prv.Encrypt(int8(33))
+
+	// create ciphertext variables
+	temp := ctx.Int8()
+	sum := ctx.Int8()
+	carry := ctx.Int8()
+
+	// perform homomorphic gate operations
+	temp[0] = pub.Xor(x[0], y[0])
+	sum[0] = pub.Xor(temp[0], carry[0])
+	temp[1] = pub.And(x[0], y[0])
+	temp[2] = pub.And(carry[0], temp[0])
+	carry[1] = pub.Xor(temp[1], temp[2])
+	carry[0] = pub.Copy(carry[1])
+
+	// decrypt results
+	z := prv.Decrypt(sum[:])
+	fmt.Println("The result is: ", z)
 }
 ```
 
