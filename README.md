@@ -23,6 +23,10 @@ func main() {
 	ctx := gates.DefaultGateBootstrappingParameters(100)
 	pub, prv := ctx.GenerateKeys()
 
+	// encrypt 2 8-bit ciphertexts
+	x := prv.Encrypt(int8(22))
+	y := prv.Encrypt(int8(33))
+
 	// perform homomorphic sum gate operations
 	BITS := 8
 	temp := ctx.Int(3)
