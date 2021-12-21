@@ -8,21 +8,20 @@ TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme develo
 
 ## Show me the Code
 
-The following snippet is a simple fully homomorphic 8-bit integer addition circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
+The following snippet is a simple fully homomorphic 8-bit integer circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
 
 ```golang
 package main
 
 import (
 	"fmt"
-
-	. "github.com/thedonutfactory/go-tfhe/gates"
+	"github.com/thedonutfactory/go-tfhe/gates"
 )
 
 func main() {
 	// generate public and private keys
-	ctx := DefaultGateBootstrappingParameters(100)
-	pub, prv := keys(ctx)
+	ctx := gates.DefaultGateBootstrappingParameters(100)
+	pub, prv := ctx.GenerateKeys()
 
 	// encrypt 2 8-bit ciphertexts
 	x := prv.Encrypt(int8(22))
