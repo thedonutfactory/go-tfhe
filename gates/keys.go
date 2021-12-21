@@ -9,11 +9,11 @@ import (
 	. "github.com/thedonutfactory/go-tfhe/types"
 )
 
-func (key *PrivateKey) Encrypt(message interface{}) Int {
+func (key *PrivateKey) Encrypt(message interface{}) Ctxt {
 	return key.ToCtxt(message)
 }
 
-func (key *PrivateKey) Decrypt(message Int) int {
+func (key *PrivateKey) Decrypt(message Ctxt) int {
 	return key.ToPtxt(message)
 }
 
@@ -41,12 +41,12 @@ func (key *PrivateKey) BootsSymDecrypt(sample *LweSample) int {
 	}
 }
 
-func (key *PrivateKey) ToPtxt(val Int) int {
-	return key.PlainBits(val)
+func (key *PrivateKey) ToPtxt(val Ctxt) int {
+	return key.plainBits(val)
 }
 
-func (key *PrivateKey) ToCtxt(val interface{}) Int {
-	var ctxt Int
+func (key *PrivateKey) ToCtxt(val interface{}) Ctxt {
+	var ctxt Ctxt
 	switch v := val.(type) {
 	default:
 		fmt.Printf("unexpected type %T", v)
@@ -55,54 +55,54 @@ func (key *PrivateKey) ToCtxt(val interface{}) Int {
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 8)
+		ctxt = key.cipherBits(int(value), 8)
 	case uint16:
 		value, ok := val.(uint16)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 16)
+		ctxt = key.cipherBits(int(value), 16)
 	case uint32:
 		value, ok := val.(uint32)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 32)
+		ctxt = key.cipherBits(int(value), 32)
 	case uint64:
 		value, ok := val.(uint64)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 64)
+		ctxt = key.cipherBits(int(value), 64)
 	case int8:
 		value, ok := val.(int8)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 8)
+		ctxt = key.cipherBits(int(value), 8)
 	case int16:
 		value, ok := val.(int16)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 16)
+		ctxt = key.cipherBits(int(value), 16)
 	case int32:
 		value, ok := val.(int32)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 32)
+		ctxt = key.cipherBits(int(value), 32)
 	case int64:
 		value, ok := val.(int64)
 		if !ok {
 			fmt.Printf("Unable to convert type %T", value)
 		}
-		ctxt = key.CipherBits(int(value), 64)
+		ctxt = key.cipherBits(int(value), 64)
 	}
 	return ctxt
 }
 
-func (key *PrivateKey) CipherBits(val, size int) Int {
+func (key *PrivateKey) cipherBits(val, size int) Ctxt {
 	ctxt := NewInt(size, key.Params.InOutParams)
 	ctxt[0] = key.BootsSymEncrypt(val & 0x1)
 	for i := 1; i < size; i++ {
@@ -111,9 +111,9 @@ func (key *PrivateKey) CipherBits(val, size int) Int {
 	return ctxt
 }
 
-func (key *PrivateKey) PlainBits(val Int) int {
+func (key *PrivateKey) plainBits(val Ctxt) int {
 	binary := ""
-	for i := 0; i < len(val); i++ {
+	for i := len(val) - 1; i >= 0; i-- {
 		binary += strconv.Itoa(key.BootsSymDecrypt(val[i]))
 	}
 	output, err := strconv.ParseInt(binary, 2, 64)

@@ -11,7 +11,7 @@ func TestWriteKeys(t *testing.T) {
 	// generate params
 	params := gates.DefaultGateBootstrappingParameters(100)
 
-	pubKey, privKey := gates.GenerateKeys(params)
+	pubKey, privKey := params.GenerateKeys()
 	defer func() {
 		os.Remove("private.key")
 		os.Remove("public.key")
