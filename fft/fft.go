@@ -6,7 +6,9 @@ import (
 )
 
 // the default fft processor
-var fftProc FftProcessorInterface = &GoDspFftProcessor{}
+//var fftProc FftProcessorInterface = &GoDspFftProcessor{}
+
+var fftProc FftProcessorInterface = NewFftwProcessor(1024)
 
 type FftProcessorInterface interface {
 	executeReverseInt(a []int32) []complex128

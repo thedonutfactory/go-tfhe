@@ -37,11 +37,10 @@ func main() {
 	y := prv.Encrypt(int8(33))
 
 	start := time.Now()
-
 	// perform homomorphic sum gate operations
 	BITS := 8
 	temp := ctx.Int(3)
-	sum := ctx.Int(9)
+	sum := ctx.Int(BITS + 1)
 	carry := ctx.Int2()
 	for i := 0; i < BITS; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
