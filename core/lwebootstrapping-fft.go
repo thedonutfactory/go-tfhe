@@ -157,7 +157,8 @@ func TfheBootstrapWoKSFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu Toru
 	n := in_params.N
 
 	testvect := NewTorusPolynomial(N)
-	bara := make([]int32, N)
+	// bara := make([]int32, N)
+	bara := make([]int32, n)
 
 	// Modulus switching
 	barb := ModSwitchFromTorus32(x.B, Nx2)
