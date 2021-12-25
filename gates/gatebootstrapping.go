@@ -55,6 +55,33 @@ func NewPrivateKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKe
 	}
 }
 
+// Default parameter set.
+//
+// This parameter set ensures 128-bits of security, and a probability of error is upper-bounded by
+// $2^{-25}$. The secret keys generated with this parameter set are uniform binary.
+// This parameter set allows to evaluate faster Boolean circuits than the `Default128bitGateBootstrappingParameters`
+// one.
+func NewDefaultGateBootstrappingParameters() *GateBootstrappingParameterSet {
+	const (
+		N         = 512
+		k         = 2
+		n         = 586
+		bkL       = 2
+		bkBgbit   = 8
+		ksBasebit = 2
+		ksLength  = 5
+		ksStdev   = 0.000_089_761_673_968_349_98     // 2^{-13.44...}
+		bkStdev   = 0.000_000_029_890_407_929_674_34 // 2^{-24.9...}
+		maxStdev  = 0.012467                         //max standard deviation for a 1/4 msg space
+	)
+
+	paramsIn := NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := NewTGswParams(bkL, bkBgbit, paramsAccum)
+
+	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
+}
+
 func Default80bitGateBootstrappingParameters() *GateBootstrappingParameterSet {
 	// These are the historic parameter set provided in 2016,
 	// that were analyzed against lattice enumeration attacks
