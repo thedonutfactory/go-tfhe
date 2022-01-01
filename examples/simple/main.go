@@ -29,8 +29,8 @@ func keys(params *gates.GateBootstrappingParameterSet) (*gates.PublicKey, *gates
 
 func main() {
 	// generate public and private keys
-	ctx := gates.NewDefaultGateBootstrappingParameters()
-	pub, prv := ctx.GenerateKeys()
+	ctx := gates.Default128bitGateBootstrappingParameters()
+	pub, prv := keys(ctx) //ctx.GenerateKeys()
 
 	// encrypt 2 8-bit ciphertexts
 	x := prv.Encrypt(int8(22))

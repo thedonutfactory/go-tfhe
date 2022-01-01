@@ -15,7 +15,7 @@ var (
 	minimumLambda int32 = 100
 	// generate the keys
 	pubKey, priKey            = DefaultGateBootstrappingParameters(minimumLambda).GenerateKeys()
-	ops            Operations = &CipheredOperations{bk: pubKey}
+	ops            Operations = &CipheredOperations{Pk: pubKey}
 )
 
 func to4Bits(val int) []int {
@@ -160,8 +160,16 @@ func TestMaximum(tt *testing.T) {
 
 func TestAddition(tt *testing.T) {
 	assert := assert.New(tt)
-	v := toCiphertext(2, 1)
-	result := ops.Add(v[0], v[1], NB_BITS)
+
+	//ctx := gates.Default128bitGateBootstrappingParameters()
+	//pub, prv := keys(ctx) //ctx.GenerateKeys()
+
+	// encrypt 2 8-bit ciphertexts
+	x := priKey.Encrypt(int8(2))
+	y := priKey.Encrypt(int8(1))
+
+	//v := toCiphertext(2, 1)
+	result := ops.Add(x, y, NB_BITS)
 	decryptAndDisplayResult(result, tt)
 
 	// result should be 3 -> 0011

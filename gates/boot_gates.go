@@ -149,7 +149,7 @@ func (bk *PublicKey) Constant(value bool) *LweSample {
 	inOutParams := bk.Params.InOutParams
 	MU := ModSwitchToTorus32(1, 8)
 	var muValue = -MU
-	if value == true {
+	if value {
 		muValue = MU
 	}
 	result := NewLweSample(inOutParams)
