@@ -1,8 +1,8 @@
 package gates
 
 import (
-	. "github.com/thedonutfactory/go-tfhe/core"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 /*
@@ -10,21 +10,21 @@ import (
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Nand(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) Nand(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,1/8) - ca - cb
-	NandConst := ModSwitchToTorus32(1, 8)
-	LweNoiselessTrivial(tempResult, NandConst, inOutParams)
-	LweSubTo(tempResult, ca, inOutParams)
-	LweSubTo(tempResult, cb, inOutParams)
+	NandConst := types.ModSwitchToTorus32(1, 8)
+	core.LweNoiselessTrivial(tempResult, NandConst, inOutParams)
+	core.LweSubTo(tempResult, ca, inOutParams)
+	core.LweSubTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//return tfheBootstrap(bk.Bkw.Bk, MU, tempResult)
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 	// tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult)
 }
 
@@ -33,21 +33,21 @@ func (bk *PublicKey) Nand(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Or(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) Or(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,1/8) + ca + cb
-	OrConst := ModSwitchToTorus32(1, 8)
-	LweNoiselessTrivial(tempResult, OrConst, inOutParams)
-	LweAddTo(tempResult, ca, inOutParams)
-	LweAddTo(tempResult, cb, inOutParams)
+	OrConst := types.ModSwitchToTorus32(1, 8)
+	core.LweNoiselessTrivial(tempResult, OrConst, inOutParams)
+	core.LweAddTo(tempResult, ca, inOutParams)
+	core.LweAddTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -55,21 +55,21 @@ func (bk *PublicKey) Or(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) And(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) And(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,-1/8) + ca + cb
-	AndConst := ModSwitchToTorus32(-1, 8)
-	LweNoiselessTrivial(tempResult, AndConst, inOutParams)
-	LweAddTo(tempResult, ca, inOutParams)
-	LweAddTo(tempResult, cb, inOutParams)
+	AndConst := types.ModSwitchToTorus32(-1, 8)
+	core.LweNoiselessTrivial(tempResult, AndConst, inOutParams)
+	core.LweAddTo(tempResult, ca, inOutParams)
+	core.LweAddTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -77,21 +77,21 @@ func (bk *PublicKey) And(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Xor(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) Xor(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,1/4) + 2*(ca + cb)
-	XorConst := ModSwitchToTorus32(1, 4)
-	LweNoiselessTrivial(tempResult, XorConst, inOutParams)
-	LweAddMulTo(tempResult, 2, ca, inOutParams)
-	LweAddMulTo(tempResult, 2, cb, inOutParams)
+	XorConst := types.ModSwitchToTorus32(1, 4)
+	core.LweNoiselessTrivial(tempResult, XorConst, inOutParams)
+	core.LweAddMulTo(tempResult, 2, ca, inOutParams)
+	core.LweAddMulTo(tempResult, 2, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -99,21 +99,21 @@ func (bk *PublicKey) Xor(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Xnor(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) Xnor(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,-1/4) + 2*(-ca-cb)
-	XnorConst := ModSwitchToTorus32(-1, 4)
-	LweNoiselessTrivial(tempResult, XnorConst, inOutParams)
-	LweSubMulTo(tempResult, 2, ca, inOutParams)
-	LweSubMulTo(tempResult, 2, cb, inOutParams)
+	XnorConst := types.ModSwitchToTorus32(-1, 4)
+	core.LweNoiselessTrivial(tempResult, XnorConst, inOutParams)
+	core.LweSubMulTo(tempResult, 2, ca, inOutParams)
+	core.LweSubMulTo(tempResult, 2, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -121,10 +121,10 @@ func (bk *PublicKey) Xnor(ca, cb *LweSample) *LweSample {
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Not(ca *LweSample) *LweSample {
+func (bk *PublicKey) Not(ca *core.LweSample) *core.LweSample {
 	inOutParams := bk.Params.InOutParams
-	result := NewLweSample(inOutParams)
-	LweNegate(result, ca, inOutParams)
+	result := core.NewLweSample(inOutParams)
+	core.LweNegate(result, ca, inOutParams)
 	return result
 }
 
@@ -133,10 +133,10 @@ func (bk *PublicKey) Not(ca *LweSample) *LweSample {
  * Takes in input 1 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Copy(ca *LweSample) *LweSample {
+func (bk *PublicKey) Copy(ca *core.LweSample) *core.LweSample {
 	inOutParams := bk.Params.InOutParams
-	result := NewLweSample(inOutParams)
-	LweCopy(result, ca, inOutParams)
+	result := core.NewLweSample(inOutParams)
+	core.LweCopy(result, ca, inOutParams)
 	return result
 }
 
@@ -145,15 +145,15 @@ func (bk *PublicKey) Copy(ca *LweSample) *LweSample {
  * Takes a boolean value)
  * Outputs a LWE sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Constant(value bool) *LweSample {
+func (bk *PublicKey) Constant(value bool) *core.LweSample {
 	inOutParams := bk.Params.InOutParams
-	MU := ModSwitchToTorus32(1, 8)
+	MU := types.ModSwitchToTorus32(1, 8)
 	var muValue = -MU
 	if value {
 		muValue = MU
 	}
-	result := NewLweSample(inOutParams)
-	LweNoiselessTrivial(result, muValue, inOutParams)
+	result := core.NewLweSample(inOutParams)
+	core.LweNoiselessTrivial(result, muValue, inOutParams)
 	return result
 }
 
@@ -162,21 +162,21 @@ func (bk *PublicKey) Constant(value bool) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Nor(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) Nor(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,-1/8) - ca - cb
-	NorConst := ModSwitchToTorus32(-1, 8)
-	LweNoiselessTrivial(tempResult, NorConst, inOutParams)
-	LweSubTo(tempResult, ca, inOutParams)
-	LweSubTo(tempResult, cb, inOutParams)
+	NorConst := types.ModSwitchToTorus32(-1, 8)
+	core.LweNoiselessTrivial(tempResult, NorConst, inOutParams)
+	core.LweSubTo(tempResult, ca, inOutParams)
+	core.LweSubTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -184,21 +184,21 @@ func (bk *PublicKey) Nor(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) AndNY(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) AndNY(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,-1/8) - ca + cb
-	AndNYConst := ModSwitchToTorus32(-1, 8)
-	LweNoiselessTrivial(tempResult, AndNYConst, inOutParams)
-	LweSubTo(tempResult, ca, inOutParams)
-	LweAddTo(tempResult, cb, inOutParams)
+	AndNYConst := types.ModSwitchToTorus32(-1, 8)
+	core.LweNoiselessTrivial(tempResult, AndNYConst, inOutParams)
+	core.LweSubTo(tempResult, ca, inOutParams)
+	core.LweAddTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -206,21 +206,21 @@ func (bk *PublicKey) AndNY(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) AndYN(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) AndYN(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,-1/8) + ca - cb
-	AndYNConst := ModSwitchToTorus32(-1, 8)
-	LweNoiselessTrivial(tempResult, AndYNConst, inOutParams)
-	LweAddTo(tempResult, ca, inOutParams)
-	LweSubTo(tempResult, cb, inOutParams)
+	AndYNConst := types.ModSwitchToTorus32(-1, 8)
+	core.LweNoiselessTrivial(tempResult, AndYNConst, inOutParams)
+	core.LweAddTo(tempResult, ca, inOutParams)
+	core.LweSubTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -228,21 +228,21 @@ func (bk *PublicKey) AndYN(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) OrNY(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) OrNY(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,1/8) - ca + cb
-	OrNYConst := ModSwitchToTorus32(1, 8)
-	LweNoiselessTrivial(tempResult, OrNYConst, inOutParams)
-	LweSubTo(tempResult, ca, inOutParams)
-	LweAddTo(tempResult, cb, inOutParams)
+	OrNYConst := types.ModSwitchToTorus32(1, 8)
+	core.LweNoiselessTrivial(tempResult, OrNYConst, inOutParams)
+	core.LweSubTo(tempResult, ca, inOutParams)
+	core.LweAddTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -250,21 +250,21 @@ func (bk *PublicKey) OrNY(ca, cb *LweSample) *LweSample {
  * Takes in input 2 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) OrYN(ca, cb *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) OrYN(ca, cb *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
-	tempResult := NewLweSample(inOutParams)
+	tempResult := core.NewLweSample(inOutParams)
 
 	//compute: (0,1/8) + ca - cb
-	OrYNConst := ModSwitchToTorus32(1, 8)
-	LweNoiselessTrivial(tempResult, OrYNConst, inOutParams)
-	LweAddTo(tempResult, ca, inOutParams)
-	LweSubTo(tempResult, cb, inOutParams)
+	OrYNConst := types.ModSwitchToTorus32(1, 8)
+	core.LweNoiselessTrivial(tempResult, OrYNConst, inOutParams)
+	core.LweAddTo(tempResult, ca, inOutParams)
+	core.LweSubTo(tempResult, cb, inOutParams)
 
 	//if the phase is positive, the result is 1/8
 	//if the phase is positive, else the result is -1/8
 	//tfheBootstrap_FFT(result, bk.bkFFT, MU, tempResult);
-	return TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
+	return core.TfheBootstrapFFT(bk.Bkw.BkFFT, MU, tempResult)
 }
 
 /*
@@ -272,39 +272,39 @@ func (bk *PublicKey) OrYN(ca, cb *LweSample) *LweSample {
  * Takes in input 3 LWE samples (with message space [-1/8,1/8], noise<1/16)
  * Outputs a LWE bootstrapped sample (with message space [-1/8,1/8], noise<1/16)
  */
-func (bk *PublicKey) Mux(a, b, c *LweSample) *LweSample {
-	MU := ModSwitchToTorus32(1, 8)
+func (bk *PublicKey) Mux(a, b, c *core.LweSample) *core.LweSample {
+	MU := types.ModSwitchToTorus32(1, 8)
 	inOutParams := bk.Params.InOutParams
 	extractedParams := &bk.Params.TgswParams.TlweParams.ExtractedLweparams
 
-	tempResult := NewLweSample(inOutParams)
-	tempResult1 := NewLweSample(extractedParams)
-	u1 := NewLweSample(extractedParams)
-	u2 := NewLweSample(extractedParams)
+	tempResult := core.NewLweSample(inOutParams)
+	tempResult1 := core.NewLweSample(extractedParams)
+	u1 := core.NewLweSample(extractedParams)
+	u2 := core.NewLweSample(extractedParams)
 
 	//compute "AND(a,b)": (0,-1/8) + a + b
-	AndConst := ModSwitchToTorus32(-1, 8)
-	LweNoiselessTrivial(tempResult, AndConst, inOutParams)
-	LweAddTo(tempResult, a, inOutParams)
-	LweAddTo(tempResult, b, inOutParams)
+	AndConst := types.ModSwitchToTorus32(-1, 8)
+	core.LweNoiselessTrivial(tempResult, AndConst, inOutParams)
+	core.LweAddTo(tempResult, a, inOutParams)
+	core.LweAddTo(tempResult, b, inOutParams)
 	// Bootstrap without KeySwitch
 	// tfheBootstrapWoKS_FFT(u1, bk.bkFFT, MU, tempResult);
-	TfheBootstrapWoKSFFT(u1, bk.Bkw.BkFFT, MU, tempResult)
+	core.TfheBootstrapWoKSFFT(u1, bk.Bkw.BkFFT, MU, tempResult)
 
 	//compute "AND(not(a),c)": (0,-1/8) - a + c
-	LweNoiselessTrivial(tempResult, AndConst, inOutParams)
-	LweSubTo(tempResult, a, inOutParams)
-	LweAddTo(tempResult, c, inOutParams)
+	core.LweNoiselessTrivial(tempResult, AndConst, inOutParams)
+	core.LweSubTo(tempResult, a, inOutParams)
+	core.LweAddTo(tempResult, c, inOutParams)
 	// Bootstrap without KeySwitch
 	//tfheBootstrapWoKS_FFT(u2, bk.bkFFT, MU, tempResult);
-	TfheBootstrapWoKSFFT(u2, bk.Bkw.BkFFT, MU, tempResult)
+	core.TfheBootstrapWoKSFFT(u2, bk.Bkw.BkFFT, MU, tempResult)
 
 	// Add u1=u1+u2
-	MuxConst := ModSwitchToTorus32(1, 8)
-	LweNoiselessTrivial(tempResult1, MuxConst, extractedParams)
-	LweAddTo(tempResult1, u1, extractedParams)
-	LweAddTo(tempResult1, u2, extractedParams)
+	MuxConst := types.ModSwitchToTorus32(1, 8)
+	core.LweNoiselessTrivial(tempResult1, MuxConst, extractedParams)
+	core.LweAddTo(tempResult1, u1, extractedParams)
+	core.LweAddTo(tempResult1, u2, extractedParams)
 	// Key switching
-	//LweKeySwitch(result, bk.bkFFT.ks, tempResult1)
-	return LweKeySwitch(bk.Bkw.BkFFT.Ks, tempResult1)
+	//core.LweKeySwitch(result, bk.bkFFT.ks, tempResult1)
+	return core.LweKeySwitch(bk.Bkw.BkFFT.Ks, tempResult1)
 }

@@ -5,8 +5,8 @@ import (
 	"math"
 	"strconv"
 
-	. "github.com/thedonutfactory/go-tfhe/core"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 func (key *PrivateKey) Encrypt(message interface{}) Ctxt {
@@ -18,22 +18,22 @@ func (key *PrivateKey) Decrypt(message Ctxt) int {
 }
 
 /** encrypts a boolean */
-func (key *PrivateKey) BootsSymEncrypt(message int) *LweSample {
-	_1s8 := ModSwitchToTorus32(1, 8)
-	var mu Torus32 = -_1s8
+func (key *PrivateKey) BootsSymEncrypt(message int) *core.LweSample {
+	_1s8 := types.ModSwitchToTorus32(1, 8)
+	var mu types.Torus32 = -_1s8
 	if message != 0 {
 		mu = _1s8
 	}
 	//Torus32 mu = message ? _1s8 : -_1s8;
-	r := NewLweSample(key.LweKey.Params)
+	r := core.NewLweSample(key.LweKey.Params)
 	alpha := key.Params.InOutParams.AlphaMin //TODO: specify noise
-	LweSymEncrypt(r, mu, alpha, key.LweKey)
+	core.LweSymEncrypt(r, mu, alpha, key.LweKey)
 	return r
 }
 
 /** decrypts a boolean */
-func (key *PrivateKey) BootsSymDecrypt(sample *LweSample) int {
-	mu := LwePhase(sample, key.LweKey)
+func (key *PrivateKey) BootsSymDecrypt(sample *core.LweSample) int {
+	mu := core.LwePhase(sample, key.LweKey)
 	if mu > 0 {
 		return 1
 	} else {

@@ -3,12 +3,12 @@ package core
 import (
 	"math/big"
 
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
-func torusPolynomialMultNaivePlainAux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
+func torusPolynomialMultNaivePlainAux(result []types.Torus32, poly1 []int32, poly2 []types.Torus32, N int32) {
 	_2Nm1 := 2*N - 1
-	var ri Torus32
+	var ri types.Torus32
 	for i := int32(0); i < N; i++ {
 		ri = 0
 		for j := int32(0); j <= i; j++ {
@@ -25,8 +25,8 @@ func torusPolynomialMultNaivePlainAux(result []Torus32, poly1 []int32, poly2 []T
 	}
 }
 
-func torusPolynomialMultNaiveAux(result []Torus32, poly1 []int32, poly2 []Torus32, N int32) {
-	var ri Torus32
+func torusPolynomialMultNaiveAux(result []types.Torus32, poly1 []int32, poly2 []types.Torus32, N int32) {
+	var ri types.Torus32
 	for i := int32(0); i < N; i++ {
 		ri = 0
 		for j := int32(0); j <= i; j++ {
@@ -61,7 +61,7 @@ func torusPolynomialMultNaive(result *TorusPolynomial, poly1 *IntPolynomial, pol
 // A and B of size = size
 // R of size = 2*size-1
 
-func karatsubaAux(R []Torus32, A []int32, B []Torus32, size int32) {
+func karatsubaAux(R []types.Torus32, A []int32, B []types.Torus32, size int32) {
 	h := size / 2
 	sm1 := size - 1
 
@@ -74,8 +74,8 @@ func karatsubaAux(R []Torus32, A []int32, B []Torus32, size int32) {
 
 	//we split the polynomials in 2
 	Atemp := make([]int32, h)
-	Btemp := make([]Torus32, h)
-	Rtemp := make([]Torus32, size)
+	Btemp := make([]types.Torus32, h)
+	Rtemp := make([]types.Torus32, size)
 	//Note: in the above line, I have put size instead of sm1 so that buf remains aligned on a power of 2
 	for i := int32(0); i < h; i++ {
 		Atemp[i] = A[i] + A[h+i]
@@ -109,7 +109,7 @@ func Mul(x, y []*big.Int) (res []*big.Int) {
 // poly1, poly2 and result are polynomials mod X^N+1
 func torusPolynomialMultKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	R := make([]Torus32, 2*N-1)
+	R := make([]types.Torus32, 2*N-1)
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
@@ -126,7 +126,7 @@ func torusPolynomialMultKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial,
 // poly1, poly2 and result are polynomials mod X^N+1
 func torusPolynomialAddMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	R := make([]Torus32, 2*N-1)
+	R := make([]types.Torus32, 2*N-1)
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba
@@ -143,7 +143,7 @@ func torusPolynomialAddMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomi
 // poly1, poly2 and result are polynomials mod X^N+1
 func torusPolynomialSubMulRKaratsuba(result *TorusPolynomial, poly1 *IntPolynomial, poly2 *TorusPolynomial) {
 	N := poly1.N
-	R := make([]Torus32, 2*N-1)
+	R := make([]types.Torus32, 2*N-1)
 	//buf := make([]byte, 16*N) //that's large enough to store every tmp variables (2*2*N*4)
 
 	// Karatsuba

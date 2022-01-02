@@ -1,7 +1,7 @@
 package core
 
 import (
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
@@ -57,7 +57,7 @@ func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
 	basebit := ks.Basebit
 	t := int32(ks.T)
 	base := int32(1 << basebit)
-	var err Torus32
+	var err types.Torus32
 
 	// compute the average error
 	for i := int32(0); i < n; i++ {
@@ -74,7 +74,7 @@ func renormalizeKSkey(ks *LweKeySwitchKey, outKey *LweKey, inKey []int32) {
 		}
 	}
 	nb := n * t * (base - 1)
-	err = DoubleToTorus(TorusToDouble(err) / float64(nb))
+	err = types.DoubleToTorus(types.TorusToDouble(err) / float64(nb))
 
 	// relinearize
 	for i := int32(0); i < n; i++ {
@@ -128,7 +128,7 @@ func lweCreateKeySwitchKeyFromArray(result [][][]*LweSample,
  */
 func lweKeySwitchTranslateFromArray(result *LweSample,
 	ks [][][]*LweSample, params *LweParams,
-	ai []Torus32,
+	ai []types.Torus32,
 	n, t, basebit int32) {
 
 	base := 1 << basebit

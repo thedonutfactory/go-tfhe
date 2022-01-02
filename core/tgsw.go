@@ -3,19 +3,19 @@ package core
 import (
 	"fmt"
 
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 type TGswParams struct {
-	L          int32       ///< decomp length
-	Bgbit      int32       ///< log_2(Bg)
-	Bg         int32       ///< decomposition base (must be a power of 2)
-	HalfBg     int32       ///< Bg/2
-	MaskMod    uint32      ///< Bg-1
-	TlweParams *TLweParams ///< Params of each row
-	Kpl        int32       ///< number of rows = (k+1)*l
-	H          []Torus32   ///< powers of Bgbit
-	Offset     uint32      ///< offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
+	L          int32           ///< decomp length
+	Bgbit      int32           ///< log_2(Bg)
+	Bg         int32           ///< decomposition base (must be a power of 2)
+	HalfBg     int32           ///< Bg/2
+	MaskMod    uint32          ///< Bg-1
+	TlweParams *TLweParams     ///< Params of each row
+	Kpl        int32           ///< number of rows = (k+1)*l
+	H          []types.Torus32 ///< powers of Bgbit
+	Offset     uint32          ///< offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
 }
 
 type TGswKey struct {
@@ -92,7 +92,7 @@ func NewTGswSample(params *TGswParams) *TGswSample {
 func NewTGswParams(l, Bgbit int32, tlweParams *TLweParams) *TGswParams {
 	var Bg int32 = 1 << Bgbit
 	var halfBg int32 = Bg / 2
-	h := make([]Torus32, l)
+	h := make([]types.Torus32, l)
 	for i := int32(0); i < l; i++ {
 		kk := (32 - (i+1)*Bgbit)
 		h[i] = 1 << kk // 1/(Bg^(i+1)) as a Torus32
@@ -289,7 +289,7 @@ func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msi
 	tmp := NewTorusPolynomial(N)
 	decomp := NewIntPolynomialArray(int(l), N)
 
-	indic := ModSwitchToTorus32(1, int32(Msize))
+	indic := types.ModSwitchToTorus32(1, int32(Msize))
 	torusPolynomialClear(testvec)
 	testvec.Coefs[0] = indic
 	TGswTorus32PolynomialDecompH(decomp, testvec, params)
@@ -303,7 +303,7 @@ func TGswSymDecrypt(result *IntPolynomial, sample *TGswSample, key *TGswKey, Msi
 		TorusPolynomialAddMulR(testvec, &decomp[i], tmp)
 	}
 	for i := int32(0); i < N; i++ {
-		result.Coefs[i] = ModSwitchFromTorus32(testvec.Coefs[i], int32(Msize))
+		result.Coefs[i] = types.ModSwitchFromTorus32(testvec.Coefs[i], int32(Msize))
 	}
 }
 

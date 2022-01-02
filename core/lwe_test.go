@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 var (
@@ -67,20 +67,20 @@ func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 
 		//verify correctness of the decryption
 		for trial := int32(0); trial < nbSamples; trial++ {
-			message := ModSwitchToTorus32(trial, M)
+			message := types.ModSwitchToTorus32(trial, M)
 			LweSymEncrypt(samples[trial], message, alpha, key)
 			phase := LwePhase(samples[trial], key)
 			decrypt := LweSymDecrypt(samples[trial], key, M)
-			dmessage := TorusToDouble(message)
-			dphase := TorusToDouble(phase)
+			dmessage := types.TorusToDouble(message)
+			dphase := types.TorusToDouble(phase)
 			assert.Equal(message, decrypt)
-			assert.LessOrEqual(Absfrac(dmessage-dphase), 10.*alpha)
+			assert.LessOrEqual(types.Absfrac(dmessage-dphase), 10.*alpha)
 			assert.Equal(alpha*alpha, samples[trial].CurrentVariance)
 		}
 		//verify that samples are random enough (all coordinates different)
 		n := params.N
 		for i := int32(0); i < n; i++ {
-			testset := make(map[Torus32]bool)
+			testset := make(map[types.Torus32]bool)
 			//set < Torus32 > testset
 			for trial := int32(0); trial < nbSamples; trial++ {
 				testset[samples[trial].A[i]] = true
@@ -96,9 +96,9 @@ func TestLweSymEncryptPhaseDecrypt(t *testing.T) {
 func fillRandom(result *LweSample, params *LweParams) {
 	n := params.N
 	for i := int32(0); i < n; i++ {
-		result.A[i] = UniformTorus32Dist()
+		result.A[i] = types.UniformTorus32Dist()
 	}
-	result.B = UniformTorus32Dist()
+	result.B = types.UniformTorus32Dist()
 	result.CurrentVariance = 0.2
 }
 
@@ -124,7 +124,7 @@ func TestLweClear(t *testing.T) {
 func TestLweNoiselessTrivial(t *testing.T) {
 	assert := assert.New(t)
 	for _, key := range allKeys {
-		message := UniformTorus32Dist()
+		message := types.UniformTorus32Dist()
 		params := key.Params
 		n := params.N
 		sample := NewLweSample(params)

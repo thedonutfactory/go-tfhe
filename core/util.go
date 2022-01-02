@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 func Assert(condition bool) {
@@ -66,20 +66,20 @@ func castTorus2(arr []complex128) (res []int32) {
 	res = make([]int32, len(arr))
 	for i, v := range arr {
 		t := real(v) * _2p32 * _1sN
-		fmt.Printf("%f -> %f, %d\n", real(v), t, Torus32(int((t))))
+		fmt.Printf("%f -> %f, %d\n", real(v), t, types.Torus32(int((t))))
 		res[i] = int32(int64((real(v)) * _2p32 * _1sN))
 	}
 	return
 }
 
-func castTorus(arr []complex128) (res []Torus32) {
+func castTorus(arr []complex128) (res []types.Torus32) {
 	res = make([]int32, len(arr))
 	for i, v := range arr {
 
 		//res[i] = int32(real(v))
 		//res[i] = Torus32(int(real(v)))
 		//res[i] = int32(int(math.Round(real(v))))
-		res[i] = DoubleToTorus(real(v)) // int32(real(v))
+		res[i] = types.DoubleToTorus(real(v)) // int32(real(v))
 	}
 	return
 }

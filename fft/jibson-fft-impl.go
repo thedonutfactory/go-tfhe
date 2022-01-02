@@ -2,7 +2,7 @@ package fft
 
 import (
 	"github.com/mjibson/go-dsp/fft"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 type GoDspFftProcessor struct{}
@@ -26,7 +26,7 @@ func (*GoDspFftProcessor) executeReverseInt(a []int32) []complex128 {
 	return res
 }
 
-func (*GoDspFftProcessor) executeReverseTorus32(a []Torus32) []complex128 {
+func (*GoDspFftProcessor) executeReverseTorus32(a []types.Torus32) []complex128 {
 	N := len(a)
 	Ns2 := N / 2
 	_2N := N * 2
@@ -47,7 +47,7 @@ func (*GoDspFftProcessor) executeReverseTorus32(a []Torus32) []complex128 {
 	return res
 }
 
-func (*GoDspFftProcessor) executeDirectTorus32(a []complex128) []Torus32 {
+func (*GoDspFftProcessor) executeDirectTorus32(a []complex128) []types.Torus32 {
 	N := len(a) * 2
 	Ns2 := N / 2
 	_2N := N * 2
@@ -66,7 +66,7 @@ func (*GoDspFftProcessor) executeDirectTorus32(a []complex128) []Torus32 {
 	}
 	z := fft.FFT(cplxInout)
 
-	res := make([]Torus32, N)
+	res := make([]types.Torus32, N)
 	res[0] = int32(int64(real(z[0]) * _1sN * _2p32))
 	for i := 1; i < N; i++ {
 		res[i] = -int32(int64(real(z[N-i]) * _1sN * _2p32))

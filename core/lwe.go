@@ -3,7 +3,7 @@ package core
 import (
 	"math"
 
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
@@ -23,8 +23,8 @@ type LweParams struct {
 }
 
 type LweSample struct {
-	A               []Torus32 // the n coefs of the mask
-	B               Torus32
+	A               []types.Torus32 // the n coefs of the mask
+	B               types.Torus32
 	CurrentVariance float64
 }
 
@@ -41,7 +41,7 @@ func NewLweKey(params *LweParams) *LweKey {
 }
 
 func NewLweSample(params *LweParams) *LweSample {
-	return &LweSample{A: make([]Torus32, params.N), B: 0, CurrentVariance: 0}
+	return &LweSample{A: make([]types.Torus32, params.N), B: 0, CurrentVariance: 0}
 }
 
 func NewLweSampleArray(size int32, params *LweParams) (arr []*LweSample) {
@@ -66,7 +66,7 @@ func LweKeyGen(result *LweKey) {
 	z := make([]int32, result.Params.N)
 	// Generate some random numbers from standard normal distribution
 	for i := range z {
-		z[i] = Torus32(math.Round(dist.Rand()))
+		z[i] = types.Torus32(math.Round(dist.Rand()))
 	}
 	result.Key = z
 }
@@ -79,10 +79,10 @@ var LweSymEncrypt = LweSymEncryptImpl
  * The Lwe sample for the result must be allocated and initialized
  * (this means that the parameters are already in the result)
  */
-func LweSymEncryptImpl(result *LweSample, message Torus32, alpha float64, key *LweKey) {
-	result.B = Gaussian32(message, alpha)
+func LweSymEncryptImpl(result *LweSample, message types.Torus32, alpha float64, key *LweKey) {
+	result.B = types.Gaussian32(message, alpha)
 	for i := 0; i < int(key.Params.N); i++ {
-		result.A[i] = UniformTorus32Dist()
+		result.A[i] = types.UniformTorus32Dist()
 		result.B += result.A[i] * key.Key[i]
 	}
 	result.CurrentVariance = alpha * alpha
@@ -91,10 +91,10 @@ func LweSymEncryptImpl(result *LweSample, message Torus32, alpha float64, key *L
 /*
  * This function encrypts a message by using key and a given noise value
  */
-func LweSymEncryptWithExternalNoise(result *LweSample, message Torus32, noise float64, alpha float64, key *LweKey) {
+func LweSymEncryptWithExternalNoise(result *LweSample, message types.Torus32, noise float64, alpha float64, key *LweKey) {
 	result.B = message + int32(noise)
 	for i := 0; i < int(key.Params.N); i++ {
-		result.A[i] = UniformTorus32Dist()
+		result.A[i] = types.UniformTorus32Dist()
 		result.B += result.A[i] * key.Key[i]
 	}
 
@@ -104,8 +104,8 @@ func LweSymEncryptWithExternalNoise(result *LweSample, message Torus32, noise fl
 /**
  * This function computes the phase of sample by using key : phi = b - a.s
  */
-func LwePhase(sample *LweSample, key *LweKey) Torus32 {
-	var axs Torus32 = 0
+func LwePhase(sample *LweSample, key *LweKey) types.Torus32 {
+	var axs types.Torus32 = 0
 	for i := 0; i < int(key.Params.N); i++ {
 		axs += sample.A[i] * key.Key[i]
 	}
@@ -116,9 +116,9 @@ func LwePhase(sample *LweSample, key *LweKey) Torus32 {
  * This function computes the decryption of sample by using key
  * The constant Msize indicates the message space and is used to approximate the phase
  */
-func LweSymDecrypt(sample *LweSample, key *LweKey, Msize int32) Torus32 {
+func LweSymDecrypt(sample *LweSample, key *LweKey, Msize int32) types.Torus32 {
 	phi := LwePhase(sample, key)
-	return ApproxPhase(phi, Msize)
+	return types.ApproxPhase(phi, Msize)
 }
 
 //Arithmetic operations on Lwe samples
@@ -150,7 +150,7 @@ func LweNegate(result, sample *LweSample, params *LweParams) {
 }
 
 /** result = (0,mu) */
-func LweNoiselessTrivial(result *LweSample, mu Torus32, params *LweParams) {
+func LweNoiselessTrivial(result *LweSample, mu types.Torus32, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] = 0
 	}
