@@ -5,7 +5,7 @@ import (
 	"math"
 
 	"github.com/thedonutfactory/go-tfhe/fft"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
@@ -18,17 +18,17 @@ type IntPolynomial struct {
 /** This structure represents an torus polynomial modulo X^N+1 */
 type TorusPolynomial struct {
 	N     int32
-	Coefs []Torus32
+	Coefs []types.Torus32
 }
 
 func NewTorusPolynomial(n int32) *TorusPolynomial {
-	return &TorusPolynomial{N: n, Coefs: make([]Torus32, n)}
+	return &TorusPolynomial{N: n, Coefs: make([]types.Torus32, n)}
 }
 
 func NewTorusPolynomialArray(size int, n int32) (arr []TorusPolynomial) {
 	arr = make([]TorusPolynomial, size)
 	for i := 0; i < size; i++ {
-		arr[i] = TorusPolynomial{N: n, Coefs: make([]Torus32, n)}
+		arr[i] = TorusPolynomial{N: n, Coefs: make([]types.Torus32, n)}
 	}
 	return
 }
@@ -60,7 +60,7 @@ func torusPolynomialUniform(result *TorusPolynomial) {
 		Max: math.MaxInt32,
 	}
 	for i := int32(0); i < result.N; i++ {
-		result.Coefs[i] = Torus32(dist.Rand())
+		result.Coefs[i] = types.Torus32(dist.Rand())
 	}
 }
 
@@ -304,7 +304,7 @@ func torusPolynomialNormInftyDistSkipFirst(poly1 *TorusPolynomial, poly2 *TorusP
 	// Max between the coefficients of abs(poly1-poly2)
 	fmt.Println("Warning, skipping 0th element in torusPolynomialNormInftyDist")
 	for i := int32(1); i < N; i++ {
-		r := math.Abs(TorusToDouble(poly1.Coefs[i] - poly2.Coefs[i]))
+		r := math.Abs(types.TorusToDouble(poly1.Coefs[i] - poly2.Coefs[i]))
 		fmt.Printf("%d, %d => %f \n", poly1.Coefs[i], poly2.Coefs[i], r)
 		if r > norm {
 			norm = r
@@ -319,7 +319,7 @@ func torusPolynomialNormInftyDist(poly1 *TorusPolynomial, poly2 *TorusPolynomial
 
 	// Max between the coefficients of abs(poly1-poly2)
 	for i := int32(0); i < N; i++ {
-		r := math.Abs(TorusToDouble(poly1.Coefs[i] - poly2.Coefs[i]))
+		r := math.Abs(types.TorusToDouble(poly1.Coefs[i] - poly2.Coefs[i]))
 		if r > norm {
 			norm = r
 		}
@@ -342,7 +342,7 @@ func intPolynomialNormInftyDist(poly1 *IntPolynomial, poly2 *IntPolynomial) floa
 	var norm float64 = 0
 	// Max between the coefficients of abs(poly1-poly2)
 	for i := int32(0); i < poly1.N; i++ {
-		r := Abs(poly1.Coefs[i] - poly2.Coefs[i])
+		r := types.Abs(poly1.Coefs[i] - poly2.Coefs[i])
 		if float64(r) > norm {
 			norm = float64(r)
 		}

@@ -1,6 +1,6 @@
 package core
 
-import . "github.com/thedonutfactory/go-tfhe/types"
+import "github.com/thedonutfactory/go-tfhe/types"
 
 func tfheMuxRotate(result *TLweSample, accum *TLweSample, bki *TGswSample, barai int32,
 	bkParams *TGswParams) {
@@ -81,7 +81,7 @@ func tfheBlindRotateAndExtract(result *LweSample,
 * @param mu The output message (if phase(x)>0)
 * @param x The input sample
  */
-func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x *LweSample) {
+func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu types.Torus32, x *LweSample) {
 	bkParams := bk.BkParams
 	accumParams := bk.AccumParams
 	inParams := bk.InOutParams
@@ -90,9 +90,9 @@ func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x
 	n := inParams.N
 	testvect := NewTorusPolynomial(N)
 	bara := make([]int32, N)
-	barb := ModSwitchFromTorus32(x.B, Nx2)
+	barb := types.ModSwitchFromTorus32(x.B, Nx2)
 	for i := int32(0); i < n; i++ {
-		bara[i] = ModSwitchFromTorus32(x.A[i], Nx2)
+		bara[i] = types.ModSwitchFromTorus32(x.A[i], Nx2)
 	}
 	//the initial testvec = [mu,mu,mu,...,mu]
 	for i := int32(0); i < N; i++ {
@@ -108,7 +108,7 @@ func tfheBootstrapWoKS(result *LweSample, bk *LweBootstrappingKey, mu Torus32, x
 * @param mu The output message (if phase(x)>0)
 * @param x The input sample
  */
-func TfheBootstrap(bk *LweBootstrappingKey, mu Torus32, x *LweSample) *LweSample {
+func TfheBootstrap(bk *LweBootstrappingKey, mu types.Torus32, x *LweSample) *LweSample {
 	u := NewLweSample(&bk.AccumParams.ExtractedLweparams)
 	tfheBootstrapWoKS(u, bk, mu, x)
 	// Key Switching

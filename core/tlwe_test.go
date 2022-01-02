@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 var (
@@ -53,7 +53,7 @@ func fillTLweRandom(result *TLweSample, params *TLweParams) {
 	N := params.N
 	for i := int32(0); i <= k; i++ {
 		for j := int32(0); j < N; j++ {
-			result.A[i].Coefs[j] = UniformTorus32Dist()
+			result.A[i].Coefs[j] = types.UniformTorus32Dist()
 		}
 	}
 	result.CurrentVariance = 0.2
@@ -129,36 +129,36 @@ func TestTLweSymEncryptPhaseDecryptT(t *testing.T) {
 		k := params.K
 		samples := NewTLweSampleArray(nbSamples, params)
 		phase := NewTorusPolynomial(N)
-		var decrypt Torus32
+		var decrypt types.Torus32
 
 		//verify correctness of the decryption
 		for trial := 0; trial < nbSamples; trial++ {
-			// The message is a Torus32
-			message := ModSwitchToTorus32(rand.Int31()%M, M)
+			// The message is a types.Torus32
+			message := types.ModSwitchToTorus32(rand.Int31()%M, M)
 
 			// Encrypt and decrypt
 			TLweSymEncryptT(samples[trial], message, alpha, key)
 			decrypt = TLweSymDecryptT(samples[trial], key, M)
 			//ILA: Testing APPROX correct decryption
 			//the absolute value of the difference between message and decrypt is <= than toler
-			assert.LessOrEqual(math.Abs(TorusToDouble(message-decrypt)), toler)
-			assert.LessOrEqual(math.Abs(TorusToDouble(message-decrypt)), toler)
+			assert.LessOrEqual(math.Abs(types.TorusToDouble(message-decrypt)), toler)
+			assert.LessOrEqual(math.Abs(types.TorusToDouble(message-decrypt)), toler)
 
 			// ILA: It is really necessary? phase used in decrypt!!!
 			// Phase
 			TLwePhase(phase, samples[trial], key)
 			// Testing phase
-			dmessage := TorusToDouble(message)
-			dphase := TorusToDouble(phase.Coefs[0])
-			assert.LessOrEqual(Absfrac(dmessage-dphase), 10.*alpha) //ILA: why absfrac?
+			dmessage := types.TorusToDouble(message)
+			dphase := types.TorusToDouble(phase.Coefs[0])
+			assert.LessOrEqual(types.Absfrac(dmessage-dphase), 10.*alpha) //ILA: why absfrac?
 			//assert.EqualValues(alpha*alpha, samples[trial].CurrentVariance)
 		}
 
 		// Verify that samples are random enough (all coordinates different)
 		for i := int32(0); i < k; i++ {
 			for j := int32(0); j < N; j++ {
-				testset := make(map[Torus32]bool)
-				//set<Torus32> testset
+				testset := make(map[types.Torus32]bool)
+				//set<types.Torus32> testset
 				for trial := 0; trial < nbSamples; trial++ {
 					//testset.insert(samples[trial].a[i].Coefs[j])
 					testset[samples[trial].A[i].Coefs[j]] = true
@@ -197,7 +197,7 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 		//verify correctness of the decryption
 		for trial := 0; trial < nbSamples; trial++ {
 			for j := int32(0); j < N; j++ {
-				message.Coefs[j] = ModSwitchToTorus32(rand.Int31()%M, M)
+				message.Coefs[j] = types.ModSwitchToTorus32(rand.Int31()%M, M)
 			}
 
 			// Encrypt and Decrypt
@@ -212,18 +212,18 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 			TLweApproxPhase(approxphase, phase, M, N)
 			// Testing Phase and ApproxPhase
 			for j := int32(0); j < N; j++ {
-				dmessage := TorusToDouble(message.Coefs[j])
-				dphase := TorusToDouble(phase.Coefs[j])
-				dapproxphase := TorusToDouble(approxphase.Coefs[j])
-				assert.LessOrEqual(Absfrac(dmessage-dphase), 10.*alpha)   // ILA: why absfrac?
-				assert.LessOrEqual(Absfrac(dmessage-dapproxphase), alpha) // ILA verify
+				dmessage := types.TorusToDouble(message.Coefs[j])
+				dphase := types.TorusToDouble(phase.Coefs[j])
+				dapproxphase := types.TorusToDouble(approxphase.Coefs[j])
+				assert.LessOrEqual(types.Absfrac(dmessage-dphase), 10.*alpha)   // ILA: why absfrac?
+				assert.LessOrEqual(types.Absfrac(dmessage-dapproxphase), alpha) // ILA verify
 			}
 		}
 
 		// Verify that samples are random enough (all coordinates different)
 		for i := int32(0); i < k; i++ {
 			for j := int32(0); j < N; j++ {
-				testset := make(map[Torus32]bool)
+				testset := make(map[types.Torus32]bool)
 				for trial := 0; trial < nbSamples; trial++ {
 					fmt.Println(samples[trial].A[i].Coefs[j])
 					testset[samples[trial].A[i].Coefs[j]] = true
@@ -309,7 +309,7 @@ func TestTLweNoiselessTrivial(t *testing.T) {
 		k := params.K
 		message := NewTorusPolynomial(N)
 		for j := int32(0); j < N; j++ {
-			message.Coefs[j] = UniformTorus32Dist()
+			message.Coefs[j] = types.UniformTorus32Dist()
 		}
 		sample := NewTLweSample(params)
 
@@ -462,7 +462,7 @@ func TestTLweSubMulTo(t *testing.T) {
 /** result += (0,x) */
 func TestTLweAddTTo(t *testing.T) {
 	assert := assert.New(t)
-	x := UniformTorus32Dist()
+	x := types.UniformTorus32Dist()
 	for _, key := range allRandomKeys {
 		params := key.Params
 		N := params.N
@@ -490,7 +490,7 @@ func TestTLweAddTTo(t *testing.T) {
 /** result += p*(0,x) */
 func TestTLweAddRTTo(t *testing.T) {
 	assert := assert.New(t)
-	x := UniformTorus32Dist()
+	x := types.UniformTorus32Dist()
 	for _, key := range allRandomKeys {
 		params := key.Params
 		N := params.N
@@ -501,7 +501,7 @@ func TestTLweAddRTTo(t *testing.T) {
 		p := NewIntPolynomial(N)
 		fillTLweRandom(sample1, params)
 		for i := int32(0); i < N; i++ {
-			p.Coefs[i] = UniformTorus32Dist() % 1000
+			p.Coefs[i] = types.UniformTorus32Dist() % 1000
 		}
 		copyTLweSample(sample1copy, sample1, params)
 		tLweAddRTTo(sample1, pos, p, x, params)

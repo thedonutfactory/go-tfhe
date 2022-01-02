@@ -2,7 +2,7 @@ package fft
 
 import (
 	"github.com/mjibson/go-dsp/fft"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 // the default fft processor
@@ -10,19 +10,19 @@ var fftProc FftProcessorInterface = &GoDspFftProcessor{}
 
 type FftProcessorInterface interface {
 	executeReverseInt(a []int32) []complex128
-	executeReverseTorus32(a []Torus32) []complex128
-	executeDirectTorus32(a []complex128) []Torus32
+	executeReverseTorus32(a []types.Torus32) []complex128
+	executeDirectTorus32(a []complex128) []types.Torus32
 }
 
 func IntPolynomialIfft(result *LagrangeHalfCPolynomial, coefs []int32) {
 	result.Coefs = fftProc.executeReverseInt(coefs)
 }
 
-func TorusPolynomialIfft(result *LagrangeHalfCPolynomial, coefs []Torus32) {
+func TorusPolynomialIfft(result *LagrangeHalfCPolynomial, coefs []types.Torus32) {
 	result.Coefs = fftProc.executeReverseTorus32(coefs)
 }
 
-func TorusPolynomialFft(p *LagrangeHalfCPolynomial) []Torus32 {
+func TorusPolynomialFft(p *LagrangeHalfCPolynomial) []types.Torus32 {
 	return fftProc.executeDirectTorus32(p.Coefs)
 }
 

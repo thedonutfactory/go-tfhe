@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 var (
@@ -32,7 +32,7 @@ func TestLweCreateKeySwitchKeyFromArray(tt *testing.T) {
 	defer func() { LweSymEncrypt = old }()
 	LweSymEncrypt = func(
 		result *LweSample,
-		message Torus32,
+		message types.Torus32,
 		alpha float64,
 		key *LweKey) {
 		LweNoiselessTrivial(result, message, key.Params)
@@ -47,7 +47,7 @@ func TestLweCreateKeySwitchKeyFromArray(tt *testing.T) {
 	base := test.Base
 	inKey := make([]int32, N)
 	for i := int32(0); i < N; i++ {
-		if UniformTorus32Dist()%2 == 0 {
+		if types.UniformTorus32Dist()%2 == 0 {
 			inKey[i] = 1
 		} else {
 			inKey[i] = 0

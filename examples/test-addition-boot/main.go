@@ -6,21 +6,21 @@ import (
 	"os"
 	"time"
 
-	. "github.com/thedonutfactory/go-tfhe/core"
-	. "github.com/thedonutfactory/go-tfhe/gates"
-	. "github.com/thedonutfactory/go-tfhe/io"
+	"github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/gates"
+	"github.com/thedonutfactory/go-tfhe/io"
 	. "github.com/thedonutfactory/go-tfhe/types"
 )
 
-func fullAdderMUX(x, y Int, key *PublicKey, priv *PrivateKey) Int {
+func fullAdderMUX(x, y gates.Int, key *gates.PublicKey, priv *gates.PrivateKey) gates.Int {
 	nbBits := len(x)
 	inOutParams := priv.Params.InOutParams
-	sum := NewLweSampleArray(int32(nbBits)+1, inOutParams)
+	sum := core.NewLweSampleArray(int32(nbBits)+1, inOutParams)
 	// carries
-	carry := NewLweSampleArray(2, inOutParams)
+	carry := core.NewLweSampleArray(2, inOutParams)
 	carry[0] = priv.BootsSymEncrypt(0) // first carry initialized to 0
 	// temps
-	temp := NewLweSampleArray(2, inOutParams)
+	temp := core.NewLweSampleArray(2, inOutParams)
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
@@ -43,10 +43,10 @@ func fullAdderMUX(x, y Int, key *PublicKey, priv *PrivateKey) Int {
 
 		if messmux != tt {
 			fmt.Printf("\tError[fullAdderMUX]: %d - %f - %f - %f - %f\n", i,
-				TorusToDouble(LwePhase(temp[0], priv.LweKey)),
-				TorusToDouble(LwePhase(carry[0], priv.LweKey)),
-				TorusToDouble(LwePhase(temp[1], priv.LweKey)),
-				TorusToDouble(LwePhase(carry[1], priv.LweKey)),
+				TorusToDouble(core.LwePhase(temp[0], priv.LweKey)),
+				TorusToDouble(core.LwePhase(carry[0], priv.LweKey)),
+				TorusToDouble(core.LwePhase(temp[1], priv.LweKey)),
+				TorusToDouble(core.LwePhase(carry[1], priv.LweKey)),
 			)
 		}
 
@@ -56,15 +56,15 @@ func fullAdderMUX(x, y Int, key *PublicKey, priv *PrivateKey) Int {
 	return sum
 }
 
-func fullAdder(x, y Int, key *PublicKey, priv *PrivateKey) Int {
+func fullAdder(x, y gates.Int, key *gates.PublicKey, priv *gates.PrivateKey) gates.Int {
 	nbBits := len(x)
 	inOutParams := priv.Params.InOutParams
-	sum := NewLweSampleArray(int32(nbBits)+1, inOutParams)
+	sum := core.NewLweSampleArray(int32(nbBits)+1, inOutParams)
 	// carries
-	carry := NewLweSampleArray(2, inOutParams)
+	carry := core.NewLweSampleArray(2, inOutParams)
 	carry[0] = priv.BootsSymEncrypt(0) // first carry initialized to 0
 	// temps
-	temp := NewLweSampleArray(3, inOutParams)
+	temp := core.NewLweSampleArray(3, inOutParams)
 
 	for i := 0; i < nbBits; i++ {
 		//sumi = xi XOR yi XOR carry(i-1)
@@ -81,11 +81,11 @@ func fullAdder(x, y Int, key *PublicKey, priv *PrivateKey) Int {
 	return sum
 }
 
-func comparisonMUX(x, y Int, key *PublicKey, priv *PrivateKey) Int1 {
+func comparisonMUX(x, y gates.Int, key *gates.PublicKey, priv *gates.PrivateKey) gates.Int1 {
 	nbBits := len(x)
 	inOutParams := priv.Params.InOutParams
 	// carries
-	carry := NewLweSampleArray(2, inOutParams)
+	carry := core.NewLweSampleArray(2, inOutParams)
 	carry[0] = priv.BootsSymEncrypt(1) // first carry initialized to 1
 
 	for i := 0; i < nbBits; i++ {
@@ -93,7 +93,7 @@ func comparisonMUX(x, y Int, key *PublicKey, priv *PrivateKey) Int1 {
 		carry[1] = key.Mux(temp, y[i], carry[0])
 		carry[0] = key.Copy(carry[1])
 	}
-	out := NewInt1(inOutParams)
+	out := gates.NewInt1(inOutParams)
 	out[0] = key.Copy(carry[0])
 	return out
 }
@@ -146,7 +146,7 @@ func toBits(val, size int) []int {
 	return l
 }
 
-func decryptAndDisplayResult(sum []*LweSample, keyset *PrivateKey) {
+func decryptAndDisplayResult(sum []*core.LweSample, keyset *gates.PrivateKey) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
 		messSum := keyset.BootsSymDecrypt(sum[i])
@@ -155,20 +155,20 @@ func decryptAndDisplayResult(sum []*LweSample, keyset *PrivateKey) {
 	fmt.Println("]")
 }
 
-func keys(params *GateBootstrappingParameterSet) (*PublicKey, *PrivateKey) {
-	var pubKey *PublicKey
-	var privKey *PrivateKey
+func keys(params *gates.GateBootstrappingParameterSet) (*gates.PublicKey, *gates.PrivateKey) {
+	var pubKey *gates.PublicKey
+	var privKey *gates.PrivateKey
 	if _, err := os.Stat("private.key"); err == nil {
 		fmt.Println("------ Reading keys from file ------")
-		privKey, _ = ReadPrivKey("private.key")
-		pubKey, _ = ReadPubKey("public.key")
+		privKey, _ = io.ReadPrivKey("private.key")
+		pubKey, _ = io.ReadPubKey("public.key")
 
 	} else {
 		fmt.Println("------ Key Generation ------")
 		// generate the keys
 		pubKey, privKey = params.GenerateKeys()
-		WritePrivKey(privKey, "private.key")
-		WritePubKey(pubKey, "public.key")
+		io.WritePrivKey(privKey, "private.key")
+		io.WritePubKey(pubKey, "public.key")
 	}
 	return pubKey, privKey
 }
@@ -180,7 +180,7 @@ func main() {
 	)
 	// generate params
 	var minimumLambda int32 = 100
-	ctx := DefaultGateBootstrappingParameters(minimumLambda)
+	ctx := gates.DefaultGateBootstrappingParameters(minimumLambda)
 	pubKey, privKey := keys(ctx)
 
 	for trial := 0; trial < nbTrials; trial++ {
@@ -211,9 +211,9 @@ func main() {
 
 			if messSum != (messX ^ messY ^ messCarry) {
 				fmt.Printf("\tVerification Error %d, %f - %f - %f\n", i,
-					TorusToDouble(LwePhase(x[i], privKey.LweKey)),
-					TorusToDouble(LwePhase(y[i], privKey.LweKey)),
-					TorusToDouble(LwePhase(sum[i], privKey.LweKey)),
+					TorusToDouble(core.LwePhase(x[i], privKey.LweKey)),
+					TorusToDouble(core.LwePhase(y[i], privKey.LweKey)),
+					TorusToDouble(core.LwePhase(sum[i], privKey.LweKey)),
 				)
 			}
 			if messCarry != 0 {

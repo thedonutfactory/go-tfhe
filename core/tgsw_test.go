@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 const FAKE_TLWE_UID int32 = 542354312          // precaution: distinguish fakes from trues
@@ -219,11 +219,11 @@ func TestTGswTLweDecompH(t *testing.T) {
 
 		for bloc := int32(0); bloc <= k; bloc++ {
 			for i := int32(0); i < N; i++ {
-				var test Torus32 = 0
+				var test types.Torus32 = 0
 				for j := int32(0); j < l; j++ {
 					test += result[bloc*l+j].Coefs[i] * h[j]
 				}
-				assert.LessOrEqual(Abs(test-sample.A[bloc].Coefs[i]), toler)
+				assert.LessOrEqual(types.Abs(test-sample.A[bloc].Coefs[i]), toler)
 			}
 		}
 	}
@@ -417,11 +417,11 @@ func TestTGswTorus32PolynomialDecompH(t *testing.T) {
 
 		for i := int32(0); i < N; i++ {
 			// recomposition
-			var test Torus32 = 0
+			var test types.Torus32 = 0
 			for j := int32(0); j < l; j++ {
 				test += result[j].Coefs[i] * h[j]
 			}
-			assert.LessOrEqual(Abs(test-sample.Coefs[i]), toler)
+			assert.LessOrEqual(types.Abs(test-sample.Coefs[i]), toler)
 		}
 	}
 }

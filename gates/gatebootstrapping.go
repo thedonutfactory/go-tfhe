@@ -3,33 +3,33 @@ package gates
 import (
 	"math"
 
-	. "github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/core"
 )
 
 type GateBootstrappingParameterSet struct {
 	KsT         int32
 	KsBasebit   int32
-	InOutParams *LweParams
-	TgswParams  *TGswParams
+	InOutParams *core.LweParams
+	TgswParams  *core.TGswParams
 }
 
 type PublicKey struct {
 	Params *GateBootstrappingParameterSet
-	Bkw    *LweBootstrappingKeyWrapper
+	Bkw    *core.LweBootstrappingKeyWrapper
 }
 
 type PrivateKey struct {
 	Params  *GateBootstrappingParameterSet
-	LweKey  *LweKey
-	TgswKey *TGswKey
+	LweKey  *core.LweKey
+	TgswKey *core.TGswKey
 }
 
 /** generate a new uninitialized ciphertext array of length nbelems */
-func NewGateBootstrappingCiphertextArray(nbelems int, params *GateBootstrappingParameterSet) (arr []*LweSample) {
-	return NewLweSampleArray(int32(nbelems), params.InOutParams)
+func NewGateBootstrappingCiphertextArray(nbelems int, params *GateBootstrappingParameterSet) (arr []*core.LweSample) {
+	return core.NewLweSampleArray(int32(nbelems), params.InOutParams)
 }
 
-func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *LweParams, tgswParams *TGswParams) *GateBootstrappingParameterSet {
+func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *core.LweParams, tgswParams *core.TGswParams) *GateBootstrappingParameterSet {
 	return &GateBootstrappingParameterSet{
 		KsT:         ksT,
 		KsBasebit:   ksBasebit,
@@ -38,7 +38,7 @@ func NewTFheGateBootstrappingParameterSet(ksT, ksBasebit int32, inOutParams *Lwe
 	}
 }
 
-func NewPublicKey(params *GateBootstrappingParameterSet, bkw *LweBootstrappingKeyWrapper) *PublicKey {
+func NewPublicKey(params *GateBootstrappingParameterSet, bkw *core.LweBootstrappingKeyWrapper) *PublicKey {
 
 	return &PublicKey{
 		Params: params,
@@ -46,7 +46,7 @@ func NewPublicKey(params *GateBootstrappingParameterSet, bkw *LweBootstrappingKe
 	}
 }
 
-func NewPrivateKey(params *GateBootstrappingParameterSet, bk *LweBootstrappingKeyWrapper, lweKey *LweKey, tgswKey *TGswKey) *PrivateKey {
+func NewPrivateKey(params *GateBootstrappingParameterSet, bk *core.LweBootstrappingKeyWrapper, lweKey *core.LweKey, tgswKey *core.TGswKey) *PrivateKey {
 	return &PrivateKey{
 		Params:  params,
 		LweKey:  lweKey,
@@ -75,9 +75,9 @@ func NewDefaultGateBootstrappingParameters() *GateBootstrappingParameterSet {
 		maxStdev  = 0.012467                         //max standard deviation for a 1/4 msg space
 	)
 
-	paramsIn := NewLweParams(n, ksStdev, maxStdev)
-	paramsAccum := NewTLweParams(N, k, bkStdev, maxStdev)
-	paramsBk := NewTGswParams(bkL, bkBgbit, paramsAccum)
+	paramsIn := core.NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := core.NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := core.NewTGswParams(bkL, bkBgbit, paramsAccum)
 
 	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
@@ -100,9 +100,9 @@ func Default80bitGateBootstrappingParameters() *GateBootstrappingParameterSet {
 		maxStdev  = 0.012467 //max standard deviation for a 1/4 msg space
 	)
 
-	paramsIn := NewLweParams(n, ksStdev, maxStdev)
-	paramsAccum := NewTLweParams(N, k, bkStdev, maxStdev)
-	paramsBk := NewTGswParams(bkL, bkBgbit, paramsAccum)
+	paramsIn := core.NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := core.NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := core.NewTGswParams(bkL, bkBgbit, paramsAccum)
 
 	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
@@ -126,9 +126,9 @@ func Default128bitGateBootstrappingParameters() *GateBootstrappingParameterSet {
 	ksStdev := math.Pow(2, -15) //standard deviation
 	bkStdev := math.Pow(2, -25) //standard deviation
 
-	paramsIn := NewLweParams(n, ksStdev, maxStdev)
-	paramsAccum := NewTLweParams(N, k, bkStdev, maxStdev)
-	paramsBk := NewTGswParams(bkL, bkBgbit, paramsAccum)
+	paramsIn := core.NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := core.NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := core.NewTGswParams(bkL, bkBgbit, paramsAccum)
 
 	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
 }
@@ -150,11 +150,11 @@ func DefaultGateBootstrappingParameters(minimumLambda int32) *GateBootstrappingP
 }
 
 func (params *GateBootstrappingParameterSet) GenerateKeys() (*PublicKey, *PrivateKey) {
-	lweKey := NewLweKey(params.InOutParams)
-	LweKeyGen(lweKey)
-	tgswKey := NewTGswKey(params.TgswParams)
-	TGswKeyGen(tgswKey)
-	bkw := NewLweBootstrappingKeyWrapper(params.KsT, params.KsBasebit, params.InOutParams, params.TgswParams, lweKey, tgswKey)
+	lweKey := core.NewLweKey(params.InOutParams)
+	core.LweKeyGen(lweKey)
+	tgswKey := core.NewTGswKey(params.TgswParams)
+	core.TGswKeyGen(tgswKey)
+	bkw := core.NewLweBootstrappingKeyWrapper(params.KsT, params.KsBasebit, params.InOutParams, params.TgswParams, lweKey, tgswKey)
 	//tfheCreateLweBootstrappingKey(bkw.Bk, lweKey, tgswKey)
 	return NewPublicKey(params, bkw), NewPrivateKey(params, bkw, lweKey, tgswKey)
 }

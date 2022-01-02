@@ -5,8 +5,7 @@ import (
 
 	set "github.com/badgerodon/collections/set"
 	"github.com/stretchr/testify/assert"
-
-	. "github.com/thedonutfactory/go-tfhe/types"
+	"github.com/thedonutfactory/go-tfhe/types"
 )
 
 var (
@@ -164,7 +163,7 @@ func TestTorusPolynomialSubTo(t *testing.T) {
 //  TorusPolynomial + p*TorusPolynomial
 func TestTorusPolynomialAddMulZ(t *testing.T) {
 	assert := assert.New(t)
-	p := UniformTorus32Dist()
+	p := types.UniformTorus32Dist()
 	for _, N := range dimensions {
 		pols := NewTorusPolynomialArray(5, int32(N))
 		pola := &pols[0]
@@ -189,7 +188,7 @@ func TestTorusPolynomialAddMulZ(t *testing.T) {
 //  TorusPolynomial += p*TorusPolynomial
 func TestTorusPolynomialAddMulZTo(t *testing.T) {
 	assert := assert.New(t)
-	p := UniformTorus32Dist()
+	p := types.UniformTorus32Dist()
 	for _, N := range dimensions {
 		pols := NewTorusPolynomialArray(4, int32(N))
 		pola := &pols[0]
@@ -212,7 +211,7 @@ func TestTorusPolynomialAddMulZTo(t *testing.T) {
 //  TorusPolynomial - p*TorusPolynomial
 func TestTorusPolynomialSubMulZ(t *testing.T) {
 	assert := assert.New(t)
-	p := UniformTorus32Dist()
+	p := types.UniformTorus32Dist()
 	for _, N := range dimensions {
 		pols := NewTorusPolynomialArray(5, int32(N))
 		pola := &pols[0]
@@ -237,7 +236,7 @@ func TestTorusPolynomialSubMulZ(t *testing.T) {
 //  TorusPolynomial -= p*TorusPolynomial
 func TestTorusPolynomialSubMulZTo(t *testing.T) {
 	assert := assert.New(t)
-	p := UniformTorus32Dist()
+	p := types.UniformTorus32Dist()
 	for _, N := range dimensions {
 		pols := NewTorusPolynomialArray(4, int32(N))
 		pola := &pols[0]
@@ -268,7 +267,7 @@ func anticyclicGet(tab []int32, a int32, N int32) int32 {
 
 func randomSmallInts(tab []int32, bound, N int32) {
 	for j := int32(0); j < N; j++ {
-		tab[j] = (UniformTorus32Dist() % bound)
+		tab[j] = (types.UniformTorus32Dist() % bound)
 	}
 }
 
@@ -286,7 +285,7 @@ func TestTorusPolynomialMulByXai(t *testing.T) {
 	for _, N := range dimensions {
 		for trial := 0; trial < nbTrials; trial++ {
 			//TODO: parallelization
-			a := (UniformTorus32Dist() % 1000000) - 500000
+			a := (types.UniformTorus32Dist() % 1000000) - 500000
 			ai := ((a % int32(2*N)) + int32(2*N)) % int32(2*N)
 			pols := NewTorusPolynomialArray(4, int32(N))
 			pola := &pols[0]
@@ -313,7 +312,7 @@ func TestIntPolynomialMulByXaiMinusOne(t *testing.T) {
 	for _, N := range dimensions {
 		for trial := 0; trial < nbTrials; trial++ {
 			//TODO: parallelization
-			a := (UniformTorus32Dist() % 1000000) - 500000
+			a := (types.UniformTorus32Dist() % 1000000) - 500000
 			ai := ((a % int32(2*N)) + int32(2*N)) % int32(2*N)
 			pols := NewIntPolynomialArray(3, int32(N))
 			pola := &pols[0]
@@ -321,8 +320,8 @@ func TestIntPolynomialMulByXaiMinusOne(t *testing.T) {
 			polb := &pols[2]
 			//fill the polynomial with random Coefs
 			for j := 0; j < N; j++ {
-				pola.Coefs[j] = UniformTorus32Dist()
-				polb.Coefs[j] = UniformTorus32Dist()
+				pola.Coefs[j] = types.UniformTorus32Dist()
+				polb.Coefs[j] = types.UniformTorus32Dist()
 			}
 			intPolynomialCopy(polacopy, pola)
 			intPolynomialMulByXaiMinusOne(polb, ai, pola)
@@ -344,7 +343,7 @@ func TestTorusPolynomialMulByXaiMinusOne(t *testing.T) {
 	for _, N := range dimensions {
 		for trial := 0; trial < nbTrials; trial++ {
 			//TODO: parallelization
-			a := (UniformTorus32Dist() % 1000000) - 500000
+			a := (types.UniformTorus32Dist() % 1000000) - 500000
 			ai := ((a % int32(2*N)) + int32(2*N)) % int32(2*N)
 			pols := NewTorusPolynomialArray(3, int32(N))
 			pola := &pols[0]
@@ -377,7 +376,7 @@ func TestIntPolynomialNormSq2(t *testing.T) {
 		for trial := 0; trial < nbTrials; trial++ {
 			var norm2 float64 = 0
 			for j := 0; j < N; j++ {
-				r := (UniformTorus32Dist() % 1000) - 500
+				r := (types.UniformTorus32Dist() % 1000) - 500
 				a.Coefs[j] = r
 				acopy.Coefs[j] = r
 				norm2 += float64(r * r)
@@ -416,7 +415,7 @@ func TestPolynomialMultNaive(t *testing.T) {
 			for j := 0; j < N; j++ {
 				assert.EqualValues(acopy.Coefs[j], a.Coefs[j])
 				assert.EqualValues(bcopy.Coefs[j], b.Coefs[j])
-				var r Torus32 = 0
+				var r types.Torus32 = 0
 				for k := 0; k < N; k++ {
 					r += bcopy.Coefs[k] * anticyclicGet(acopy.Coefs, int32(j-k), int32(N))
 				}
@@ -451,7 +450,7 @@ func TestTorusPolynomialMultKaratsuba(t *testing.T) {
 			for j := 0; j < N; j++ {
 				assert.EqualValues(acopy.Coefs[j], a.Coefs[j])
 				assert.EqualValues(bcopy.Coefs[j], b.Coefs[j])
-				var r Torus32 = 0
+				var r types.Torus32 = 0
 				for k := 0; k < N; k++ {
 					r += bcopy.Coefs[k] * anticyclicGet(acopy.Coefs, int32(j-k), int32(N))
 				}
@@ -488,7 +487,7 @@ func TestTorusPolynomialAddMulRKaratsuba(t *testing.T) {
 			for j := 0; j < N; j++ {
 				assert.EqualValues(acopy.Coefs[j], a.Coefs[j])
 				assert.EqualValues(bcopy.Coefs[j], b.Coefs[j])
-				var r Torus32 = ccopy.Coefs[j]
+				var r types.Torus32 = ccopy.Coefs[j]
 				for k := 0; k < N; k++ {
 					r += bcopy.Coefs[k] * anticyclicGet(acopy.Coefs, int32(j-k), int32(N))
 				}
@@ -525,7 +524,7 @@ func TestTorusPolynomialSubMulRKaratsuba(t *testing.T) {
 			for j := 0; j < N; j++ {
 				assert.EqualValues(acopy.Coefs[j], a.Coefs[j])
 				assert.EqualValues(bcopy.Coefs[j], b.Coefs[j])
-				var r Torus32 = ccopy.Coefs[j]
+				var r types.Torus32 = ccopy.Coefs[j]
 				for k := 0; k < N; k++ {
 					r -= bcopy.Coefs[k] * anticyclicGet(acopy.Coefs, int32(j-k), int32(N))
 				}

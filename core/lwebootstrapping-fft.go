@@ -1,6 +1,6 @@
 package core
 
-import . "github.com/thedonutfactory/go-tfhe/types"
+import "github.com/thedonutfactory/go-tfhe/types"
 
 type LweBootstrappingKeyFFT struct {
 	InOutParams   *LweParams       ///< paramètre de l'input et de l'output. key: s
@@ -147,7 +147,7 @@ func tfhe_blindRotateAndExtract_FFT(result *LweSample, v *TorusPolynomial,
  * @param mu The output message (if phase(x)>0)
  * @param x The input sample
  */
-func TfheBootstrapWoKSFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu Torus32, x *LweSample) {
+func TfheBootstrapWoKSFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu types.Torus32, x *LweSample) {
 
 	bk_params := bk.BkParams
 	accum_params := bk.AccumParams
@@ -161,9 +161,9 @@ func TfheBootstrapWoKSFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu Toru
 	bara := make([]int32, n)
 
 	// Modulus switching
-	barb := ModSwitchFromTorus32(x.B, Nx2)
+	barb := types.ModSwitchFromTorus32(x.B, Nx2)
 	for i := int32(0); i < n; i++ {
-		bara[i] = ModSwitchFromTorus32(x.A[i], Nx2)
+		bara[i] = types.ModSwitchFromTorus32(x.A[i], Nx2)
 	}
 
 	// the initial testvec = [mu,mu,mu,...,mu]
@@ -182,7 +182,7 @@ func TfheBootstrapWoKSFFT(result *LweSample, bk *LweBootstrappingKeyFFT, mu Toru
  * @param mu The output message (if phase(x)>0)
  * @param x The input sample
  */
-func TfheBootstrapFFT(bk *LweBootstrappingKeyFFT, mu Torus32, x *LweSample) *LweSample {
+func TfheBootstrapFFT(bk *LweBootstrappingKeyFFT, mu types.Torus32, x *LweSample) *LweSample {
 
 	u := NewLweSample(&bk.AccumParams.ExtractedLweparams)
 

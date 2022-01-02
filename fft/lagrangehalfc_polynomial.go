@@ -1,6 +1,6 @@
 package fft
 
-import . "github.com/thedonutfactory/go-tfhe/types"
+import "github.com/thedonutfactory/go-tfhe/types"
 
 type LagrangeHalfCPolynomial struct {
 	Coefs []complex128
@@ -22,15 +22,15 @@ func (p *LagrangeHalfCPolynomial) Clear() {
 	p.Coefs = make([]complex128, len(p.Coefs))
 }
 
-func (p *LagrangeHalfCPolynomial) SetTorusConstant(mu Torus32) {
-	muc := complex(TorusToDouble(mu), 0.)
+func (p *LagrangeHalfCPolynomial) SetTorusConstant(mu types.Torus32) {
+	muc := complex(types.TorusToDouble(mu), 0.)
 	for j := 0; j < len(p.Coefs); j++ {
 		p.Coefs[j] = muc
 	}
 }
 
-func (p *LagrangeHalfCPolynomial) AddTorusConstant(mu Torus32) {
-	muc := complex(TorusToDouble(mu), 0.)
+func (p *LagrangeHalfCPolynomial) AddTorusConstant(mu types.Torus32) {
+	muc := complex(types.TorusToDouble(mu), 0.)
 	for j := 0; j < len(p.Coefs); j++ {
 		p.Coefs[j] += muc
 	}

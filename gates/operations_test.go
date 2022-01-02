@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	. "github.com/thedonutfactory/go-tfhe/core"
+	"github.com/thedonutfactory/go-tfhe/core"
 )
 
 const NB_BITS = 4
@@ -28,12 +28,12 @@ func to4Bits(val int) []int {
 	return l
 }
 
-func toCiphertext(nums ...int) [][]*LweSample {
-	r := make([][]*LweSample, 0)
+func toCiphertext(nums ...int) [][]*core.LweSample {
+	r := make([][]*core.LweSample, 0)
 	nbBits := int32(NB_BITS)
 	for _, num := range nums {
 		xBits := to4Bits(num)
-		x := NewLweSampleArray(nbBits, pubKey.Params.InOutParams)
+		x := core.NewLweSampleArray(nbBits, pubKey.Params.InOutParams)
 		for i := int32(0); i < nbBits; i++ {
 			x[i] = priKey.BootsSymEncrypt(xBits[i])
 		}
@@ -55,7 +55,7 @@ func clearBit(n int, pos uint) int {
 	return n
 }
 
-func toPlaintext(ciphers ...[]*LweSample) []int {
+func toPlaintext(ciphers ...[]*core.LweSample) []int {
 	arr := make([]int, len(ciphers))
 	for ci, c := range ciphers {
 		var current int = 0
@@ -72,7 +72,7 @@ func toPlaintext(ciphers ...[]*LweSample) []int {
 	return arr
 }
 
-func decryptAndDisplayResult(sum []*LweSample, tt *testing.T) {
+func decryptAndDisplayResult(sum []*core.LweSample, tt *testing.T) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
 		messSum := priKey.BootsSymDecrypt(sum[i])
@@ -95,8 +95,8 @@ func TestCompareBit(tt *testing.T) {
 	a := priKey.BootsSymEncrypt(1)
 	b := priKey.BootsSymEncrypt(1)
 
-	carry := NewLweSample(pubKey.Params.InOutParams)
-	tmp := NewLweSample(pubKey.Params.InOutParams)
+	carry := core.NewLweSample(pubKey.Params.InOutParams)
+	tmp := core.NewLweSample(pubKey.Params.InOutParams)
 
 	result := ops.CompareBit(a, b, carry, tmp)
 
