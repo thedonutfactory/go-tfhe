@@ -54,6 +54,10 @@ func main() {
 		carry[0] = pub.Copy(carry[1])
 	}
 	sum[BITS] = pub.Copy(carry[0])
+	duration := time.Since(start)
+	// Formatted string, such as "2h3m0.5s" or "4.503μs"
+	fmt.Printf("finished Bootstrapping %d bits addition circuit\n", BITS)
+	fmt.Printf("total time: %s\n", duration)
 
 	duration := time.Since(start)
 	fmt.Printf("finished Bootstrapping %d bits addition circuit\n", BITS)
