@@ -12,7 +12,7 @@ The following snippet is a simple fully homomorphic 8-bit integer circuit. As yo
 
 1. To create a fully homomorphic addition circuit with go, start by creating a new module:
 
-`go mod init example.com/fhe-add` (this package should be changed to whatever your package structure is)
+`go mod init example.com/fhe-add` (this package should be changed to whatever you want your package structure to look like)
 
 2. Import `go-tfhe` library:
 
