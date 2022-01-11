@@ -8,7 +8,17 @@ TFHE, or Fully Homomorphic Encryption Library over the Torus, is a scheme develo
 
 ## Show me the Code
 
-The following snippet is a simple fully homomorphic 8-bit integer circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate).
+The following snippet is a simple fully homomorphic 8-bit integer circuit. As you can see, fully homomorphic encryption constructs and evaluates boolean circuits, just as traditional computing environments do. This allows developers to produce FHE programs using [boolean logic gates](https://en.wikipedia.org/wiki/Logic_gate). 
+
+1. To create a fully homomorphic addition circuit with go, start by creating a new module:
+
+`go mod init example.com/fhe-add` (this package should be changed to whatever your package structure is)
+
+2. Import `go-tfhe` library:
+
+`go get github.com/thedonutfactory/go-tfhe`
+
+3. Create `main.go` and add the following code:
 
 ```golang
 package main
@@ -50,6 +60,10 @@ func main() {
 	fmt.Println("The sum of of x and y: ", z)
 }
 ```
+
+4a. Run the program directly with `go run main.go` or,
+
+4b. Compile the FHE program with `go build -o fhe-add main.go`, which will create the executable file `fhe-add`.
 
 ### FHE Illustrated - like literally illustrated, with cute gophers
 
