@@ -1,6 +1,8 @@
 package gates
 
 import (
+	"fmt"
+
 	"github.com/thedonutfactory/go-tfhe/core"
 	"github.com/thedonutfactory/go-tfhe/types"
 )
@@ -307,4 +309,78 @@ func (bk *PublicKey) Mux(a, b, c *core.LweSample) *core.LweSample {
 	// Key switching
 	//core.LweKeySwitch(result, bk.bkFFT.ks, tempResult1)
 	return core.LweKeySwitch(bk.Bkw.BkFFT.Ks, tempResult1)
+}
+
+func (key *PublicKey) ToCtxtConstant(val interface{}) Ctxt {
+	var ctxt Ctxt
+	switch v := val.(type) {
+	default:
+		fmt.Printf("unexpected type %T", v)
+	case uint8:
+		value, ok := val.(uint8)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 8)
+	case uint16:
+		value, ok := val.(uint16)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 16)
+	case uint32:
+		value, ok := val.(uint32)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 32)
+	case uint64:
+		value, ok := val.(uint64)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 64)
+	case int8:
+		value, ok := val.(int8)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 8)
+	case int16:
+		value, ok := val.(int16)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 16)
+	case int32:
+		value, ok := val.(int32)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 32)
+	case int64:
+		value, ok := val.(int64)
+		if !ok {
+			fmt.Printf("Unable to convert type %T", value)
+		}
+		ctxt = key.CipherBits(int(value), 64)
+	}
+	return ctxt
+}
+
+func (key *PublicKey) CipherBits(val, size int) Ctxt {
+	ctxt := NewInt(size, key.Params.InOutParams)
+	ctxt[0] = key.Constant(_toBool(val & 0x1))
+	for i := 1; i < size; i++ {
+		ctxt[i] = key.Constant(_toBool(val & PowInt(2, i) >> i))
+	}
+	return ctxt
+}
+
+func _toBool(v int) bool {
+	if v == 0 {
+		return false
+	} else {
+		return true
+	}
 }
