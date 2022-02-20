@@ -11,6 +11,7 @@ type Operations interface {
 	Minimum(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
 	Maximum(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
 	Gte(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
+	Gt(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
 
 	// arithmetic
 	Add(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
@@ -18,6 +19,7 @@ type Operations interface {
 	Mul(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
 	Div(a, b []*core.LweSample, nbBits int) (result []*core.LweSample)
 	Pow(a []*core.LweSample, n, nbBits int) (result []*core.LweSample)
+	Negate(a []*core.LweSample, nbBits int) (result []*core.LweSample)
 
 	// bitwise shift
 	ShiftLeft(a []*core.LweSample, positions, nbBits int) (result []*core.LweSample)
@@ -48,6 +50,14 @@ type CipheredOperations struct {
 	Pk *PublicKey
 }
 
+func (ops *CipheredOperations) NewCtxArray(size int) []*core.LweSample {
+	result := NewGateBootstrappingCiphertextArray(size, ops.Pk.Params)
+	for i := 0; i < size; i++ {
+		result[i] = ops.Pk.Constant(false)
+	}
+	return result
+}
+
 // elementary full comparator gate that is used to compare the i-th bit:
 //   input: ai ops.bk.And bi the i-th bit of a ops.bk.And b
 //          lsb_carry: the result of the comparison on the lowest bits
@@ -61,8 +71,8 @@ func (ops *CipheredOperations) CompareBit(a, b, lsbCarry, tmp *core.LweSample) *
 
 // Returns a == b
 func (ops *CipheredOperations) Equals(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	tmps := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	tmps := ops.NewCtxArray(2)
 	result[0] = ops.Pk.Constant(true)
 	for i := 0; i < nbBits; i++ {
 		tmps[0] = ops.Pk.Xnor(a[i], b[i])
@@ -77,15 +87,15 @@ func (ops *CipheredOperations) isNegative(a []*core.LweSample, nbBits int) *core
 
 // this function compares two multibit words, and puts the min in result
 func (ops *CipheredOperations) Minimum(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	tmps := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	aGreater := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	tmps := ops.NewCtxArray(2)
+	aGreater := ops.NewCtxArray(2)
 
-	minimumSameSign := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	minimumOneNegative := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	oneNegative := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	negativoA := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	negativoB := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	minimumSameSign := ops.NewCtxArray(nbBits)
+	minimumOneNegative := ops.NewCtxArray(nbBits)
+	oneNegative := ops.NewCtxArray(2)
+	negativoA := ops.NewCtxArray(2)
+	negativoB := ops.NewCtxArray(2)
 
 	negativoA[0] = ops.isNegative(a, nbBits)
 	negativoB[0] = ops.isNegative(b, nbBits)
@@ -121,15 +131,15 @@ func (ops *CipheredOperations) Minimum(a, b []*core.LweSample, nbBits int) (resu
 
 // this function compares two multibit words, and puts the min in result
 func (ops *CipheredOperations) Maximum2(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	tmps := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	aGreater := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	tmps := ops.NewCtxArray(2)
+	aGreater := ops.NewCtxArray(2)
 
-	minimumSameSign := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	minimumOneNegative := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	oneNegative := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	negativoA := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	negativoB := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	minimumSameSign := ops.NewCtxArray(nbBits)
+	minimumOneNegative := ops.NewCtxArray(nbBits)
+	oneNegative := ops.NewCtxArray(2)
+	negativoA := ops.NewCtxArray(2)
+	negativoB := ops.NewCtxArray(2)
 
 	negativoA[0] = ops.isNegative(a, nbBits)
 	negativoB[0] = ops.isNegative(b, nbBits)
@@ -165,15 +175,15 @@ func (ops *CipheredOperations) Maximum2(a, b []*core.LweSample, nbBits int) (res
 
 // this function compares two multibit words, and puts the min in result
 func (ops *CipheredOperations) Maximum(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	tmps := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	aGreater := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	tmps := ops.NewCtxArray(2)
+	aGreater := ops.NewCtxArray(2)
 
-	minimumSameSign := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	minimumOneNegative := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	oneNegative := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	negativoA := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	negativoB := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	minimumSameSign := ops.NewCtxArray(nbBits)
+	minimumOneNegative := ops.NewCtxArray(nbBits)
+	oneNegative := ops.NewCtxArray(2)
+	negativoA := ops.NewCtxArray(2)
+	negativoB := ops.NewCtxArray(2)
 
 	negativoA[0] = ops.isNegative(a, nbBits)
 	negativoB[0] = ops.isNegative(b, nbBits)
@@ -229,10 +239,10 @@ func (ops *CipheredOperations) addBit(a, b, carry_in *core.LweSample) (result, c
 }
 
 // return -a
-func (ops *CipheredOperations) negative(result, a []*core.LweSample, nbBits int) {
-
-	ha_changed := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	not_x := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+func (ops *CipheredOperations) Negate(a []*core.LweSample, nbBits int) (result []*core.LweSample) {
+	result = ops.NewCtxArray(nbBits)
+	ha_changed := ops.NewCtxArray(2)
+	not_x := ops.NewCtxArray(2)
 
 	for i := 0; i < 2; i++ {
 		ha_changed[i] = ops.Pk.Constant(false)
@@ -244,12 +254,12 @@ func (ops *CipheredOperations) negative(result, a []*core.LweSample, nbBits int)
 		result[i] = ops.Pk.Mux(ha_changed[0], not_x[0], a[i])
 		ha_changed[0] = ops.Pk.Or(ha_changed[0], a[i])
 	}
-
+	return result
 }
 
 func (ops *CipheredOperations) Add(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	tmpsCarry := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	tmpsCarry := ops.NewCtxArray(2)
 
 	//initialize the carry to 0
 	//tmpsCarry := ops.Constant(false, nbBits)
@@ -263,15 +273,15 @@ func (ops *CipheredOperations) Add(a, b []*core.LweSample, nbBits int) (result [
 }
 
 func (ops *CipheredOperations) Sub(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	res := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	ops.negative(res, b, nbBits)
-	return ops.Add(a, res, nbBits)
+	//res := ops.NewCtxArray(nbBits)
+	negB := ops.Negate(b, nbBits)
+	return ops.Add(a, negB, nbBits)
 }
 
 // Unsigned multiply
 func (ops *CipheredOperations) umul(result, a, b []*core.LweSample, nbBits int) {
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux2 := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	aux := ops.NewCtxArray(nbBits)
+	aux2 := ops.NewCtxArray(nbBits)
 
 	for i := 0; i < nbBits; i++ {
 		aux[i] = ops.Pk.Constant(false)
@@ -303,21 +313,21 @@ func (ops *CipheredOperations) umul(result, a, b []*core.LweSample, nbBits int) 
 
 // multiply two ciphertexts and return the result
 func (ops *CipheredOperations) Mul(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux2 := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	aux := ops.NewCtxArray(nbBits)
+	aux2 := ops.NewCtxArray(nbBits)
 
 	// Parameters to take into account negative numbers
-	negatA := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	negatB := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	negatA := ops.NewCtxArray(nbBits)
+	negatB := ops.NewCtxArray(nbBits)
 
-	opA := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	opB := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	opA := ops.NewCtxArray(nbBits)
+	opB := ops.NewCtxArray(nbBits)
 
-	isNegativeA := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	isNegativeB := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	isNegativeA := ops.NewCtxArray(2)
+	isNegativeB := ops.NewCtxArray(2)
 
-	corrige := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	corrige := ops.NewCtxArray(2)
 
 	// Set number of bits so: nb(result) = nb(a)+nb(b)
 	for i := 0; i < nbBits; i++ {
@@ -337,8 +347,8 @@ func (ops *CipheredOperations) Mul(a, b []*core.LweSample, nbBits int) (result [
 	}
 
 	// BEGIN SIGN LOGIC
-	ops.negative(negatA, a, nbBits)
-	ops.negative(negatB, b, nbBits)
+	negatA = ops.Negate(a, nbBits)
+	negatB = ops.Negate(b, nbBits)
 
 	// Put the two numbers in positive
 	opA = ops.Maximum(negatA, a, nbBits)
@@ -354,7 +364,7 @@ func (ops *CipheredOperations) Mul(a, b []*core.LweSample, nbBits int) (result [
 
 	// BEGIN SIGN LOGIC
 	// We determine whether to return the positive or negative result
-	ops.negative(aux, result, nbBits)
+	aux = ops.Negate(result, nbBits)
 
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Mux(corrige[0], aux[i], result[i])
@@ -366,13 +376,28 @@ func (ops *CipheredOperations) Mul(a, b []*core.LweSample, nbBits int) (result [
 //0 si a >= b
 //Ignores the sign!
 func (ops *CipheredOperations) Gte(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	ops.gte(result, a, b, nbBits)
 	return result
 }
 
 func (ops *CipheredOperations) gte(result, a, b []*core.LweSample, nbBits int) {
-	eq := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	eq := ops.NewCtxArray(2)
+	result[0] = ops.Pk.Constant(true)
+	for i := 0; i < nbBits; i++ {
+		eq[0] = ops.Pk.Xnor(a[i], b[i])
+		result[0] = ops.Pk.Mux(eq[0], result[0], a[i])
+	}
+}
+
+func (ops *CipheredOperations) Gt(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
+	result = ops.NewCtxArray(nbBits)
+	ops.gt(result, a, b, nbBits)
+	return result
+}
+
+func (ops *CipheredOperations) gt(result, a, b []*core.LweSample, nbBits int) {
+	eq := ops.NewCtxArray(2)
 	result[0] = ops.Pk.Constant(false)
 	for i := 0; i < nbBits; i++ {
 		eq[0] = ops.Pk.Xnor(a[i], b[i])
@@ -382,14 +407,14 @@ func (ops *CipheredOperations) gte(result, a, b []*core.LweSample, nbBits int) {
 
 // signed bit shift left
 func (ops *CipheredOperations) ShiftLeft(a []*core.LweSample, positions, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	aux := ops.NewCtxArray(nbBits)
 
-	neg := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	is_neg := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	val := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	// neg := ops.NewCtxArray(nbBits)
+	is_neg := ops.NewCtxArray(2)
+	val := ops.NewCtxArray(nbBits)
 
-	ops.negative(neg, a, nbBits)
+	neg := ops.Negate(a, nbBits)
 	is_neg[0] = ops.isNegative(a, nbBits)
 
 	for i := 0; i < nbBits; i++ {
@@ -412,7 +437,7 @@ func (ops *CipheredOperations) ShiftLeft(a []*core.LweSample, positions, nbBits 
 		}
 	}
 
-	ops.negative(aux, result, nbBits)
+	aux = ops.Negate(result, nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Mux(is_neg[0], aux[i], result[i])
 	}
@@ -421,14 +446,14 @@ func (ops *CipheredOperations) ShiftLeft(a []*core.LweSample, positions, nbBits 
 
 // signed bit shift right
 func (ops *CipheredOperations) ShiftRight(a []*core.LweSample, positions, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	aux := ops.NewCtxArray(nbBits)
 
-	is_neg := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	neg := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	val := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	is_neg := ops.NewCtxArray(2)
+	// neg := ops.NewCtxArray(nbBits)
+	val := ops.NewCtxArray(nbBits)
 
-	ops.negative(neg, a, nbBits)
+	neg := ops.Negate(a, nbBits)
 	is_neg[0] = ops.isNegative(a, nbBits)
 
 	for i := 0; i < nbBits; i++ {
@@ -452,7 +477,7 @@ func (ops *CipheredOperations) ShiftRight(a []*core.LweSample, positions, nbBits
 		}
 	}
 
-	ops.negative(aux, result, nbBits)
+	aux = ops.Negate(result, nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Mux(is_neg[0], aux[i], result[i])
 	}
@@ -461,8 +486,8 @@ func (ops *CipheredOperations) ShiftRight(a []*core.LweSample, positions, nbBits
 
 // Unsigned shift left
 func (ops *CipheredOperations) UshiftLeft(a []*core.LweSample, positions, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	aux := ops.NewCtxArray(nbBits)
 
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Copy(a[i])
@@ -484,8 +509,8 @@ func (ops *CipheredOperations) UshiftLeft(a []*core.LweSample, positions, nbBits
 
 // unsigned shift right
 func (ops *CipheredOperations) UshiftRight(a []*core.LweSample, positions, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
+	aux := ops.NewCtxArray(nbBits)
 
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Copy(a[i])
@@ -523,32 +548,32 @@ func (ops *CipheredOperations) urescale(result, a []*core.LweSample, nbBitsResul
 }
 
 func (ops *CipheredOperations) rescale(result, a []*core.LweSample, nbBitsResult, nbBits int) {
-	auxA := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	corrige := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	auxA := ops.NewCtxArray(nbBits)
+	corrige := ops.NewCtxArray(2)
 
-	aux_res := NewGateBootstrappingCiphertextArray(nbBitsResult, ops.Pk.Params)
-	aux_res_neg := NewGateBootstrappingCiphertextArray(nbBitsResult, ops.Pk.Params)
+	aux_res := ops.NewCtxArray(nbBitsResult)
+	aux_res_neg := ops.NewCtxArray(nbBitsResult)
 
-	ops.negative(auxA, a, nbBits)
+	auxA = ops.Negate(a, nbBits)
 	corrige[0] = ops.isNegative(a, nbBits)
 	// Trabajaremos con el positivo
 	n := ops.Maximum(auxA, a, nbBits)
 
 	ops.urescale(aux_res, n, nbBitsResult, nbBits)
 
-	ops.negative(aux_res_neg, aux_res, nbBitsResult)
+	aux_res_neg = ops.Negate(aux_res, nbBitsResult)
 	for i := 0; i < nbBitsResult; i++ {
 		result[i] = ops.Pk.Mux(corrige[0], aux_res_neg[i], aux_res[i])
 	}
 }
 
 func (ops *CipheredOperations) udiv(cociente, a, b []*core.LweSample, nbBits int) {
-	gt := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	div_aux := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	div_aux2 := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	dividendo := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	divisor := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	remainder := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
+	gt := ops.NewCtxArray(2)
+	div_aux := ops.NewCtxArray(2 * nbBits)
+	div_aux2 := ops.NewCtxArray(2 * nbBits)
+	dividendo := ops.NewCtxArray(2 * nbBits)
+	divisor := ops.NewCtxArray(2 * nbBits)
+	remainder := ops.NewCtxArray(2 * nbBits)
 
 	ops.rescale(dividendo, a, 2*nbBits, nbBits)
 	ops.rescale(div_aux, b, 2*nbBits, nbBits)
@@ -575,27 +600,27 @@ func (ops *CipheredOperations) udiv(cociente, a, b []*core.LweSample, nbBits int
 }
 
 func (ops *CipheredOperations) Div(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 
-	aux := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	aux2 := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	negatA := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	negatB := NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	//opA := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
-	//opB := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	aux := ops.NewCtxArray(nbBits)
+	aux2 := ops.NewCtxArray(nbBits)
+	negatA := ops.NewCtxArray(nbBits)
+	negatB := ops.NewCtxArray(nbBits)
+	//opA := ops.NewCtxArray(nbBits, ops.bk.params)
+	//opB := ops.NewCtxArray(nbBits, ops.bk.params)
 
-	gt := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	bit := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	corrige := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	isNegativeA := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
-	isNegativeB := NewGateBootstrappingCiphertextArray(2, ops.Pk.Params)
+	gt := ops.NewCtxArray(2)
+	bit := ops.NewCtxArray(2)
+	corrige := ops.NewCtxArray(2)
+	isNegativeA := ops.NewCtxArray(2)
+	isNegativeB := ops.NewCtxArray(2)
 
-	div_aux := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	div_aux2 := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	dividendo := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	divisor := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	cociente := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
-	resto := NewGateBootstrappingCiphertextArray(2*nbBits, ops.Pk.Params)
+	div_aux := ops.NewCtxArray(2 * nbBits)
+	div_aux2 := ops.NewCtxArray(2 * nbBits)
+	dividendo := ops.NewCtxArray(2 * nbBits)
+	divisor := ops.NewCtxArray(2 * nbBits)
+	cociente := ops.NewCtxArray(2 * nbBits)
+	resto := ops.NewCtxArray(2 * nbBits)
 
 	for i := 0; i < nbBits; i++ {
 		aux[i] = ops.Pk.Constant(false)
@@ -619,8 +644,8 @@ func (ops *CipheredOperations) Div(a, b []*core.LweSample, nbBits int) (result [
 	}
 
 	// BEGIN LOGICAL SIGN
-	ops.negative(negatA, a, nbBits)
-	ops.negative(negatB, b, nbBits)
+	negatA = ops.Negate(a, nbBits)
+	negatB = ops.Negate(b, nbBits)
 
 	// put the two numbers in positive
 	opA := ops.Maximum(negatA, a, nbBits)
@@ -636,7 +661,7 @@ func (ops *CipheredOperations) Div(a, b []*core.LweSample, nbBits int) (result [
 
 	// BEGIN LOGICAL SIGN
 	// determine whether to return the positive or negative result
-	ops.negative(aux, result, nbBits)
+	aux = ops.Negate(result, nbBits)
 
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Mux(corrige[0], aux[i], result[i])
@@ -646,10 +671,10 @@ func (ops *CipheredOperations) Div(a, b []*core.LweSample, nbBits int) (result [
 }
 
 func (ops *CipheredOperations) Pow(a []*core.LweSample, n, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
-	// aux := NewGateBootstrappingCiphertextArray(nbBits, ops.bk.params)
+	result = ops.NewCtxArray(nbBits)
+	// aux := ops.NewCtxArray(nbBits, ops.bk.params)
 
-	cero := NewGateBootstrappingCiphertextArray(1, ops.Pk.Params)
+	cero := ops.NewCtxArray(1)
 	cero[0] = ops.Pk.Constant(false)
 
 	// Initializing result
@@ -676,7 +701,7 @@ func (ops *CipheredOperations) Pow(a []*core.LweSample, n, nbBits int) (result [
 
 // boolean operations wrappers
 func (ops *CipheredOperations) Nand(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Nand(a[i], b[i])
 	}
@@ -684,7 +709,7 @@ func (ops *CipheredOperations) Nand(a, b []*core.LweSample, nbBits int) (result 
 }
 
 func (ops *CipheredOperations) Or(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Or(a[i], b[i])
 	}
@@ -692,7 +717,7 @@ func (ops *CipheredOperations) Or(a, b []*core.LweSample, nbBits int) (result []
 }
 
 func (ops *CipheredOperations) And(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.And(a[i], b[i])
 	}
@@ -700,7 +725,7 @@ func (ops *CipheredOperations) And(a, b []*core.LweSample, nbBits int) (result [
 }
 
 func (ops *CipheredOperations) Xor(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Xor(a[i], b[i])
 	}
@@ -708,7 +733,7 @@ func (ops *CipheredOperations) Xor(a, b []*core.LweSample, nbBits int) (result [
 }
 
 func (ops *CipheredOperations) Xnor(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Xnor(a[i], b[i])
 	}
@@ -716,7 +741,7 @@ func (ops *CipheredOperations) Xnor(a, b []*core.LweSample, nbBits int) (result 
 }
 
 func (ops *CipheredOperations) Not(a []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Not(a[i])
 	}
@@ -724,7 +749,7 @@ func (ops *CipheredOperations) Not(a []*core.LweSample, nbBits int) (result []*c
 }
 
 func (ops *CipheredOperations) Copy(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Copy(a[i])
 	}
@@ -732,7 +757,7 @@ func (ops *CipheredOperations) Copy(a, b []*core.LweSample, nbBits int) (result 
 }
 
 func (ops *CipheredOperations) Constant(value bool, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Constant(value)
 	}
@@ -740,7 +765,7 @@ func (ops *CipheredOperations) Constant(value bool, nbBits int) (result []*core.
 }
 
 func (ops *CipheredOperations) Nor(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Nor(a[i], b[i])
 	}
@@ -748,7 +773,7 @@ func (ops *CipheredOperations) Nor(a, b []*core.LweSample, nbBits int) (result [
 }
 
 func (ops *CipheredOperations) AndNY(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.AndNY(a[i], b[i])
 	}
@@ -756,7 +781,7 @@ func (ops *CipheredOperations) AndNY(a, b []*core.LweSample, nbBits int) (result
 }
 
 func (ops *CipheredOperations) AndYN(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.AndYN(a[i], b[i])
 	}
@@ -764,7 +789,7 @@ func (ops *CipheredOperations) AndYN(a, b []*core.LweSample, nbBits int) (result
 }
 
 func (ops *CipheredOperations) OrNY(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.OrNY(a[i], b[i])
 	}
@@ -772,7 +797,7 @@ func (ops *CipheredOperations) OrNY(a, b []*core.LweSample, nbBits int) (result 
 }
 
 func (ops *CipheredOperations) OrYN(a, b []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.OrYN(a[i], b[i])
 	}
@@ -780,7 +805,7 @@ func (ops *CipheredOperations) OrYN(a, b []*core.LweSample, nbBits int) (result 
 }
 
 func (ops *CipheredOperations) Mux(a, b, c []*core.LweSample, nbBits int) (result []*core.LweSample) {
-	result = NewGateBootstrappingCiphertextArray(nbBits, ops.Pk.Params)
+	result = ops.NewCtxArray(nbBits)
 	for i := 0; i < nbBits; i++ {
 		result[i] = ops.Pk.Mux(a[i], b[i], c[i])
 	}

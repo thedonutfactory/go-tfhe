@@ -55,6 +55,28 @@ func NewPrivateKey(params *GateBootstrappingParameterSet, bk *core.LweBootstrapp
 	}
 }
 
+// insecure
+func TestGateBootstrappingParameters() *GateBootstrappingParameterSet {
+	const (
+		N         = 64
+		k         = 2
+		n         = 64
+		bkL       = 2
+		bkBgbit   = 8
+		ksBasebit = 2
+		ksLength  = 5
+		ksStdev   = 0.000_089_761_673_968_349_98     // 2^{-13.44...}
+		bkStdev   = 0.000_000_029_890_407_929_674_34 // 2^{-24.9...}
+		maxStdev  = 0.012467                         //max standard deviation for a 1/4 msg space
+	)
+
+	paramsIn := core.NewLweParams(n, ksStdev, maxStdev)
+	paramsAccum := core.NewTLweParams(N, k, bkStdev, maxStdev)
+	paramsBk := core.NewTGswParams(bkL, bkBgbit, paramsAccum)
+
+	return NewTFheGateBootstrappingParameterSet(ksLength, ksBasebit, paramsIn, paramsBk)
+}
+
 // Default parameter set.
 //
 // This parameter set ensures 128-bits of security, and a probability of error is upper-bounded by

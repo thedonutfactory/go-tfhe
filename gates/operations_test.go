@@ -8,7 +8,7 @@ import (
 	"github.com/thedonutfactory/go-tfhe/core"
 )
 
-const NB_BITS = 4
+const NB_BITS = 8
 
 // generate params
 var (
@@ -78,7 +78,7 @@ func decryptAndDisplayResult(sum []*core.LweSample, tt *testing.T) {
 		messSum := priKey.BootsSymDecrypt(sum[i])
 		fmt.Printf("%d ", messSum)
 	}
-	fmt.Print("]")
+	fmt.Print("]\n")
 }
 
 func TestToPlaintext(tt *testing.T) {
@@ -124,6 +124,16 @@ func TestNotEqual(tt *testing.T) {
 	decryptAndDisplayResult(result, tt)
 	equalityBit := priKey.BootsSymDecrypt(result[0])
 	assert.EqualValues(0, equalityBit)
+}
+
+func TestNotEquals(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(2, 3)
+	result := ops.Equals(v[0], v[1], NB_BITS)
+	result = ops.Not(result, NB_BITS)
+	decryptAndDisplayResult(result, tt)
+	equalityBit := priKey.BootsSymDecrypt(result[0])
+	assert.EqualValues(1, equalityBit)
 }
 
 func TestMinimum(tt *testing.T) {
@@ -198,6 +208,67 @@ func TestSubtraction(tt *testing.T) {
 	assert.EqualValues(3, r[0])
 }
 
+func TestSubtractionToZero(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(1, 1)
+	result := ops.Sub(v[0], v[1], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be 0 -> 0000
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(0, r[0])
+}
+
+func TestSubtractionFromZero(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(1, 0)
+	result := ops.Sub(v[0], v[1], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be 1 -> 0001
+	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(1, r[0])
+}
+
+func TestGtAndSubtractionFrom(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(3, 5, 1)
+	r1 := ops.Gt(v[1], v[0], NB_BITS)
+	decryptAndDisplayResult(r1, tt)
+	decryptAndDisplayResult(v[2], tt)
+	//t1 := toPlaintext(r1)
+	//assert.EqualValues(1, t1[0])
+
+	//result := ops.Sub(v[2], r1, NB_BITS)
+
+	negR1 := ops.Negate(r1, NB_BITS)
+	decryptAndDisplayResult(negR1, tt)
+	toPlaintext(negR1)
+
+	result := ops.Add(v[2], negR1, NB_BITS)
+	decryptAndDisplayResult(result, tt)
+	toPlaintext(result)
+
+	// result should be 0 -> 0000
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(0, r[0])
+}
+
 func TestMultiply(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 2)
@@ -260,6 +331,54 @@ func TestGteCheckEquality(tt *testing.T) {
 
 	r := toPlaintext(result)
 	assert.EqualValues(1, r[0])
+}
+
+func TestGt(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(3, 1)
+	result := ops.Gt(v[0], v[1], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be true(1) -> 0001
+	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(1, r[0])
+}
+
+func TestGtFalse(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(3, 5)
+	result := ops.Gt(v[0], v[1], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be false(1) -> 0000
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(0, r[0])
+}
+
+func TestGtFalseWhenEqual(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(3, 3)
+	result := ops.Gt(v[0], v[1], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be false(1) -> 0000
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(0, r[0])
 }
 
 func TestShiftLeft(tt *testing.T) {
@@ -416,6 +535,38 @@ func TestPow(tt *testing.T) {
 	assert.EqualValues(8, r[0])
 }
 
+func TestNegate(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(2)
+	result := ops.Negate(v[0], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be 14 -> 1110
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(1, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(1, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(1, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(14, r[0])
+}
+
+func TestNegateZero(tt *testing.T) {
+	assert := assert.New(tt)
+	v := toCiphertext(0)
+	result := ops.Negate(v[0], NB_BITS)
+	decryptAndDisplayResult(result, tt)
+
+	// result should be 0 -> 0000
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[1]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[2]))
+	assert.EqualValues(0, priKey.BootsSymDecrypt(result[3]))
+
+	r := toPlaintext(result)
+	assert.EqualValues(0, r[0])
+}
+
 func TestAnd(tt *testing.T) {
 	assert := assert.New(tt)
 	a, b := 2, 3
@@ -423,6 +574,68 @@ func TestAnd(tt *testing.T) {
 	result := ops.And(v[0], v[1], NB_BITS)
 	r := toPlaintext(result)
 	assert.EqualValues(a&b, r[0])
+}
+
+func TestLogicalAnd(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := true, true
+	ca, cb := ops.Constant(a, NB_BITS), ops.Constant(b, NB_BITS)
+	result := ops.And(ca, cb, NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a && b, toBool(r[0]))
+}
+
+func TestLogicalAnd2(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := true, false
+	ca, cb := ops.Constant(a, NB_BITS), ops.Constant(b, NB_BITS)
+	result := ops.And(ca, cb, NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a && b, toBool(r[0]))
+}
+
+func TestLogicalAnd3(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := false, false
+	ca, cb := ops.Constant(a, NB_BITS), ops.Constant(b, NB_BITS)
+	result := ops.And(ca, cb, NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a && b, toBool(r[0]))
+}
+
+func TestLogicalOr(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := true, true
+	ca, cb := ops.Constant(a, NB_BITS), ops.Constant(b, NB_BITS)
+	result := ops.Or(ca, cb, NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a || b, toBool(r[0]))
+}
+
+func TestLogicalOr2(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := true, false
+	ca, cb := ops.Constant(a, NB_BITS), ops.Constant(b, NB_BITS)
+	result := ops.Or(ca, cb, NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a || b, toBool(r[0]))
+}
+
+func TestLogicalOr3(tt *testing.T) {
+	assert := assert.New(tt)
+	a, b := false, false
+	ca, cb := ops.Constant(a, NB_BITS), ops.Constant(b, NB_BITS)
+	result := ops.Or(ca, cb, NB_BITS)
+	r := toPlaintext(result)
+	assert.EqualValues(a || b, toBool(r[0]))
+}
+
+func toBool(val int) bool {
+	if val == 0 {
+		return false
+	} else {
+		return true
+	}
 }
 
 func TestOr(tt *testing.T) {
