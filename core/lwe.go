@@ -7,15 +7,16 @@ import (
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
+// this structure contains the params necessary for the LWE key switch
 type LweKey struct {
 	Params *LweParams
 	Key    []int32
 }
 
-//this structure contains Lwe parameters
-//this structure is constant (cannot be modified once initialized):
-//the pointer to the param can be passed directly
-//to all the Lwe keys that use these params.
+// this structure contains Lwe parameters
+// this structure is constant (cannot be modified once initialized):
+// the pointer to the param can be passed directly
+// to all the Lwe keys that use these params.
 type LweParams struct {
 	N        int32
 	AlphaMin float64 //le plus petit bruit tq sur
@@ -28,9 +29,8 @@ type LweSample struct {
 	CurrentVariance float64
 }
 
-//func (s *LweSample) B() Torus32 {
-//	return s.A[len(s.A)]
-//}
+// variablize for use with test mocking
+var LweSymEncrypt = LweSymEncryptImpl
 
 func NewLweParams(n int32, min, max float64) *LweParams {
 	return &LweParams{n, min, max}
@@ -52,11 +52,9 @@ func NewLweSampleArray(size int32, params *LweParams) (arr []*LweSample) {
 	return
 }
 
-/**
- * This function generates a random Lwe key for the given parameters.
- * The Lwe key for the result must be allocated and initialized
- * (this means that the parameters are already in the result)
- */
+// This function generates a random Lwe key for the given parameters.
+// The Lwe key for the result must be allocated and initialized
+// (this means that the parameters are already in the result)
 func LweKeyGen(result *LweKey) {
 	dist := distuv.Uniform{
 		Min: 0,
@@ -71,14 +69,7 @@ func LweKeyGen(result *LweKey) {
 	result.Key = z
 }
 
-// variablize for use with test mocking
-var LweSymEncrypt = LweSymEncryptImpl
-
-/**
- * This function encrypts message by using key, with stdev alpha
- * The Lwe sample for the result must be allocated and initialized
- * (this means that the parameters are already in the result)
- */
+// This function encrypts message by using key, with stdev alpha The Lwe sample for the result must be allocated and initialized (this means that the parameters are already in the result)
 func LweSymEncryptImpl(result *LweSample, message types.Torus32, alpha float64, key *LweKey) {
 	result.B = types.Gaussian32(message, alpha)
 	for i := 0; i < int(key.Params.N); i++ {
@@ -88,9 +79,7 @@ func LweSymEncryptImpl(result *LweSample, message types.Torus32, alpha float64, 
 	result.CurrentVariance = alpha * alpha
 }
 
-/*
- * This function encrypts a message by using key and a given noise value
- */
+// This function encrypts a message by using key and a given noise value
 func LweSymEncryptWithExternalNoise(result *LweSample, message types.Torus32, noise float64, alpha float64, key *LweKey) {
 	result.B = message + int32(noise)
 	for i := 0; i < int(key.Params.N); i++ {
@@ -101,9 +90,7 @@ func LweSymEncryptWithExternalNoise(result *LweSample, message types.Torus32, no
 	result.CurrentVariance = alpha * alpha
 }
 
-/**
- * This function computes the phase of sample by using key : phi = b - a.s
- */
+// This function computes the phase of sample by using key : phi = b - a.s
 func LwePhase(sample *LweSample, key *LweKey) types.Torus32 {
 	var axs types.Torus32 = 0
 	for i := 0; i < int(key.Params.N); i++ {
@@ -112,17 +99,15 @@ func LwePhase(sample *LweSample, key *LweKey) types.Torus32 {
 	return sample.B - axs
 }
 
-/**
- * This function computes the decryption of sample by using key
- * The constant Msize indicates the message space and is used to approximate the phase
- */
+// This function computes the decryption of sample by using key
+// The constant Msize indicates the message space and is used to approximate the phase
 func LweSymDecrypt(sample *LweSample, key *LweKey, Msize int32) types.Torus32 {
 	phi := LwePhase(sample, key)
 	return types.ApproxPhase(phi, Msize)
 }
 
-//Arithmetic operations on Lwe samples
-/** result = (0,0) */
+// Arithmetic operations on Lwe samples
+// result = (0,0)
 func LweClear(result *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] = 0
@@ -131,7 +116,7 @@ func LweClear(result *LweSample, params *LweParams) {
 	result.CurrentVariance = 0.
 }
 
-/** result = sample */
+// result = sample
 func LweCopy(result, sample *LweSample, params *LweParams) {
 	for i := 0; i < int(params.N); i++ {
 		result.A[i] = sample.A[i]
