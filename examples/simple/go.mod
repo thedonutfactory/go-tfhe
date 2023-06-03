@@ -1,6 +1,6 @@
 module github.com/thedonutfactory/examples
 
-go 1.15
+go 1.19
 
 replace github.com/thedonutfactory/go-tfhe => ../../
 
