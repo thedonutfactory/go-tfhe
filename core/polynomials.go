@@ -151,7 +151,7 @@ func TorusPolynomialSubMulZ(result *TorusPolynomial, poly1 *TorusPolynomial, p i
 	}
 }
 
-//result= (X^{a}-1)*source
+// result= (X^{a}-1)*source
 func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *TorusPolynomial) {
 	N := source.N
 	out := result.Coefs
@@ -180,7 +180,7 @@ func TorusPolynomialMulByXaiMinusOne(result *TorusPolynomial, a int32, source *T
 	}
 }
 
-//result= X^{a}*source
+// result= X^{a}*source
 func TorusPolynomialMulByXai(result *TorusPolynomial, a int32, source *TorusPolynomial) {
 	N := source.N
 	out := result.Coefs
@@ -305,7 +305,7 @@ func torusPolynomialNormInftyDistSkipFirst(poly1 *TorusPolynomial, poly2 *TorusP
 	fmt.Println("Warning, skipping 0th element in torusPolynomialNormInftyDist")
 	for i := int32(1); i < N; i++ {
 		r := math.Abs(types.TorusToDouble(poly1.Coefs[i] - poly2.Coefs[i]))
-		fmt.Printf("%d, %d => %f \n", poly1.Coefs[i], poly2.Coefs[i], r)
+		// fmt.Printf("%d, %d => %f \n", poly1.Coefs[i], poly2.Coefs[i], r)
 		if r > norm {
 			norm = r
 		}

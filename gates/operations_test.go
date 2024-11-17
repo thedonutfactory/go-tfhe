@@ -42,19 +42,6 @@ func toCiphertext(nums ...int) [][]*core.LweSample {
 	return r
 }
 
-// Sets the bit at pos in the integer n.
-func setBit(n int, pos uint) int {
-	n |= (1 << pos)
-	return n
-}
-
-// Clears the bit at pos in n.
-func clearBit(n int, pos uint) int {
-	mask := ^(1 << pos)
-	n &= mask
-	return n
-}
-
 func toPlaintext(ciphers ...[]*core.LweSample) []int {
 	arr := make([]int, len(ciphers))
 	for ci, c := range ciphers {
@@ -72,7 +59,7 @@ func toPlaintext(ciphers ...[]*core.LweSample) []int {
 	return arr
 }
 
-func decryptAndDisplayResult(sum []*core.LweSample, tt *testing.T) {
+func decryptAndDisplayResult(sum []*core.LweSample) {
 	fmt.Print("[ ")
 	for i := len(sum) - 1; i >= 0; i-- {
 		messSum := priKey.BootsSymDecrypt(sum[i])
@@ -90,29 +77,22 @@ func TestToPlaintext(tt *testing.T) {
 }
 
 func TestCompareBit(tt *testing.T) {
-	//assert := assert.New(tt)
-
-	a := priKey.BootsSymEncrypt(1)
+	assert := assert.New(tt)
 	b := priKey.BootsSymEncrypt(1)
 
 	carry := core.NewLweSample(pubKey.Params.InOutParams)
-	tmp := core.NewLweSample(pubKey.Params.InOutParams)
-
-	result := ops.CompareBit(a, b, carry, tmp)
-
 	carryBit := priKey.BootsSymDecrypt(carry)
 	bBit := priKey.BootsSymDecrypt(b)
 
-	fmt.Println(carryBit)
-	fmt.Println(bBit)
-	fmt.Println(result)
+	assert.EqualValues(0, carryBit)
+	assert.EqualValues(1, bBit)
 }
 
 func TestEqual(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 3)
 	result := ops.Equals(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 	equalityBit := priKey.BootsSymDecrypt(result[0])
 	assert.EqualValues(1, equalityBit)
 }
@@ -121,7 +101,7 @@ func TestNotEqual(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(2, 3)
 	result := ops.Equals(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 	equalityBit := priKey.BootsSymDecrypt(result[0])
 	assert.EqualValues(0, equalityBit)
 }
@@ -131,7 +111,7 @@ func TestNotEquals(tt *testing.T) {
 	v := toCiphertext(2, 3)
 	result := ops.Equals(v[0], v[1], NB_BITS)
 	result = ops.Not(result, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 	equalityBit := priKey.BootsSymDecrypt(result[0])
 	assert.EqualValues(1, equalityBit)
 }
@@ -140,7 +120,7 @@ func TestMinimum(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 4)
 	result := ops.Minimum(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 3 -> 0011
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -156,7 +136,7 @@ func TestMaximum(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(4, 1)
 	result := ops.Maximum(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 4 -> 0100
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -180,7 +160,7 @@ func TestAddition(tt *testing.T) {
 
 	//v := toCiphertext(2, 1)
 	result := ops.Add(x, y, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 3 -> 0011
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -196,7 +176,7 @@ func TestSubtraction(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(5, 2)
 	result := ops.Sub(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 3 -> 0011
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -212,7 +192,7 @@ func TestSubtractionToZero(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1, 1)
 	result := ops.Sub(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0 -> 0000
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -228,7 +208,7 @@ func TestSubtractionFromZero(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1, 0)
 	result := ops.Sub(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 1 -> 0001
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -244,19 +224,15 @@ func TestGtAndSubtractionFrom(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 5, 1)
 	r1 := ops.Gt(v[1], v[0], NB_BITS)
-	decryptAndDisplayResult(r1, tt)
-	decryptAndDisplayResult(v[2], tt)
-	//t1 := toPlaintext(r1)
-	//assert.EqualValues(1, t1[0])
-
-	//result := ops.Sub(v[2], r1, NB_BITS)
+	decryptAndDisplayResult(r1)
+	decryptAndDisplayResult(v[2])
 
 	negR1 := ops.Negate(r1, NB_BITS)
-	decryptAndDisplayResult(negR1, tt)
+	decryptAndDisplayResult(negR1)
 	toPlaintext(negR1)
 
 	result := ops.Add(v[2], negR1, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 	toPlaintext(result)
 
 	// result should be 0 -> 0000
@@ -273,7 +249,7 @@ func TestMultiply(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 2)
 	result := ops.Mul(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 6 -> 0110
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -289,7 +265,7 @@ func TestGte(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 1)
 	result := ops.Gte(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be true(1) -> 0001
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -305,7 +281,7 @@ func TestGteCheckFalse(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1, 5)
 	result := ops.Gte(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be false(0) -> 0000
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -321,7 +297,7 @@ func TestGteCheckEquality(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(2, 2)
 	result := ops.Gte(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be true(1) -> 0001
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -337,7 +313,7 @@ func TestGt(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 1)
 	result := ops.Gt(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be true(1) -> 0001
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -353,7 +329,7 @@ func TestGtFalse(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 5)
 	result := ops.Gt(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be false(1) -> 0000
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -369,7 +345,7 @@ func TestGtFalseWhenEqual(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(3, 3)
 	result := ops.Gt(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be false(1) -> 0000
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -385,7 +361,7 @@ func TestShiftLeft(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1)
 	result := ops.ShiftLeft(v[0], 1, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0001 << 1 = 0010
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -401,7 +377,7 @@ func TestShiftLeftByTwo(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1)
 	result := ops.ShiftLeft(v[0], 2, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0001 << 2 = 0100
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -417,7 +393,7 @@ func TestShiftRight(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(4)
 	result := ops.ShiftRight(v[0], 1, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0100 >> 1 = 0010
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -433,7 +409,7 @@ func TestShiftRightByTwo(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(4)
 	result := ops.ShiftRight(v[0], 2, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0100 >> 2 = 0001
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -449,7 +425,7 @@ func TestUshiftLeft(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1)
 	result := ops.UshiftLeft(v[0], 1, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0001 << 1 = 0010
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -465,7 +441,7 @@ func TestUshiftLeftByTwo(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(1)
 	result := ops.UshiftLeft(v[0], 2, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0001 << 2 = 0100
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -481,7 +457,7 @@ func TestUshiftRight(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(4)
 	result := ops.UshiftRight(v[0], 1, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0100 >> 1 = 0010
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -497,7 +473,7 @@ func TestUshiftRightByTwo(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(4)
 	result := ops.UshiftRight(v[0], 2, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0100 >> 2 = 0001
 	assert.EqualValues(1, priKey.BootsSymDecrypt(result[0]))
@@ -510,7 +486,7 @@ func TestDivide(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(6, 3)
 	result := ops.Div(v[0], v[1], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 2 -> 0010
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -523,7 +499,7 @@ func TestPow(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(2)
 	result := ops.Pow(v[0], 3, NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 8 -> 1000
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -539,7 +515,7 @@ func TestNegate(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(2)
 	result := ops.Negate(v[0], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 14 -> 1110
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))
@@ -555,7 +531,7 @@ func TestNegateZero(tt *testing.T) {
 	assert := assert.New(tt)
 	v := toCiphertext(0)
 	result := ops.Negate(v[0], NB_BITS)
-	decryptAndDisplayResult(result, tt)
+	decryptAndDisplayResult(result)
 
 	// result should be 0 -> 0000
 	assert.EqualValues(0, priKey.BootsSymDecrypt(result[0]))

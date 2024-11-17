@@ -23,7 +23,7 @@ func printLagrange(p *fft.LagrangeHalfCPolynomial) {
 	fmt.Printf("\n")
 }
 
-//TEST(LagrangeHalfcTest, fftIsBijective) {
+// TEST(LagrangeHalfcTest, fftIsBijective) {
 func TestFftIsBijective(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
@@ -36,7 +36,7 @@ func TestFftIsBijective(t *testing.T) {
 		afft := fft.NewLagrangeHalfCPolynomial(N)
 		a := NewTorusPolynomial(N)
 		torusPolynomialUniform(a)
-		fmt.Printf("torusPolynomialUniform(a):")
+		// fmt.Printf("torusPolynomialUniform(a):")
 		printTorusPolynomial(a)
 
 		TorusPolynomialCopy(acopy, a)
@@ -62,7 +62,7 @@ func TestFftIsBijective(t *testing.T) {
 	}
 }
 
-//TEST(LagrangeHalfcTest, LagrangeHalfCPolynomialClear) {
+// TEST(LagrangeHalfcTest, LagrangeHalfCPolynomialClear) {
 func TestLagrangeHalfCPolynomialClear(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 10
@@ -104,7 +104,7 @@ func TestLagrangeHalfCPolynomialSetTorusConstant(t *testing.T) {
 	}
 }
 
-//EXPORT void LagrangeHalfCPolynomialAddTorusConstant(LagrangeHalfCPolynomial* result, const Torus32 cst);
+// EXPORT void LagrangeHalfCPolynomialAddTorusConstant(LagrangeHalfCPolynomial* result, const Torus32 cst);
 func TestLagrangeHalfCPolynomialAddTorusConstant(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
@@ -213,7 +213,7 @@ func TestTorusPolynomialSubMulRFFT(t *testing.T) {
 	}
 }
 
-//TEST(LagrangeHalfcTest, LagrangeHalfCPolynomialAddTo) {
+// TEST(LagrangeHalfcTest, LagrangeHalfCPolynomialAddTo) {
 func TestLagrangeHalfCPolynomialAddTo(t *testing.T) {
 	assert := assert.New(t)
 	NBTRIALS := 1
