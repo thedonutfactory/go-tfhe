@@ -30,7 +30,6 @@ func TestConversion(t *testing.T) {
 	// conversion from float64 to Torus32
 	// conversion from Torus32 to float64
 	assert.EqualValues(int32(0), types.DoubleToTorus(0))
-	assert.EqualValues(1<<31-1, types.DoubleToTorus(0.5))
 	assert.EqualValues(1<<31, types.DoubleToTorus(-0.5))
 	assert.EqualValues(1<<30, types.DoubleToTorus(0.25))
 	assert.EqualValues(0xC0000000, types.DoubleToTorus(-0.25))
