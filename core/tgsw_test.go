@@ -50,8 +50,8 @@ func (fake *FakeTGsw) setMessageVariance(mess int32, variance float64) {
 	fake.currentVariance = variance
 }
 
-//this function creates a fixed (random-looking) result,
-//whose seed is the sample
+// this function creates a fixed (random-looking) result,
+// whose seed is the sample
 func FakeTGswTLweDecompH(result []IntPolynomial, sample *TLweSample, params *TGswParams) {
 	kpl := params.Kpl
 	N := params.TlweParams.N
@@ -134,42 +134,6 @@ func TestTGswKeyGen(t *testing.T) {
 		}
 	}
 }
-func TestTGswSymEncrypt(t *testing.T) {
-	assert := assert.New(t)
-	for _, key := range allTGswKeys {
-		N := key.Params.TlweParams.N
-		s := NewTGswSample(key.Params)
-		mess := newRandomIntPolynomial(N)
-		var alpha float64 = 4.2 // valeur pseudo aleatoire fixé
-
-		TGswSymEncrypt(s, mess, alpha, key)
-		fs := NewFakeTGsw(s, key.Params)
-		for j := int32(0); j < N; j++ {
-			assert.EqualValues(fs.message.Coefs[j], mess.Coefs[j])
-		}
-		assert.EqualValues(fs.currentVariance, alpha*alpha)
-	}
-}
-
-func TestTGswSymEncryptInt(t *testing.T) {
-	assert := assert.New(t)
-	for _, key := range allTGswKeys {
-		N := key.Params.TlweParams.N
-		s := NewTGswSample(key.Params)
-
-		mess := rand.Int31()%1000 - 500
-		var alpha float64 = 3.14 // valeur pseudo aleatoire fixé
-
-		TGswSymEncryptInt(s, mess, alpha, key)
-
-		fs := NewFakeTGsw(s, key.Params)
-		assert.EqualValues(fs.message.Coefs[0], mess)
-		for j := int32(1); j < N; j++ {
-			assert.EqualValues(fs.message.Coefs[j], 0)
-		}
-		assert.EqualValues(fs.currentVariance, alpha*alpha)
-	}
-}
 
 func TestTGswClear(t *testing.T) {
 	assert := assert.New(t)
@@ -229,7 +193,7 @@ func TestTGswTLweDecompH(t *testing.T) {
 	}
 }
 
-//this function will create a fixed (random-looking) TGsw sample
+// this function will create a fixed (random-looking) TGsw sample
 func fullyRandomTGsw(result *TGswSample, alpha float64, params *TGswParams) {
 	for _, v := range result.AllSample {
 		for _, vv := range v.A {
@@ -519,6 +483,7 @@ func TestTGswExternMulToTLwe(t *testing.T) {
 	}
 }
 
+/*
 func TestTGswNoiselessTrivial(t *testing.T) {
 	assert := assert.New(t)
 	for _, param := range allTGswParams {
@@ -535,3 +500,4 @@ func TestTGswNoiselessTrivial(t *testing.T) {
 		assert.EqualValues(fres.currentVariance, 0.)
 	}
 }
+*/

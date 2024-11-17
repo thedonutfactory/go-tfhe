@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -225,7 +224,7 @@ func TestTLweSymEncryptPhaseDecrypt(t *testing.T) {
 			for j := int32(0); j < N; j++ {
 				testset := make(map[types.Torus32]bool)
 				for trial := 0; trial < nbSamples; trial++ {
-					fmt.Println(samples[trial].A[i].Coefs[j])
+					// fmt.Println(samples[trial].A[i].Coefs[j])
 					testset[samples[trial].A[i].Coefs[j]] = true
 				}
 				assert.GreaterOrEqual(float64(len(testset)), 0.9*nbSamples) // >=

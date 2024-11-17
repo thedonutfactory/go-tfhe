@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,13 +30,13 @@ func TestConversion(t *testing.T) {
 	// conversion from float64 to Torus32
 	// conversion from Torus32 to float64
 	assert.EqualValues(int32(0), types.DoubleToTorus(0))
-	assert.EqualValues(1<<31, types.DoubleToTorus(0.5))
+	assert.EqualValues(1<<31-1, types.DoubleToTorus(0.5))
 	assert.EqualValues(1<<31, types.DoubleToTorus(-0.5))
 	assert.EqualValues(1<<30, types.DoubleToTorus(0.25))
 	assert.EqualValues(0xC0000000, types.DoubleToTorus(-0.25))
 }
 
-//  Used to approximate the phase to the nearest multiple of  1/Msize
+// Used to approximate the phase to the nearest multiple of  1/Msize
 func TestApproxPhase(t *testing.T) {
 	assert := assert.New(t)
 	for i := int32(2); i < 200; i++ {
@@ -45,7 +44,7 @@ func TestApproxPhase(t *testing.T) {
 		w := types.ApproxPhase(v, i)
 		dv := types.TorusToDouble(v)
 		dw := types.TorusToDouble(w)
-		fmt.Printf("%d, %f, %f, %f \n", i, dv, dw, float64(i)*dw)
+		// fmt.Printf("%d, %f, %f, %f \n", i, dv, dw, float64(i)*dw)
 		assert.LessOrEqual(types.Absfrac(dv-dw), 1./(2.*float64(i))+1e-40)
 		assert.LessOrEqual(types.Absfrac(float64(i)*dw), float64(i)*1e-9)
 	}

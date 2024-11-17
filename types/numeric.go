@@ -6,7 +6,9 @@ import (
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
-const two32 int64 = int64(1) << 32 // 2^32
+// 2^32 as int32
+const two32 int = 1 << 32
+
 var two32Double float64 = math.Pow(2, 32)
 
 // from float64 to Torus32 - float64 to int32 conversion
@@ -106,8 +108,8 @@ func ModSwitchToTorus32(mu, Msize int32) Torus32 {
 	return Torus32(phase64 >> 32)
 }
 
-//this function return the absolute value of the (centered) fractional part of d
-//i.e. the distance between d and its nearest integer
+// this function return the absolute value of the (centered) fractional part of d
+// i.e. the distance between d and its nearest integer
 func Absfrac(d float64) float64 {
 	return math.Abs(d - math.Round(d))
 	//return abs(d-rint(d))
