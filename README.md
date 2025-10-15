@@ -1,4 +1,4 @@
-# Go-TFHE: Fully Homomorphic Encryption Library in Go
+# Go-TFHE: Fully Homomorphic Encryption Library
 
 A pure Go implementation of TFHE (Torus Fully Homomorphic Encryption)
 
