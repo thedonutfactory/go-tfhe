@@ -1,3 +1,6 @@
+//go:build !rust
+// +build !rust
+
 // Package fft provides FFT operations for TFHE polynomial multiplication.
 //
 // Based on "Fast and Error-Free Negacyclic Integer Convolution using Extended Fourier Transform"
@@ -9,8 +12,8 @@ package fft
 import (
 	"math"
 
-	"github.com/thedonutfactory/go-tfhe/params"
 	"github.com/mjibson/go-dsp/fft"
+	"github.com/thedonutfactory/go-tfhe/params"
 )
 
 // FFTProcessor provides FFT operations for TFHE negacyclic polynomial multiplication
