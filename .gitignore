@@ -32,3 +32,7 @@ Thumbs.db
 /examples/*/add_two_numbers
 /examples/*/simple_gates
 
+
+# Rust build artifacts
+fft-bridge/target/
+fft-bridge/Cargo.lock
