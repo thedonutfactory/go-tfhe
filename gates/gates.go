@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/thedonutfactory/go-tfhe/cloudkey"
-	"github.com/thedonutfactory/go-tfhe/fft"
 	"github.com/thedonutfactory/go-tfhe/params"
+	"github.com/thedonutfactory/go-tfhe/poly"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
 	"github.com/thedonutfactory/go-tfhe/trgsw"
 	"github.com/thedonutfactory/go-tfhe/trlwe"
@@ -122,16 +122,16 @@ func Copy(tlweA *Ciphertext) *Ciphertext {
 
 // bootstrap performs full bootstrapping with key switching
 func bootstrap(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	plan := fft.NewFFTPlan(params.GetTRGSWLv1().N)
-	trlweResult := trgsw.BlindRotate(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, plan)
+	polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
+	trlweResult := trgsw.BlindRotate(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, polyEval)
 	tlweLv1 := trlwe.SampleExtractIndex(trlweResult, 0)
 	return trgsw.IdentityKeySwitching(tlweLv1, ck.KeySwitchingKey)
 }
 
 // bootstrapWithoutKeySwitch performs bootstrapping without key switching
 func bootstrapWithoutKeySwitch(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	plan := fft.NewFFTPlan(params.GetTRGSWLv1().N)
-	trlweResult := trgsw.BlindRotate(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, plan)
+	polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
+	trlweResult := trgsw.BlindRotate(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, polyEval)
 	tlweLv1 := trlwe.SampleExtractIndex2(trlweResult, 0)
 	return tlweLv1
 }
