@@ -3,8 +3,8 @@ package trlwe
 import (
 	"math/rand"
 
-	"github.com/thedonutfactory/go-tfhe/fft"
 	"github.com/thedonutfactory/go-tfhe/params"
+	"github.com/thedonutfactory/go-tfhe/poly"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
 	"github.com/thedonutfactory/go-tfhe/utils"
 )
@@ -25,7 +25,7 @@ func NewTRLWELv1() *TRLWELv1 {
 }
 
 // EncryptF64 encrypts a vector of float64 values with TRLWE Level 1
-func (t *TRLWELv1) EncryptF64(p []float64, alpha float64, key []params.Torus, plan *fft.FFTPlan) *TRLWELv1 {
+func (t *TRLWELv1) EncryptF64(p []float64, alpha float64, key []params.Torus, polyEval *poly.Evaluator) *TRLWELv1 {
 	rng := rand.New(rand.NewSource(rand.Int63()))
 	n := params.GetTRLWELv1().N
 
@@ -37,23 +37,20 @@ func (t *TRLWELv1) EncryptF64(p []float64, alpha float64, key []params.Torus, pl
 	// Add Gaussian noise to plaintext
 	t.B = utils.GaussianF64Vec(p, alpha, rng)
 
-	// Compute a * s and add to b
-	var aArray [1024]params.Torus
-	var keyArray [1024]params.Torus
-	copy(aArray[:], t.A)
-	copy(keyArray[:], key)
-
-	polyRes := plan.Processor.PolyMul1024(&aArray, &keyArray)
+	// Compute a * s and add to b using poly evaluator
+	polyA := poly.Poly{Coeffs: t.A}
+	polyKey := poly.Poly{Coeffs: key}
+	polyRes := polyEval.MulPoly(polyA, polyKey)
 
 	for i := 0; i < n; i++ {
-		t.B[i] += polyRes[i]
+		t.B[i] += polyRes.Coeffs[i]
 	}
 
 	return t
 }
 
 // EncryptBool encrypts a vector of boolean values with TRLWE Level 1
-func (t *TRLWELv1) EncryptBool(pBool []bool, alpha float64, key []params.Torus, plan *fft.FFTPlan) *TRLWELv1 {
+func (t *TRLWELv1) EncryptBool(pBool []bool, alpha float64, key []params.Torus, polyEval *poly.Evaluator) *TRLWELv1 {
 	pF64 := make([]float64, len(pBool))
 	for i, b := range pBool {
 		if b {
@@ -62,25 +59,24 @@ func (t *TRLWELv1) EncryptBool(pBool []bool, alpha float64, key []params.Torus, 
 			pF64[i] = -0.125
 		}
 	}
-	return t.EncryptF64(pF64, alpha, key, plan)
+	return t.EncryptF64(pF64, alpha, key, polyEval)
 }
 
 // DecryptBool decrypts a TRLWE Level 1 ciphertext to a vector of booleans
-func (t *TRLWELv1) DecryptBool(key []params.Torus, plan *fft.FFTPlan) []bool {
+func (t *TRLWELv1) DecryptBool(key []params.Torus, polyEval *poly.Evaluator) []bool {
 	n := len(t.A)
-
-	var aArray [1024]params.Torus
-	var keyArray [1024]params.Torus
-	copy(aArray[:], t.A)
-	copy(keyArray[:], key)
-
-	polyRes := plan.Processor.PolyMul1024(&aArray, &keyArray)
-
 	result := make([]bool, n)
+
+	// Compute a * s using poly evaluator
+	polyA := poly.Poly{Coeffs: t.A}
+	polyKey := poly.Poly{Coeffs: key}
+	polyRes := polyEval.MulPoly(polyA, polyKey)
+
 	for i := 0; i < n; i++ {
-		value := int32(t.B[i] - polyRes[i])
+		value := int32(t.B[i] - polyRes.Coeffs[i])
 		result[i] = value >= 0
 	}
+
 	return result
 }
 
@@ -91,18 +87,17 @@ type TRLWELv1FFT struct {
 }
 
 // NewTRLWELv1FFT creates a new TRLWE Level 1 FFT ciphertext from a regular TRLWE
-func NewTRLWELv1FFT(trlwe *TRLWELv1, plan *fft.FFTPlan) *TRLWELv1FFT {
-	var aArray [1024]params.Torus
-	var bArray [1024]params.Torus
-	copy(aArray[:], trlwe.A)
-	copy(bArray[:], trlwe.B)
+func NewTRLWELv1FFT(trlwe *TRLWELv1, polyEval *poly.Evaluator) *TRLWELv1FFT {
+	// Convert to Fourier domain using poly evaluator
+	polyA := poly.Poly{Coeffs: trlwe.A}
+	polyB := poly.Poly{Coeffs: trlwe.B}
 
-	aFFT := plan.Processor.IFFT1024(&aArray)
-	bFFT := plan.Processor.IFFT1024(&bArray)
+	fpA := polyEval.ToFourierPoly(polyA)
+	fpB := polyEval.ToFourierPoly(polyB)
 
 	return &TRLWELv1FFT{
-		A: aFFT[:],
-		B: bFFT[:],
+		A: fpA.Coeffs,
+		B: fpB.Coeffs,
 	}
 }
 
@@ -133,9 +128,18 @@ func SampleExtractIndex(trlwe *TRLWELv1, k int) *tlwe.TLWELv1 {
 }
 
 // SampleExtractIndex2 extracts a TLWE Lv0 sample from a TRLWE at index k
+// NOTE: This should NOT be used when TRLWE.N != TLWELv0.N
+// For Uint5 params, use proper key switching from TLWELv1 instead
 func SampleExtractIndex2(trlwe *TRLWELv1, k int) *tlwe.TLWELv0 {
 	n := params.GetTLWELv0().N
+	trlweN := len(trlwe.A)
 	result := tlwe.NewTLWELv0()
+
+	// If sizes don't match, we can't directly extract
+	// This function is only correct when trlweN == n
+	if trlweN != n {
+		panic("SampleExtractIndex2: TRLWE dimension mismatch - use proper key switching")
+	}
 
 	for i := 0; i < n; i++ {
 		if i <= k {
