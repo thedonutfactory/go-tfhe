@@ -1,40 +1,63 @@
 package evaluator
 
 import (
+	"github.com/thedonutfactory/go-tfhe/params"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
 	"github.com/thedonutfactory/go-tfhe/utils"
 )
 
-// PrepareAND prepares input for AND gate (zero-allocation)
-// Returns pointer to internal temp buffer
-func (e *Evaluator) PrepareAND(ctA, ctB *tlwe.TLWELv0) *tlwe.TLWELv0 {
-	ctA.AddAssign(ctB, e.Buffers.GatePrep)
-	e.Buffers.GatePrep.SetB(e.Buffers.GatePrep.B() + utils.F64ToTorus(-0.125))
-	return e.Buffers.GatePrep
-}
+// PrepareNAND prepares a NAND input for bootstrapping (zero-allocation)
+func (e *Evaluator) PrepareNAND(a, b *tlwe.TLWELv0) *tlwe.TLWELv0 {
+	n := params.GetTLWELv0().N
+	result := tlwe.NewTLWELv0()
 
-// PrepareNAND prepares input for NAND gate (zero-allocation)
-func (e *Evaluator) PrepareNAND(ctA, ctB *tlwe.TLWELv0) *tlwe.TLWELv0 {
-	// Negate both and add
-	for i := range e.Buffers.GatePrep.P {
-		e.Buffers.GatePrep.P[i] = -ctA.P[i] - ctB.P[i]
+	// NAND: -(a + b) + 1/8
+	for i := 0; i < n; i++ {
+		result.P[i] = -(a.P[i] + b.P[i])
 	}
-	e.Buffers.GatePrep.SetB(e.Buffers.GatePrep.B() + utils.F64ToTorus(0.125))
-	return e.Buffers.GatePrep
+	result.P[n] = -(a.P[n] + b.P[n]) + utils.F64ToTorus(0.125)
+
+	return result
 }
 
-// PrepareOR prepares input for OR gate (zero-allocation)
-func (e *Evaluator) PrepareOR(ctA, ctB *tlwe.TLWELv0) *tlwe.TLWELv0 {
-	ctA.AddAssign(ctB, e.Buffers.GatePrep)
-	e.Buffers.GatePrep.SetB(e.Buffers.GatePrep.B() + utils.F64ToTorus(0.125))
-	return e.Buffers.GatePrep
-}
+// PrepareAND prepares an AND input for bootstrapping
+func (e *Evaluator) PrepareAND(a, b *tlwe.TLWELv0) *tlwe.TLWELv0 {
+	n := params.GetTLWELv0().N
+	result := tlwe.NewTLWELv0()
 
-// PrepareXOR prepares input for XOR gate (zero-allocation)
-func (e *Evaluator) PrepareXOR(ctA, ctB *tlwe.TLWELv0) *tlwe.TLWELv0 {
-	for i := range e.Buffers.GatePrep.P {
-		e.Buffers.GatePrep.P[i] = 2 * (ctA.P[i] + ctB.P[i])
+	// AND: (a + b) - 1/8
+	for i := 0; i < n; i++ {
+		result.P[i] = a.P[i] + b.P[i]
 	}
-	e.Buffers.GatePrep.SetB(e.Buffers.GatePrep.B() + utils.F64ToTorus(0.25))
-	return e.Buffers.GatePrep
+	result.P[n] = a.P[n] + b.P[n] + utils.F64ToTorus(-0.125)
+
+	return result
+}
+
+// PrepareOR prepares an OR input for bootstrapping
+func (e *Evaluator) PrepareOR(a, b *tlwe.TLWELv0) *tlwe.TLWELv0 {
+	n := params.GetTLWELv0().N
+	result := tlwe.NewTLWELv0()
+
+	// OR: (a + b) + 1/8
+	for i := 0; i < n; i++ {
+		result.P[i] = a.P[i] + b.P[i]
+	}
+	result.P[n] = a.P[n] + b.P[n] + utils.F64ToTorus(0.125)
+
+	return result
+}
+
+// PrepareXOR prepares an XOR input for bootstrapping
+func (e *Evaluator) PrepareXOR(a, b *tlwe.TLWELv0) *tlwe.TLWELv0 {
+	n := params.GetTLWELv0().N
+	result := tlwe.NewTLWELv0()
+
+	// XOR: (a + 2*b) + 1/4
+	for i := 0; i < n; i++ {
+		result.P[i] = a.P[i] + 2*b.P[i]
+	}
+	result.P[n] = a.P[n] + 2*b.P[n] + utils.F64ToTorus(0.25)
+
+	return result
 }

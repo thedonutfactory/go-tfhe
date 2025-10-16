@@ -3,7 +3,6 @@ package cloudkey
 import (
 	"sync"
 
-	"github.com/thedonutfactory/go-tfhe/fft"
 	"github.com/thedonutfactory/go-tfhe/key"
 	"github.com/thedonutfactory/go-tfhe/params"
 	"github.com/thedonutfactory/go-tfhe/poly"
@@ -124,13 +123,12 @@ func genBootstrappingKey(secretKey *key.SecretKey) []*trgsw.TRGSWLv1FFT {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
-			plan := fft.NewFFTPlan(params.GetTRGSWLv1().N)
 			polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
 			trgswCipher := trgsw.NewTRGSWLv1().EncryptTorus(
 				secretKey.KeyLv0[idx],
 				params.BSKAlpha(),
 				secretKey.KeyLv1,
-				plan,
+				polyEval,
 			)
 			result[idx] = trgsw.NewTRGSWLv1FFT(trgswCipher, polyEval)
 		}(i)

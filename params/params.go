@@ -33,6 +33,7 @@ const (
 	Security80Bit  SecurityLevel = 80
 	Security110Bit SecurityLevel = 110
 	Security128Bit SecurityLevel = 128
+	SecurityUint5  SecurityLevel = 5 // Specialized for 5-bit message space (messageModulus=32)
 )
 
 // Current security level (can be changed at runtime if needed)
@@ -171,6 +172,50 @@ var params128Bit = struct {
 	},
 }
 
+// ============================================================================
+// UINT5 PARAMETERS (Specialized for 5-bit message space, messageModulus=32)
+// ============================================================================
+// Based on tfhe-go's ParamsUint5 configuration. These parameters are
+// specifically designed for multi-bit arithmetic with large message spaces.
+// Key features:
+// - ~700x lower noise than standard 80-bit security
+// - Larger polynomial degree (2048 vs 1024)
+// - Supports messageModulus up to 32 reliably
+// - Enables 4-bootstrap nibble addition (vs 8 with standard params)
+//
+// Security: Provides comparable security to 80-bit level but optimized
+// for precision rather than maximum cryptographic hardness.
+var paramsUint5 = struct {
+	TLWELv0  TLWELv0Params
+	TLWELv1  TLWELv1Params
+	TRLWELv1 TRLWELv1Params
+	TRGSWLv1 TRGSWLv1Params
+}{
+	TLWELv0: TLWELv0Params{
+		N:     1071,                           // Larger LWE dimension for security
+		ALPHA: 7.088226765410429399593757e-08, // ~700x lower noise for precision
+	},
+	TLWELv1: TLWELv1Params{
+		N:     2048,                   // Double polynomial degree
+		ALPHA: 2.2204460492503131e-17, // Extremely low noise
+	},
+	TRLWELv1: TRLWELv1Params{
+		N:     2048,
+		ALPHA: 2.2204460492503131e-17,
+	},
+	TRGSWLv1: TRGSWLv1Params{
+		N:         2048,
+		NBIT:      11, // 2048 = 2^11
+		BGBIT:     22, // Base = 1 << 22
+		BG:        1 << 22,
+		L:         1, // Single decomposition level
+		BASEBIT:   6, // KeySwitch base bits
+		IKS_T:     3, // KeySwitch level
+		ALPHA:     2.2204460492503131e-17,
+		BlockSize: 7, // Optimized block size for N=1071
+	},
+}
+
 // GetTLWELv0 returns the TLWE Level 0 parameters for the current security level
 func GetTLWELv0() TLWELv0Params {
 	switch CurrentSecurityLevel {
@@ -178,6 +223,8 @@ func GetTLWELv0() TLWELv0Params {
 		return params80Bit.TLWELv0
 	case Security110Bit:
 		return params110Bit.TLWELv0
+	case SecurityUint5:
+		return paramsUint5.TLWELv0
 	default:
 		return params128Bit.TLWELv0
 	}
@@ -190,6 +237,8 @@ func GetTLWELv1() TLWELv1Params {
 		return params80Bit.TLWELv1
 	case Security110Bit:
 		return params110Bit.TLWELv1
+	case SecurityUint5:
+		return paramsUint5.TLWELv1
 	default:
 		return params128Bit.TLWELv1
 	}
@@ -202,6 +251,8 @@ func GetTRLWELv1() TRLWELv1Params {
 		return params80Bit.TRLWELv1
 	case Security110Bit:
 		return params110Bit.TRLWELv1
+	case SecurityUint5:
+		return paramsUint5.TRLWELv1
 	default:
 		return params128Bit.TRLWELv1
 	}
@@ -214,6 +265,8 @@ func GetTRGSWLv1() TRGSWLv1Params {
 		return params80Bit.TRGSWLv1
 	case Security110Bit:
 		return params110Bit.TRGSWLv1
+	case SecurityUint5:
+		return paramsUint5.TRGSWLv1
 	default:
 		return params128Bit.TRGSWLv1
 	}
@@ -237,6 +290,8 @@ func SecurityInfo() string {
 		desc = "80-bit security (performance-optimized)"
 	case Security110Bit:
 		desc = "110-bit security (balanced, original TFHE)"
+	case SecurityUint5:
+		desc = "Uint5 parameters (optimized for 5-bit messages, messageModulus=32)"
 	default:
 		desc = "128-bit security (high security, quantum-resistant)"
 	}
