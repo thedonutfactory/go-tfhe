@@ -3,6 +3,8 @@ package poly
 import (
 	"math"
 	"math/cmplx"
+
+	"github.com/thedonutfactory/go-tfhe/params"
 )
 
 // Evaluator computes polynomial operations over the N-th cyclotomic ring.
@@ -26,13 +28,48 @@ type Evaluator struct {
 }
 
 // evaluationBuffer is a buffer for Evaluator.
+// These buffers are pre-allocated and reused across operations to achieve zero-allocation performance.
+//
+// This is the UNIFIED buffer system that consolidates all buffer management:
+//   - FFT/IFFT working buffers
+//   - Decomposition buffers (time and Fourier domain)
+//   - Multiplication accumulators
+//   - Rotation pools
+//   - TRLWE pools
+//   - Temporary buffers
 type evaluationBuffer struct {
-	// fp is an intermediate FFT buffer.
-	fp FourierPoly
-	// fpInv is an intermediate inverse FFT buffer.
-	fpInv FourierPoly
-	// pSplit is a buffer for split operations.
-	pSplit Poly
+	// === Core FFT Buffers ===
+	fp     FourierPoly // Intermediate FFT buffer
+	fpInv  FourierPoly // Intermediate inverse FFT buffer
+	pSplit Poly        // Buffer for split operations
+
+	// === External Product / Multiplication Buffers ===
+	fpMul1, fpMul2 FourierPoly // For multiplication operands
+	fpAcc, fpBcc   FourierPoly // For accumulation (A and B components)
+
+	// === Decomposition Buffers ===
+	decompBuffer []Poly        // Pool of decomposition results (time domain)
+	decompFFT    []FourierPoly // FFT'd decomposition results (Fourier domain)
+
+	// === CMUX Buffers ===
+	fpDiff FourierPoly // For CMUX difference computation
+
+	// === Temporary Buffers ===
+	pTemp        Poly // General purpose temporary polynomial
+	pRotA, pRotB Poly // Rotation results
+
+	// === Rotation Pool ===
+	// Pool for polyMulWithXK operations (zero-allocation rotation)
+	rotationPool [4]Poly // Pool of 4 rotation buffers
+	rotationIdx  int     // Current rotation buffer index
+
+	// === TRLWE Pool ===
+	// Pool for intermediate TRLWE results
+	trlwePool [4]struct {
+		A []params.Torus
+		B []params.Torus
+	}
+	trlweIdx int // Current TRLWE pool index
 }
 
 // NewEvaluator creates a new Evaluator with degree N.
@@ -129,10 +166,59 @@ func bitReverseInPlace[T any](data []T) {
 
 // newEvaluationBuffer creates a new evaluationBuffer.
 func newEvaluationBuffer(N int) evaluationBuffer {
+	// Pre-allocate decomposition buffers for typical TFHE parameters
+	// L=3, so we need 3*2=6 decomposition levels
+	const maxDecompLevels = 8 // Slightly more for safety
+
+	decompBuffer := make([]Poly, maxDecompLevels)
+	decompFFT := make([]FourierPoly, maxDecompLevels)
+	for i := 0; i < maxDecompLevels; i++ {
+		decompBuffer[i] = NewPoly(N)
+		decompFFT[i] = NewFourierPoly(N)
+	}
+
+	// Initialize rotation pool
+	var rotationPool [4]Poly
+	for i := 0; i < 4; i++ {
+		rotationPool[i] = NewPoly(N)
+	}
+
+	// Initialize TRLWE pool
+	var trlwePool [4]struct {
+		A []params.Torus
+		B []params.Torus
+	}
+	for i := 0; i < 4; i++ {
+		trlwePool[i].A = make([]params.Torus, N)
+		trlwePool[i].B = make([]params.Torus, N)
+	}
+
 	return evaluationBuffer{
 		fp:     NewFourierPoly(N),
 		fpInv:  NewFourierPoly(N),
 		pSplit: NewPoly(N),
+
+		// External product buffers
+		fpMul1: NewFourierPoly(N),
+		fpMul2: NewFourierPoly(N),
+		fpAcc:  NewFourierPoly(N),
+		fpBcc:  NewFourierPoly(N),
+
+		// Decomposition buffers
+		decompBuffer: decompBuffer,
+		decompFFT:    decompFFT,
+
+		// CMUX buffers
+		fpDiff: NewFourierPoly(N),
+		pTemp:  NewPoly(N),
+
+		// Blind rotation buffers
+		pRotA:        NewPoly(N),
+		pRotB:        NewPoly(N),
+		rotationPool: rotationPool,
+		rotationIdx:  0,
+		trlwePool:    trlwePool,
+		trlweIdx:     0,
 	}
 }
 

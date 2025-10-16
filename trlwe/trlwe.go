@@ -108,9 +108,10 @@ func NewTRLWELv1FFT(trlwe *TRLWELv1, plan *fft.FFTPlan) *TRLWELv1FFT {
 
 // NewTRLWELv1FFTDummy creates a dummy TRLWE Level 1 FFT ciphertext
 func NewTRLWELv1FFTDummy() *TRLWELv1FFT {
+	// FourierPoly needs 2*N for interleaved real/imaginary layout
 	return &TRLWELv1FFT{
-		A: make([]float64, params.GetTRLWELv1().N),
-		B: make([]float64, params.GetTRLWELv1().N),
+		A: make([]float64, 2*params.GetTRLWELv1().N),
+		B: make([]float64, 2*params.GetTRLWELv1().N),
 	}
 }
 
