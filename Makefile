@@ -29,16 +29,21 @@ test-gates-nocache:
 
 examples:
 	@echo "Building examples..."
-	cd examples/add_two_numbers && go build
-	cd examples/simple_gates && go build
+	go build examples/add_two_numbers.go
+	go build examples/simple_gates.go
+	go build examples/pbs.go
 
 run-add:
 	@echo "Running add_two_numbers example..."
-	cd examples/add_two_numbers && go run main.go
+	go run examples/add_two_numbers.go
 
 run-gates:
 	@echo "Running simple_gates example..."
-	cd examples/simple_gates && go run main.go
+	go run examples/simple_gates.go
+
+run-pbs:
+	@echo "Running pbs example..."
+	go run examples/pbs.go
 
 fmt:
 	@echo "Formatting code..."
@@ -51,8 +56,9 @@ vet:
 clean:
 	@echo "Cleaning build artifacts..."
 	go clean ./...
-	rm -f examples/add_two_numbers/add_two_numbers
-	rm -f examples/simple_gates/simple_gates
+	rm -f examples/add_two_numbers
+	rm -f examples/simple_gates
+	rm -f examples/pbs
 
 install-deps:
 	@echo "Installing dependencies..."
@@ -84,6 +90,7 @@ help:
 	@echo "  examples                 - Build all examples"
 	@echo "  run-add                  - Run add_two_numbers example"
 	@echo "  run-gates                - Run simple_gates example"
+	@echo "  run-pbs                  - Run pbs example"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  fmt                      - Format code"
