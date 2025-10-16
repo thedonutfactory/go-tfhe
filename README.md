@@ -223,7 +223,7 @@ Performance characteristics on a typical modern CPU:
 | Batch (8 gates) | ~200-300ms | ~120-180ms |
 | Addition (8-bit) | ~8-12s | ~5-7s |
 
-*Note: Times are for pure Go implementation. The Rust version with hand-optimized assembly is ~3-5x faster.*
+*Note: Performance can vary based on CPU architecture and number of cores.*
 
 ## Examples
 
@@ -242,15 +242,13 @@ cd examples/simple_gates
 go run main.go
 ```
 
-## Comparison with Rust Implementation
+## Key Advantages
 
-| Feature | Go Implementation | Rust Implementation |
-|---------|-------------------|---------------------|
-| Pure Language | ✅ Yes | ❌ No (uses C++/ASM) |
-| Easy Build | ✅ Yes | ⚠️ Requires build tools |
-| Performance | ~100-150ms/gate | ~30-50ms/gate |
-| Parallelization | ✅ Goroutines | ✅ Rayon |
-| Security Levels | ✅ 80/110/128-bit | ✅ 80/110/128-bit |
+- **Pure Go**: No C dependencies, no build tools required
+- **Easy Deployment**: Single binary, cross-platform compilation
+- **Simple Integration**: Standard Go modules, no CGO
+- **Parallelization**: Built-in concurrency with goroutines
+- **Multiple Security Levels**: 80/110/128-bit security parameters
 
 ## Building from Source
 
@@ -268,17 +266,17 @@ go test ./...
 
 ## Limitations
 
-- **Performance**: Pure Go is slower than hand-optimized assembly in Rust version
-- **FFT Implementation**: Uses standard Go FFT library (no SIMD optimizations)
-- **Memory**: Higher memory usage compared to Rust due to GC overhead
+- **FFT Performance**: Uses standard Go FFT library (future: custom SIMD-optimized FFT)
+- **Memory Usage**: Go's garbage collector trades memory for convenience
 
 ## Future Improvements
 
-- [ ] Add SIMD optimizations using Go assembly
-- [ ] Implement custom FFT with better cache locality
-- [ ] Add GPU acceleration support
-- [ ] Optimize memory allocations
-- [ ] Add more example circuits (multiplication, comparison, etc.)
+- [ ] Add SIMD-optimized FFT using Go assembly
+- [ ] Implement custom FFT with better cache locality  
+- [ ] Add GPU acceleration support (Metal/CUDA)
+- [ ] Optimize memory allocations and reduce GC pressure
+- [ ] Add more example circuits (multiplication, comparison, sorting, etc.)
+- [ ] Support for wider data types (16-bit, 32-bit operations)
 
 ## Contributing
 
@@ -286,14 +284,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-Same license as the original Rust implementation.
+MIT License
 
 ## References
 
 - Original TFHE paper: [TFHE: Fast Fully Homomorphic Encryption over the Torus](https://eprint.iacr.org/2018/421)
-- Rust implementation: [rs-tfhe](https://github.com/thedonutfactory/rs-tfhe)
-
-## Acknowledgments
-
-This is a port of the Rust TFHE implementation. All credit for the original design and algorithms goes to the original authors.
+- Extended FFT paper: [Fast and Error-Free Negacyclic Integer Convolution](https://eprint.iacr.org/2021/480)
 

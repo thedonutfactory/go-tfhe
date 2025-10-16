@@ -1,24 +1,14 @@
-.PHONY: all build test clean examples fmt vet test-quick test-gates build-rust test-rust test-nocache test-gates-nocache test-rust-nocache test-gates-rust-nocache
+.PHONY: all build test clean examples fmt vet test-quick test-gates test-nocache test-gates-nocache
 
 all: build test
 
 build:
-	@echo "Building go-tfhe (pure Go)..."
+	@echo "Building go-tfhe..."
 	go build ./...
 
-build-rust:
-	@echo "Building Rust FFT bridge..."
-	cd fft-bridge && cargo build --release
-	@echo "Building go-tfhe with Rust FFT..."
-	go build -tags rust ./...
-
 test:
-	@echo "Running tests (pure Go)..."
+	@echo "Running tests..."
 	go test -v ./...
-
-test-rust:
-	@echo "Running tests with Rust FFT..."
-	go test -tags rust -v ./...
 
 test-quick:
 	@echo "Running quick tests (non-gate tests)..."
@@ -29,25 +19,13 @@ test-gates:
 	@echo "Each gate test takes ~400ms, batch tests take longer..."
 	go test -v -timeout 30m ./gates
 
-test-gates-rust:
-	@echo "Running gate tests with Rust FFT (should be 4-5x faster)..."
-	go test -tags rust -v -timeout 10m ./gates
-
 test-nocache:
-	@echo "Running tests without cache (pure Go)..."
+	@echo "Running tests without cache..."
 	go test -count=1 -v ./...
 
-test-rust-nocache:
-	@echo "Running tests without cache (Rust FFT)..."
-	go test -count=1 -tags rust -v ./...
-
 test-gates-nocache:
-	@echo "Running gate tests without cache (pure Go)..."
+	@echo "Running gate tests without cache..."
 	go test -count=1 -v -timeout 30m ./gates
-
-test-gates-rust-nocache:
-	@echo "Running gate tests without cache (Rust FFT)..."
-	go test -count=1 -tags rust -v -timeout 10m ./gates
 
 examples:
 	@echo "Building examples..."
@@ -75,8 +53,6 @@ clean:
 	go clean ./...
 	rm -f examples/add_two_numbers/add_two_numbers
 	rm -f examples/simple_gates/simple_gates
-	@echo "Cleaning Rust FFT bridge..."
-	cd fft-bridge && cargo clean
 
 install-deps:
 	@echo "Installing dependencies..."
@@ -87,32 +63,22 @@ benchmark:
 	@echo "Running FFT benchmarks..."
 	go test -bench=. -benchmem ./fft
 
-benchmark-rust:
-	@echo "Running FFT benchmarks with Rust backend..."
-	go test -tags rust -bench=. -benchmem ./fft
-
 help:
 	@echo "Available targets:"
 	@echo ""
 	@echo "Building:"
-	@echo "  all                      - Build and test (pure Go)"
-	@echo "  build                    - Build all packages (pure Go)"
-	@echo "  build-rust               - Build with Rust FFT backend"
+	@echo "  all                      - Build and test"
+	@echo "  build                    - Build all packages"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test                     - Run all tests (pure Go)"
-	@echo "  test-rust                - Run all tests with Rust FFT"
-	@echo "  test-nocache             - Run all tests without cache (pure Go)"
-	@echo "  test-rust-nocache        - Run all tests without cache (Rust FFT)"
+	@echo "  test                     - Run all tests"
+	@echo "  test-nocache             - Run all tests without cache"
 	@echo "  test-quick               - Run quick tests (no gate tests)"
-	@echo "  test-gates               - Run gate tests only (pure Go, slow)"
-	@echo "  test-gates-rust          - Run gate tests with Rust FFT (4-5x faster)"
-	@echo "  test-gates-nocache       - Run gate tests without cache (pure Go)"
-	@echo "  test-gates-rust-nocache  - Run gate tests without cache (Rust FFT)"
+	@echo "  test-gates               - Run gate tests only"
+	@echo "  test-gates-nocache       - Run gate tests without cache"
 	@echo ""
 	@echo "Benchmarking:"
-	@echo "  benchmark                - Benchmark FFT (pure Go)"
-	@echo "  benchmark-rust           - Benchmark FFT (Rust backend)"
+	@echo "  benchmark                - Benchmark FFT"
 	@echo ""
 	@echo "Examples:"
 	@echo "  examples                 - Build all examples"
