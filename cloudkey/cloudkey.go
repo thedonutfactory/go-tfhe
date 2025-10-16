@@ -6,6 +6,7 @@ import (
 	"github.com/thedonutfactory/go-tfhe/fft"
 	"github.com/thedonutfactory/go-tfhe/key"
 	"github.com/thedonutfactory/go-tfhe/params"
+	"github.com/thedonutfactory/go-tfhe/poly"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
 	"github.com/thedonutfactory/go-tfhe/trgsw"
 	"github.com/thedonutfactory/go-tfhe/trlwe"
@@ -42,9 +43,10 @@ func NewCloudKeyNoKSK() *CloudKey {
 		ksk[i] = tlwe.NewTLWELv0()
 	}
 
+	polyEval := poly.NewEvaluator(n)
 	bsk := make([]*trgsw.TRGSWLv1FFT, lv0N)
 	for i := range bsk {
-		bsk[i] = trgsw.NewTRGSWLv1FFTDummy()
+		bsk[i] = trgsw.NewTRGSWLv1FFTDummy(polyEval)
 	}
 
 	return &CloudKey{
@@ -74,12 +76,12 @@ func genTestvec() *trlwe.TRLWELv1 {
 	n := params.GetTRGSWLv1().N
 	testvec := trlwe.NewTRLWELv1()
 	bTorus := utils.F64ToTorus(0.125)
-	
+
 	for i := 0; i < n; i++ {
 		testvec.A[i] = 0
 		testvec.B[i] = bTorus
 	}
-	
+
 	return testvec
 }
 
@@ -123,13 +125,14 @@ func genBootstrappingKey(secretKey *key.SecretKey) []*trgsw.TRGSWLv1FFT {
 		go func(idx int) {
 			defer wg.Done()
 			plan := fft.NewFFTPlan(params.GetTRGSWLv1().N)
+			polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
 			trgswCipher := trgsw.NewTRGSWLv1().EncryptTorus(
 				secretKey.KeyLv0[idx],
 				params.BSKAlpha(),
 				secretKey.KeyLv1,
 				plan,
 			)
-			result[idx] = trgsw.NewTRGSWLv1FFT(trgswCipher, plan)
+			result[idx] = trgsw.NewTRGSWLv1FFT(trgswCipher, polyEval)
 		}(i)
 	}
 	wg.Wait()
