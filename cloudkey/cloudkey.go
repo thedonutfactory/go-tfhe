@@ -84,7 +84,7 @@ func genTestvec() *trlwe.TRLWELv1 {
 	return testvec
 }
 
-// genKeySwitchingKey generates the key switching key
+// genKeySwitchingKey generates the key switching key (parallelized)
 func genKeySwitchingKey(secretKey *key.SecretKey) []*tlwe.TLWELv0 {
 	basebit := params.GetTRGSWLv1().BASEBIT
 	iksT := params.GetTRGSWLv1().IKS_T
@@ -96,19 +96,25 @@ func genKeySwitchingKey(secretKey *key.SecretKey) []*tlwe.TLWELv0 {
 		result[i] = tlwe.NewTLWELv0()
 	}
 
+	var wg sync.WaitGroup
 	for i := 0; i < n; i++ {
-		for j := 0; j < iksT; j++ {
-			for k := 0; k < base; k++ {
-				if k == 0 {
-					continue
+		wg.Add(1)
+		go func(iIdx int) {
+			defer wg.Done()
+			for j := 0; j < iksT; j++ {
+				for k := 0; k < base; k++ {
+					if k == 0 {
+						continue
+					}
+					shift := uint((j + 1) * basebit)
+					p := (float64(k) * float64(secretKey.KeyLv1[iIdx])) / float64(uint64(1)<<shift)
+					idx := (base * iksT * iIdx) + (base * j) + k
+					result[idx] = tlwe.NewTLWELv0().EncryptF64(p, params.KSKAlpha(), secretKey.KeyLv0)
 				}
-				shift := uint((j + 1) * basebit)
-				p := (float64(k) * float64(secretKey.KeyLv1[i])) / float64(uint64(1)<<shift)
-				idx := (base * iksT * i) + (base * j) + k
-				result[idx] = tlwe.NewTLWELv0().EncryptF64(p, params.KSKAlpha(), secretKey.KeyLv0)
 			}
-		}
+		}(i)
 	}
+	wg.Wait()
 
 	return result
 }
