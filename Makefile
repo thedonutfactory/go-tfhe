@@ -12,7 +12,7 @@ test:
 
 test-quick:
 	@echo "Running quick tests (non-gate tests)..."
-	go test -v ./params ./utils ./bitutils ./tlwe ./trlwe ./key ./cloudkey ./fft
+	go test -v ./params ./utils ./bitutils ./tlwe ./trlwe ./key ./cloudkey ./evaluator
 
 test-gates:
 	@echo "Running gate tests (this will take several minutes)..."
@@ -29,21 +29,21 @@ test-gates-nocache:
 
 examples:
 	@echo "Building examples..."
-	go build examples/add_two_numbers.go
-	go build examples/simple_gates.go
-	go build examples/pbs.go
+	cd examples/add_two_numbers && go build -o ../../bin/add_two_numbers
+	cd examples/simple_gates && go build -o ../../bin/simple_gates
+	cd examples/programmable_bootstrap && go build -o ../../bin/programmable_bootstrap
 
 run-add:
 	@echo "Running add_two_numbers example..."
-	go run examples/add_two_numbers.go
+	cd examples/add_two_numbers && go run main.go
 
 run-gates:
 	@echo "Running simple_gates example..."
-	go run examples/simple_gates.go
+	cd examples/simple_gates && go run main.go
 
 run-pbs:
-	@echo "Running pbs example..."
-	go run examples/pbs.go
+	@echo "Running programmable_bootstrap example..."
+	cd examples/programmable_bootstrap && go run main.go
 
 fmt:
 	@echo "Formatting code..."
@@ -56,9 +56,10 @@ vet:
 clean:
 	@echo "Cleaning build artifacts..."
 	go clean ./...
-	rm -f examples/add_two_numbers
-	rm -f examples/simple_gates
-	rm -f examples/pbs
+	rm -rf bin/
+	rm -f examples/add_two_numbers/add_two_numbers
+	rm -f examples/simple_gates/simple_gates
+	rm -f examples/programmable_bootstrap/programmable_bootstrap
 
 install-deps:
 	@echo "Installing dependencies..."
@@ -66,8 +67,8 @@ install-deps:
 	go mod verify
 
 benchmark:
-	@echo "Running FFT benchmarks..."
-	go test -bench=. -benchmem ./fft
+	@echo "Running benchmarks..."
+	go test -bench=. -benchmem ./...
 
 help:
 	@echo "Available targets:"
@@ -88,9 +89,9 @@ help:
 	@echo ""
 	@echo "Examples:"
 	@echo "  examples                 - Build all examples"
-	@echo "  run-add                  - Run add_two_numbers example"
+	@echo "  run-add                  - Run add_two_numbers example (8-bit ripple-carry)"
 	@echo "  run-gates                - Run simple_gates example"
-	@echo "  run-pbs                  - Run pbs example"
+	@echo "  run-pbs                  - Run programmable_bootstrap example"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  fmt                      - Format code"
