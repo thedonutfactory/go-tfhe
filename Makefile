@@ -32,6 +32,7 @@ examples:
 	cd examples/add_two_numbers && go build -o ../../bin/add_two_numbers
 	cd examples/simple_gates && go build -o ../../bin/simple_gates
 	cd examples/programmable_bootstrap && go build -o ../../bin/programmable_bootstrap
+	cd examples/add_8bit_pbs && go build -o ../../bin/add_8bit_pbs
 
 run-add:
 	@echo "Running add_two_numbers example..."
@@ -44,6 +45,10 @@ run-gates:
 run-pbs:
 	@echo "Running programmable_bootstrap example..."
 	cd examples/programmable_bootstrap && go run main.go
+
+run-add-pbs:
+	@echo "Running add_8bit_pbs example (Fast 8-bit addition with PBS)..."
+	cd examples/add_8bit_pbs && go run main.go
 
 fmt:
 	@echo "Formatting code..."
@@ -60,6 +65,7 @@ clean:
 	rm -f examples/add_two_numbers/add_two_numbers
 	rm -f examples/simple_gates/simple_gates
 	rm -f examples/programmable_bootstrap/programmable_bootstrap
+	rm -f examples/add_8bit_pbs/add_8bit_pbs
 
 install-deps:
 	@echo "Installing dependencies..."
@@ -89,8 +95,9 @@ help:
 	@echo ""
 	@echo "Examples:"
 	@echo "  examples                 - Build all examples"
-	@echo "  run-add                  - Run add_two_numbers example (8-bit ripple-carry)"
 	@echo "  run-gates                - Run simple_gates example"
+	@echo "  run-add                  - Run add_two_numbers example (traditional 8-bit, ~1.1s)"
+	@echo "  run-add-pbs              - Run add_8bit_pbs example (PBS 8-bit, ~230ms, 4.8x faster!)"
 	@echo "  run-pbs                  - Run programmable_bootstrap example"
 	@echo ""
 	@echo "Utilities:"
