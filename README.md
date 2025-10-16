@@ -9,10 +9,13 @@ Go-TFHE is a library for performing homomorphic operations on encrypted data. It
 
 ### Features
 
-- ✅ **Multiple Security Levels**: Choose between 80-bit, 110-bit, or 128-bit security
+- ✅ **Multiple Parameter Profiles**: 80-bit, 110-bit, 128-bit security + Uint5 for arithmetic
 - ✅ **Homomorphic Gates**: AND, OR, NAND, NOR, XOR, XNOR, NOT, MUX
+- ✅ **Programmable Bootstrapping**: Evaluate arbitrary functions during bootstrapping
+- ✅ **Fast Arithmetic**: 4-bootstrap nibble addition with messageModulus=32
+- ✅ **N=2048 Support**: Full parity with tfhe-go reference implementation
 - ✅ **Batch Operations**: Parallel processing for multiple gates
-- ✅ **Bootstrapping**: Noise reduction using blind rotation
+- ✅ **Optimized FFT**: Ported from tfhe-go for best performance
 - ✅ **Pure Go**: No C dependencies, easy to build and deploy
 - ✅ **Concurrent**: Leverages Go's goroutines for parallelization
 
@@ -109,9 +112,9 @@ func main() {
 }
 ```
 
-## Security Levels
+## Security Levels and Parameter Profiles
 
-Go-TFHE supports three security levels:
+Go-TFHE supports multiple parameter profiles optimized for different use cases:
 
 ### 128-bit Security (Default) - Recommended for Production
 
@@ -146,6 +149,23 @@ params.CurrentSecurityLevel = params.Security80Bit
 - **Use case**: Development, testing, prototyping
 - **Performance**: ~30-40% faster than 128-bit
 - **Warning**: Not recommended for production
+
+### Uint5 Parameters - Fast Multi-Bit Arithmetic ⭐ NEW!
+
+```go
+params.CurrentSecurityLevel = params.SecurityUint5
+```
+
+- **N (LWE/Poly dimension)**: 1071/2048
+- **ALPHA (noise)**: 7.1e-08 / 2.2e-17 (~700x lower noise!)
+- **messageModulus**: Up to **32** (5-bit message space)
+- **Polynomial degree**: **2048** (doubled)
+- **Use case**: Fast multi-bit arithmetic, homomorphic addition/multiplication
+- **Performance**: **~230ms for 8-bit addition** (only 4 bootstraps!)
+- **Key generation**: ~5-6 seconds (slower than standard params)
+- **Security**: Comparable to 80-bit, optimized for precision over maximum hardness
+
+**Perfect for**: Arithmetic circuits, financial calculations, machine learning inference
 
 ## Available Gates
 
@@ -186,6 +206,155 @@ results := gates.BatchAND(inputs, cloudKey)
 
 Expected speedup: 4-8x on multi-core systems.
 
+## Programmable Bootstrapping
+
+Programmable bootstrapping is an advanced feature that allows you to **evaluate arbitrary functions on encrypted data** during the bootstrapping process. This combines noise refreshing with function evaluation in a single operation.
+
+### What is Programmable Bootstrapping?
+
+Traditional bootstrapping refreshes a ciphertext's noise but keeps the encrypted value unchanged. Programmable bootstrapping goes further: it applies a function `f` to the encrypted value while refreshing the noise.
+
+If you have an encryption of `x`, programmable bootstrapping gives you an encryption of `f(x)`.
+
+### Basic Usage
+
+```go
+import (
+    "github.com/thedonutfactory/go-tfhe/cloudkey"
+    "github.com/thedonutfactory/go-tfhe/evaluator"
+    "github.com/thedonutfactory/go-tfhe/key"
+    "github.com/thedonutfactory/go-tfhe/params"
+    "github.com/thedonutfactory/go-tfhe/tlwe"
+)
+
+// Generate keys
+secretKey := key.NewSecretKey()
+cloudKey := cloudkey.NewCloudKey(secretKey)
+eval := evaluator.NewEvaluator(params.GetTRGSWLv1().N)
+
+// Encrypt a message using LWE message encoding
+// Note: Use EncryptLWEMessage (not EncryptBool) for programmable bootstrapping
+ct := tlwe.NewTLWELv0()
+ct.EncryptLWEMessage(1, 2, params.GetTLWELv0().ALPHA, secretKey.KeyLv0) // message 1 (true)
+
+// Define a function to apply (e.g., NOT)
+notFunc := func(x int) int { return 1 - x }
+
+// Apply the function during bootstrapping
+result := eval.BootstrapFunc(
+    ct,
+    notFunc,
+    2, // message modulus (2 for binary)
+    cloudKey.BootstrappingKey,
+    cloudKey.KeySwitchingKey,
+    cloudKey.DecompositionOffset,
+)
+
+// Decrypt result using LWE message decoding
+output := result.DecryptLWEMessage(2, secretKey.KeyLv0) // 0 (false)
+```
+
+**Important:** Programmable bootstrapping uses general LWE message encoding (`message * scale`), not binary boolean encoding (±1/8). Always use:
+- `EncryptLWEMessage()` to encrypt messages
+- `DecryptLWEMessage()` to decrypt results
+
+### Lookup Table (LUT) Reuse
+
+For better performance when applying the same function multiple times, pre-compute the lookup table:
+
+```go
+import "github.com/thedonutfactory/go-tfhe/lut"
+
+// Create a lookup table generator
+gen := lut.NewGenerator(2) // 2 = binary messages
+
+// Pre-compute the lookup table once
+notFunc := func(x int) int { return 1 - x }
+lookupTable := gen.GenLookUpTable(notFunc)
+
+// Reuse the LUT for multiple operations
+for _, ct := range ciphertexts {
+    result := eval.BootstrapLUT(
+        ct,
+        lookupTable,
+        cloudKey.BootstrappingKey,
+        cloudKey.KeySwitchingKey,
+        cloudKey.DecompositionOffset,
+    )
+    // Process result...
+}
+```
+
+### Supported Functions
+
+You can evaluate **any** function `f: {0, 1, ..., m-1} → {0, 1, ..., m-1}` where `m` is the message modulus.
+
+**Examples:**
+
+```go
+// Identity (refresh noise without changing value)
+identity := func(x int) int { return x }
+
+// NOT (boolean negation)
+not := func(x int) int { return 1 - x }
+
+// Constant functions
+alwaysTrue := func(x int) int { return 1 }
+alwaysFalse := func(x int) int { return 0 }
+
+// Multi-bit functions (with message modulus = 4)
+gen := lut.NewGenerator(4)
+increment := func(x int) int { return (x + 1) % 4 }
+double := func(x int) int { return (2 * x) % 4 }
+```
+
+### Use Cases
+
+1. **Noise Refresh with Transformation**: Apply a function while cleaning up noise
+2. **Efficient NOT gates**: Faster than traditional NOT + bootstrap
+3. **Lookup Table Evaluation**: Implement truth tables directly
+4. **Multi-bit Operations**: Work with values beyond binary
+5. **Custom Boolean Functions**: Implement any boolean function efficiently
+
+### Performance Comparison
+
+| Operation | Traditional | Programmable Bootstrap | Speedup |
+|-----------|-------------|------------------------|---------|
+| NOT + Bootstrap | 2 operations | 1 operation | 2x |
+| Lookup Table (precomputed) | - | Single bootstrap | - |
+| Function + Noise Refresh | 2 operations | 1 operation | 2x |
+
+### Advanced: Custom Message Moduli
+
+```go
+// Work with 3-bit values (8 possible messages)
+gen := lut.NewGenerator(8)
+
+// Define a function operating on 0-7
+customFunc := func(x int) int {
+    // Apply any transformation
+    return (x * 3 + 2) % 8
+}
+
+lookupTable := gen.GenLookUpTable(customFunc)
+```
+
+### Example: Complete Demo
+
+See the complete working example in `examples/programmable_bootstrap/`:
+
+```bash
+cd examples/programmable_bootstrap
+go run main.go
+```
+
+This example demonstrates:
+- Identity function
+- NOT function  
+- Constant functions
+- LUT reuse for efficiency
+- Multi-bit message support
+
 ## Architecture
 
 ### Core Components
@@ -199,6 +368,8 @@ go-tfhe/
 ├── trlwe/        # TRLWE (Ring variant of TLWE)
 ├── trgsw/        # TRGSW (GSW-based encryption) with FFT
 ├── fft/          # FFT operations for polynomial multiplication
+├── lut/          # Lookup tables for programmable bootstrapping
+├── evaluator/    # Zero-allocation evaluator for TFHE operations
 ├── key/          # Key generation and management
 ├── gates/        # Homomorphic gate operations
 └── examples/     # Example applications
@@ -208,9 +379,11 @@ go-tfhe/
 
 1. **TLWE/TRLWE Encryption**: Torus-based Learning With Errors
 2. **Blind Rotation**: Core bootstrapping operation using TRGSW
-3. **Key Switching**: Convert between different key spaces
-4. **Gadget Decomposition**: Break down ciphertexts for external product
-5. **FFT-based Polynomial Multiplication**: Efficient negacyclic convolution
+3. **Programmable Bootstrapping**: Evaluate arbitrary functions during bootstrapping
+4. **Key Switching**: Convert between different key spaces
+5. **Gadget Decomposition**: Break down ciphertexts for external product
+6. **FFT-based Polynomial Multiplication**: Efficient negacyclic convolution
+7. **Lookup Table Generation**: Encode functions as test vectors
 
 ## Performance
 
@@ -231,6 +404,7 @@ See the `examples/` directory for complete working examples:
 
 - `add_two_numbers/` - Homomorphic addition of two 16-bit numbers
 - `simple_gates/` - Test all available homomorphic gates
+- `programmable_bootstrap/` - Demonstrate programmable bootstrapping with various functions
 
 Run examples:
 
@@ -239,6 +413,9 @@ cd examples/add_two_numbers
 go run main.go
 
 cd examples/simple_gates
+go run main.go
+
+cd examples/programmable_bootstrap
 go run main.go
 ```
 

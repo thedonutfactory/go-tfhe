@@ -25,7 +25,9 @@ func init() {
 // NAND performs homomorphic NAND operation (zero-allocation)
 func NAND(tlweA, tlweB *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
 	prepared := globalEval.PrepareNAND(tlweA, tlweB)
-	return bootstrap(prepared, ck)
+	result := bootstrap(prepared, ck)
+
+	return result
 }
 
 // OR performs homomorphic OR operation (zero-allocation)
@@ -125,8 +127,18 @@ func Copy(tlweA *Ciphertext) *Ciphertext {
 
 // bootstrap performs full bootstrapping with key switching (TRUE zero-allocation)
 // Returns pointer to internal buffer - result is only valid until next bootstrap call
-func bootstrap(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
+func bootstrapTemp(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
 	return globalEval.Bootstrap(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.KeySwitchingKey, ck.DecompositionOffset)
+}
+
+// bootstrap2 performs full bootstrapping with key switching (zero-allocation)
+// copies the prepared buffer to the result
+func bootstrap(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
+	result := tlwe.NewTLWELv0()
+	bootstrapped := globalEval.Bootstrap(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.KeySwitchingKey, ck.DecompositionOffset)
+	copy(result.P, bootstrapped.P)
+	result.SetB(bootstrapped.B())
+	return result
 }
 
 // bootstrapWithoutKeySwitch performs bootstrapping without key switching (uses global eval)

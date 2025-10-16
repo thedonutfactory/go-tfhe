@@ -60,6 +60,23 @@ func (e *Evaluator) BootstrapLUT(
 ) *tlwe.TLWELv0 {
 	result := e.Buffers.GetNextResult()
 	e.BootstrapLUTAssign(ctIn, lut, bsk, ksk, decompositionOffset, result)
+
+	copiedResult := tlwe.NewTLWELv0()
+	copy(copiedResult.P, result.P)
+	copiedResult.SetB(result.B())
+
+	return copiedResult
+}
+
+func (e *Evaluator) BootstrapLUTTemp(
+	ctIn *tlwe.TLWELv0,
+	lut *lut.LookUpTable,
+	bsk []*trgsw.TRGSWLv1FFT,
+	ksk []*tlwe.TLWELv0,
+	decompositionOffset params.Torus,
+) *tlwe.TLWELv0 {
+	result := e.Buffers.GetNextResult()
+	e.BootstrapLUTAssign(ctIn, lut, bsk, ksk, decompositionOffset, result)
 	return result
 }
 
