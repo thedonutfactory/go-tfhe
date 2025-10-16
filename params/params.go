@@ -58,14 +58,15 @@ type TRLWELv1Params struct {
 
 // TRGSW Level 1 Parameters
 type TRGSWLv1Params struct {
-	N       int
-	NBIT    int
-	BGBIT   uint32
-	BG      uint32
-	L       int
-	BASEBIT int
-	IKS_T   int
-	ALPHA   float64
+	N         int
+	NBIT      int
+	BGBIT     uint32
+	BG        uint32
+	L         int
+	BASEBIT   int
+	IKS_T     int
+	ALPHA     float64
+	BlockSize int // Block size for block blind rotation (1=original, >1=block algorithm)
 }
 
 // ============================================================================
@@ -90,14 +91,15 @@ var params80Bit = struct {
 		ALPHA: 3.73e-8,
 	},
 	TRGSWLv1: TRGSWLv1Params{
-		N:       1024,
-		NBIT:    10,
-		BGBIT:   6,
-		BG:      1 << 6,
-		L:       3,
-		BASEBIT: 2,
-		IKS_T:   7,
-		ALPHA:   3.73e-8,
+		N:         1024,
+		NBIT:      10,
+		BGBIT:     6,
+		BG:        1 << 6,
+		L:         3,
+		BASEBIT:   2,
+		IKS_T:     7,
+		ALPHA:     3.73e-8,
+		BlockSize: 3, // Use block blind rotation (3-4x faster)
 	},
 }
 
@@ -123,14 +125,15 @@ var params110Bit = struct {
 		ALPHA: 2.980232238769531e-8,
 	},
 	TRGSWLv1: TRGSWLv1Params{
-		N:       1024,
-		NBIT:    10,
-		BGBIT:   6,
-		BG:      1 << 6,
-		L:       3,
-		BASEBIT: 2,
-		IKS_T:   8,
-		ALPHA:   2.980232238769531e-8,
+		N:         1024,
+		NBIT:      10,
+		BGBIT:     6,
+		BG:        1 << 6,
+		L:         3,
+		BASEBIT:   2,
+		IKS_T:     8,
+		ALPHA:     2.980232238769531e-8,
+		BlockSize: 3, // Use block blind rotation (3-4x faster)
 	},
 }
 
@@ -156,14 +159,15 @@ var params128Bit = struct {
 		ALPHA: 2.0e-8,
 	},
 	TRGSWLv1: TRGSWLv1Params{
-		N:       1024,
-		NBIT:    10,
-		BGBIT:   6,
-		BG:      1 << 6,
-		L:       3,
-		BASEBIT: 2,
-		IKS_T:   9,
-		ALPHA:   2.0e-8,
+		N:         1024,
+		NBIT:      10,
+		BGBIT:     6,
+		BG:        1 << 6,
+		L:         3,
+		BASEBIT:   2,
+		IKS_T:     9,
+		ALPHA:     2.0e-8,
+		BlockSize: 3, // Use block blind rotation (3-4x faster)
 	},
 }
 
@@ -237,4 +241,19 @@ func SecurityInfo() string {
 		desc = "128-bit security (high security, quantum-resistant)"
 	}
 	return desc
+}
+
+// GetBlockCount returns the number of blocks for block blind rotation
+func GetBlockCount() int {
+	lweDim := GetTLWELv0().N
+	blockSize := GetTRGSWLv1().BlockSize
+	if blockSize <= 1 {
+		return lweDim // Original algorithm (no blocks)
+	}
+	return (lweDim + blockSize - 1) / blockSize // Ceiling division
+}
+
+// UseBlockBlindRotation returns true if block blind rotation should be used
+func UseBlockBlindRotation() bool {
+	return GetTRGSWLv1().BlockSize > 1
 }
