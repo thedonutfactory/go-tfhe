@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/thedonutfactory/go-tfhe/cloudkey"
+	"github.com/thedonutfactory/go-tfhe/evaluator"
 	"github.com/thedonutfactory/go-tfhe/params"
-	"github.com/thedonutfactory/go-tfhe/poly"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
 	"github.com/thedonutfactory/go-tfhe/trgsw"
 	"github.com/thedonutfactory/go-tfhe/trlwe"
@@ -15,32 +15,35 @@ import (
 // Ciphertext is an alias for TLWELv0
 type Ciphertext = tlwe.TLWELv0
 
-// NAND performs homomorphic NAND operation
+// Global evaluator for single-threaded operations (zero-allocation)
+var globalEval *evaluator.Evaluator
+
+func init() {
+	globalEval = evaluator.NewEvaluator(params.GetTRGSWLv1().N)
+}
+
+// NAND performs homomorphic NAND operation (zero-allocation)
 func NAND(tlweA, tlweB *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	tlweNAND := tlweA.Add(tlweB).Neg()
-	tlweNAND.SetB(tlweNAND.B() + utils.F64ToTorus(0.125))
-	return bootstrap(tlweNAND, ck)
+	prepared := globalEval.PrepareNAND(tlweA, tlweB)
+	return bootstrap(prepared, ck)
 }
 
-// OR performs homomorphic OR operation
+// OR performs homomorphic OR operation (zero-allocation)
 func OR(tlweA, tlweB *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	tlweOR := tlweA.Add(tlweB)
-	tlweOR.SetB(tlweOR.B() + utils.F64ToTorus(0.125))
-	return bootstrap(tlweOR, ck)
+	prepared := globalEval.PrepareOR(tlweA, tlweB)
+	return bootstrap(prepared, ck)
 }
 
-// AND performs homomorphic AND operation
+// AND performs homomorphic AND operation (zero-allocation)
 func AND(tlweA, tlweB *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	tlweAND := tlweA.Add(tlweB)
-	tlweAND.SetB(tlweAND.B() + utils.F64ToTorus(-0.125))
-	return bootstrap(tlweAND, ck)
+	prepared := globalEval.PrepareAND(tlweA, tlweB)
+	return bootstrap(prepared, ck)
 }
 
-// XOR performs homomorphic XOR operation
+// XOR performs homomorphic XOR operation (zero-allocation)
 func XOR(tlweA, tlweB *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	tlweXOR := tlweA.AddMul(tlweB, 2)
-	tlweXOR.SetB(tlweXOR.B() + utils.F64ToTorus(0.25))
-	return bootstrap(tlweXOR, ck)
+	prepared := globalEval.PrepareXOR(tlweA, tlweB)
+	return bootstrap(prepared, ck)
 }
 
 // XNOR performs homomorphic XNOR operation
@@ -120,20 +123,17 @@ func Copy(tlweA *Ciphertext) *Ciphertext {
 	return result
 }
 
-// bootstrap performs full bootstrapping with key switching
+// bootstrap performs full bootstrapping with key switching (TRUE zero-allocation)
+// Returns pointer to internal buffer - result is only valid until next bootstrap call
 func bootstrap(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
-	trlweResult := trgsw.BlindRotate(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, polyEval)
-	tlweLv1 := trlwe.SampleExtractIndex(trlweResult, 0)
-	return trgsw.IdentityKeySwitching(tlweLv1, ck.KeySwitchingKey)
+	return globalEval.Bootstrap(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.KeySwitchingKey, ck.DecompositionOffset)
 }
 
-// bootstrapWithoutKeySwitch performs bootstrapping without key switching
+// bootstrapWithoutKeySwitch performs bootstrapping without key switching (uses global eval)
 func bootstrapWithoutKeySwitch(ctxt *Ciphertext, ck *cloudkey.CloudKey) *Ciphertext {
-	polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
-	trlweResult := trgsw.BlindRotate(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, polyEval)
-	tlweLv1 := trlwe.SampleExtractIndex2(trlweResult, 0)
-	return tlweLv1
+	trlweResult := trlwe.NewTRLWELv1()
+	globalEval.BlindRotateAssign(ctxt, ck.BlindRotateTestvec, ck.BootstrappingKey, ck.DecompositionOffset, trlweResult)
+	return trlwe.SampleExtractIndex2(trlweResult, 0)
 }
 
 // ============================================================================
