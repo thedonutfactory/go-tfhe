@@ -13,6 +13,11 @@ func F64ToTorus(d float64) params.Torus {
 	return params.Torus(int64(torus))
 }
 
+// TorusToF64 converts a Torus value to a float64 in range [0, 1)
+func TorusToF64(t params.Torus) float64 {
+	return float64(t) / float64(uint64(1)<<32)
+}
+
 // F64ToTorusVec converts a slice of float64 to a slice of Torus values
 func F64ToTorusVec(d []float64) []params.Torus {
 	result := make([]params.Torus, len(d))

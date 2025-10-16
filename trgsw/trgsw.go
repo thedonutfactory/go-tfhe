@@ -4,7 +4,6 @@ import (
 	"math"
 	"sync"
 
-	"github.com/thedonutfactory/go-tfhe/fft"
 	"github.com/thedonutfactory/go-tfhe/params"
 	"github.com/thedonutfactory/go-tfhe/poly"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
@@ -30,7 +29,7 @@ func NewTRGSWLv1() *TRGSWLv1 {
 }
 
 // EncryptTorus encrypts a torus value with TRGSW Level 1
-func (t *TRGSWLv1) EncryptTorus(p params.Torus, alpha float64, key []params.Torus, plan *fft.FFTPlan) *TRGSWLv1 {
+func (t *TRGSWLv1) EncryptTorus(p params.Torus, alpha float64, key []params.Torus, polyEval *poly.Evaluator) *TRGSWLv1 {
 	l := params.GetTRGSWLv1().L
 	bg := float64(params.GetTRGSWLv1().BG)
 	n := params.GetTRGSWLv1().N
@@ -45,7 +44,7 @@ func (t *TRGSWLv1) EncryptTorus(p params.Torus, alpha float64, key []params.Toru
 
 	// Encrypt all TRLWE samples
 	for i := range t.TRLWE {
-		t.TRLWE[i] = trlwe.NewTRLWELv1().EncryptF64(plainZero, alpha, key, plan)
+		t.TRLWE[i] = trlwe.NewTRLWELv1().EncryptF64(plainZero, alpha, key, polyEval)
 	}
 
 	// Add the gadget decomposition
