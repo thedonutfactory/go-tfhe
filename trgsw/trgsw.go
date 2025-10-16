@@ -1,6 +1,7 @@
 package trgsw
 
 import (
+	"math"
 	"sync"
 
 	"github.com/thedonutfactory/go-tfhe/fft"
@@ -37,7 +38,7 @@ func (t *TRGSWLv1) EncryptTorus(p params.Torus, alpha float64, key []params.Toru
 	// Calculate p_f64 values
 	pF64 := make([]float64, l)
 	for i := 0; i < l; i++ {
-		pF64[i] = 1.0 / pow(bg, float64(i+1))
+		pF64[i] = 1.0 / math.Pow(bg, float64(i+1))
 	}
 	pTorus := utils.F64ToTorusVec(pF64)
 	plainZero := make([]float64, n)
@@ -104,110 +105,133 @@ type CloudKeyData interface {
 }
 
 // ExternalProductWithFFT performs external product with FFT optimization
+// This version uses pre-allocated buffers for maximum zero-allocation performance
 func ExternalProductWithFFT(trgswFFT *TRGSWLv1FFT, trlweIn *trlwe.TRLWELv1, decompositionOffset params.Torus, polyEval *poly.Evaluator) *trlwe.TRLWELv1 {
-	dec := decomposition(trlweIn, decompositionOffset)
-
 	l := params.GetTRGSWLv1().L
 
-	// Initialize output in frequency domain
-	outAFFT := polyEval.NewFourierPoly()
-	outBFFT := polyEval.NewFourierPoly()
+	// Use decomposition buffer pool (zero-allocation)
+	decompositionInPlace(trlweIn, decompositionOffset, polyEval)
+
+	// Clear accumulation buffers (reuse existing buffers)
+	polyEval.ClearBuffer("fpAcc")
+	polyEval.ClearBuffer("fpBcc")
 
 	// For each decomposition level
 	for i := 0; i < l*2; i++ {
-		// Convert decomposition to Poly
-		decPoly := poly.Poly{Coeffs: dec[i][:]}
-
-		// Transform to frequency domain
-		decFFT := polyEval.ToFourierPoly(decPoly)
-
+		// decFFT is already in buffer.decompFFT[i] from decompositionInPlace
 		// Accumulate in frequency domain (multiply-add)
-		polyEval.MulAddFourierPolyAssign(decFFT, trgswFFT.TRLWEFFT[i].A, outAFFT)
-		polyEval.MulAddFourierPolyAssign(decFFT, trgswFFT.TRLWEFFT[i].B, outBFFT)
+		polyEval.MulAddFourierPolyAssignBuffered(i, trgswFFT.TRLWEFFT[i].A, "fpAcc")
+		polyEval.MulAddFourierPolyAssignBuffered(i, trgswFFT.TRLWEFFT[i].B, "fpBcc")
 	}
 
-	// Transform back to time domain
-	result := trlwe.NewTRLWELv1()
-	outA := poly.Poly{Coeffs: result.A}
-	outB := poly.Poly{Coeffs: result.B}
-	polyEval.ToPolyAssignUnsafe(outAFFT, outA)
-	polyEval.ToPolyAssignUnsafe(outBFFT, outB)
+	// Get pooled TRLWE buffer for result
+	resultA, resultB := polyEval.GetTRLWEBuffer()
 
-	return result
+	// Transform back to time domain using pooled buffer
+	polyEval.BufferToPolyAssign("fpAcc", resultA)
+	polyEval.BufferToPolyAssign("fpBcc", resultB)
+
+	return &trlwe.TRLWELv1{A: resultA, B: resultB}
 }
 
-// decomposition performs gadget decomposition of a TRLWE ciphertext
-func decomposition(trlweIn *trlwe.TRLWELv1, decompositionOffset params.Torus) [][1024]params.Torus {
+// decompositionInPlace performs gadget decomposition directly into evaluator buffers (zero-allocation)
+func decompositionInPlace(trlweIn *trlwe.TRLWELv1, decompositionOffset params.Torus, polyEval *poly.Evaluator) {
 	l := params.GetTRGSWLv1().L
 	n := params.GetTRGSWLv1().N
-	result := make([][1024]params.Torus, l*2)
 
 	offset := decompositionOffset
 	bgbit := params.GetTRGSWLv1().BGBIT
 	mask := params.Torus((1 << bgbit) - 1)
 	halfBG := params.Torus(1 << (bgbit - 1))
 
+	// Decompose directly into buffers
+	for i := 0; i < l*2; i++ {
+		buf := polyEval.GetDecompBuffer(i)
+		for j := 0; j < n; j++ {
+			buf.Coeffs[j] = 0
+		}
+	}
+
 	for j := 0; j < n; j++ {
 		tmp0 := trlweIn.A[j] + offset
 		tmp1 := trlweIn.B[j] + offset
 		for i := 0; i < l; i++ {
-			result[i][j] = ((tmp0 >> (32 - (uint32(i)+1)*bgbit)) & mask) - halfBG
+			polyEval.GetDecompBuffer(i).Coeffs[j] = ((tmp0 >> (32 - (uint32(i)+1)*bgbit)) & mask) - halfBG
 		}
 		for i := 0; i < l; i++ {
-			result[i+l][j] = ((tmp1 >> (32 - (uint32(i)+1)*bgbit)) & mask) - halfBG
+			polyEval.GetDecompBuffer(i + l).Coeffs[j] = ((tmp1 >> (32 - (uint32(i)+1)*bgbit)) & mask) - halfBG
 		}
 	}
 
-	return result
+	// Transform all decomposition levels to frequency domain
+	for i := 0; i < l*2; i++ {
+		polyEval.ToFourierPolyInBuffer(*polyEval.GetDecompBuffer(i), i)
+	}
 }
 
-// CMUX performs controlled MUX operation
+// CMUX performs controlled MUX operation (zero-allocation version using TRLWE pool)
 // if cond == 0 then in1 else in2
 func CMUX(in1, in2 *trlwe.TRLWELv1, cond *TRGSWLv1FFT, decompositionOffset params.Torus, polyEval *poly.Evaluator) *trlwe.TRLWELv1 {
 	n := params.GetTRGSWLv1().N
-	tmp := trlwe.NewTRLWELv1()
 
+	// Get TRLWE buffer from pool for difference computation
+	tmpA, tmpB := polyEval.GetTRLWEBuffer()
 	for i := 0; i < n; i++ {
-		tmp.A[i] = in2.A[i] - in1.A[i]
-		tmp.B[i] = in2.B[i] - in1.B[i]
+		tmpA[i] = in2.A[i] - in1.A[i]
+		tmpB[i] = in2.B[i] - in1.B[i]
 	}
+	tmp := &trlwe.TRLWELv1{A: tmpA, B: tmpB}
 
+	// External product (uses internal buffers for zero-alloc in hot path)
 	tmp2 := ExternalProductWithFFT(cond, tmp, decompositionOffset, polyEval)
-	result := trlwe.NewTRLWELv1()
 
+	// Add in1 to result (reuse tmp2)
 	for i := 0; i < n; i++ {
-		result.A[i] = tmp2.A[i] + in1.A[i]
-		result.B[i] = tmp2.B[i] + in1.B[i]
+		tmp2.A[i] += in1.A[i]
+		tmp2.B[i] += in1.B[i]
 	}
 
-	return result
+	return tmp2
 }
 
-// BlindRotate performs blind rotation for bootstrapping
+// BlindRotate performs blind rotation for bootstrapping (optimized with buffer pool)
 func BlindRotate(src *tlwe.TLWELv0, blindRotateTestvec *trlwe.TRLWELv1, bootstrappingKey []*TRGSWLv1FFT, decompositionOffset params.Torus, polyEval *poly.Evaluator) *trlwe.TRLWELv1 {
 	n := params.GetTRGSWLv1().N
 	nBit := params.GetTRGSWLv1().NBIT
 
+	// Reset rotation pool for this operation
+	polyEval.ResetRotationPool()
+
 	bTilda := 2*n - ((int(src.B()) + (1 << (31 - nBit - 1))) >> (32 - nBit - 1))
-	result := &trlwe.TRLWELv1{
-		A: polyMulWithXK(blindRotateTestvec.A, bTilda),
-		B: polyMulWithXK(blindRotateTestvec.B, bTilda),
-	}
+
+	// Initial rotation using buffer pool
+	resultA := polyEval.PolyMulWithXK(blindRotateTestvec.A, bTilda)
+	resultB := polyEval.PolyMulWithXK(blindRotateTestvec.B, bTilda)
+	result := &trlwe.TRLWELv1{A: resultA, B: resultB}
 
 	tlweLv0N := params.GetTLWELv0().N
 	for i := 0; i < tlweLv0N; i++ {
 		aTilda := int((src.P[i] + (1 << (31 - nBit - 1))) >> (32 - nBit - 1))
-		res2 := &trlwe.TRLWELv1{
-			A: polyMulWithXK(result.A, aTilda),
-			B: polyMulWithXK(result.B, aTilda),
-		}
+
+		// Use buffer pool for rotation
+		res2A := polyEval.PolyMulWithXK(result.A, aTilda)
+		res2B := polyEval.PolyMulWithXK(result.B, aTilda)
+		res2 := &trlwe.TRLWELv1{A: res2A, B: res2B}
+
 		result = CMUX(result, res2, bootstrappingKey[i], decompositionOffset, polyEval)
 	}
 
 	return result
 }
 
-// BatchBlindRotate performs multiple blind rotations in parallel
+// evaluatorPool is a pool of evaluators for parallel operations
+var evaluatorPool = sync.Pool{
+	New: func() interface{} {
+		return poly.NewEvaluator(params.GetTRGSWLv1().N)
+	},
+}
+
+// BatchBlindRotate performs multiple blind rotations in parallel (zero-allocation)
 func BatchBlindRotate(srcs []*tlwe.TLWELv0, blindRotateTestvec *trlwe.TRLWELv1, bootstrappingKey []*TRGSWLv1FFT, decompositionOffset params.Torus) []*trlwe.TRLWELv1 {
 	results := make([]*trlwe.TRLWELv1, len(srcs))
 	var wg sync.WaitGroup
@@ -216,7 +240,10 @@ func BatchBlindRotate(srcs []*tlwe.TLWELv0, blindRotateTestvec *trlwe.TRLWELv1, 
 		wg.Add(1)
 		go func(idx int, s *tlwe.TLWELv0) {
 			defer wg.Done()
-			polyEval := poly.NewEvaluator(params.GetTRGSWLv1().N)
+			// Get evaluator from pool (reuse instead of allocate)
+			polyEval := evaluatorPool.Get().(*poly.Evaluator)
+			defer evaluatorPool.Put(polyEval)
+
 			results[idx] = BlindRotate(s, blindRotateTestvec, bootstrappingKey, decompositionOffset, polyEval)
 		}(i, src)
 	}
@@ -225,12 +252,18 @@ func BatchBlindRotate(srcs []*tlwe.TLWELv0, blindRotateTestvec *trlwe.TRLWELv1, 
 	return results
 }
 
-// polyMulWithXK multiplies a polynomial by X^k in the ring Z[X]/(X^N+1)
-func polyMulWithXK(a []params.Torus, k int) []params.Torus {
-	n := params.GetTRGSWLv1().N
-	result := make([]params.Torus, n)
+// polyMulWithXKInPlace multiplies a polynomial by X^k in-place (zero-allocation)
+func polyMulWithXKInPlace(a []params.Torus, k int, result []params.Torus) {
+	n := len(a)
+	k = k % (2 * n) // Normalize k to [0, 2N)
+
+	if k == 0 {
+		copy(result, a)
+		return
+	}
 
 	if k < n {
+		// Positive rotation: coefficients shift right, wrap with negation
 		for i := 0; i < n-k; i++ {
 			result[i+k] = a[i]
 		}
@@ -238,15 +271,15 @@ func polyMulWithXK(a []params.Torus, k int) []params.Torus {
 			result[i+k-n] = ^params.Torus(0) - a[i]
 		}
 	} else {
-		for i := 0; i < 2*n-k; i++ {
-			result[i+k-n] = ^params.Torus(0) - a[i]
+		// Rotation >= n: all coefficients get negated
+		k -= n
+		for i := 0; i < n-k; i++ {
+			result[i+k] = ^params.Torus(0) - a[i]
 		}
-		for i := 2*n - k; i < n; i++ {
-			result[i-(2*n-k)] = a[i]
+		for i := n - k; i < n; i++ {
+			result[i+k-n] = a[i]
 		}
 	}
-
-	return result
 }
 
 // IdentityKeySwitching performs identity key switching
@@ -275,14 +308,5 @@ func IdentityKeySwitching(src *tlwe.TLWELv1, keySwitchingKey []*tlwe.TLWELv0) *t
 		}
 	}
 
-	return result
-}
-
-// Helper function for power
-func pow(base, exp float64) float64 {
-	result := 1.0
-	for i := 0; i < int(exp); i++ {
-		result *= base
-	}
 	return result
 }

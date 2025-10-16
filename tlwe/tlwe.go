@@ -81,6 +81,13 @@ func (t *TLWELv0) Add(other *TLWELv0) *TLWELv0 {
 	return result
 }
 
+// AddAssign adds two TLWE Level 0 ciphertexts and writes to output (zero-allocation)
+func (t *TLWELv0) AddAssign(other *TLWELv0, output *TLWELv0) {
+	for i := range output.P {
+		output.P[i] = t.P[i] + other.P[i]
+	}
+}
+
 // Sub subtracts two TLWE Level 0 ciphertexts
 func (t *TLWELv0) Sub(other *TLWELv0) *TLWELv0 {
 	result := NewTLWELv0()

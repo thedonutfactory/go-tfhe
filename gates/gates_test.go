@@ -478,3 +478,163 @@ func TestBatchXOR(t *testing.T) {
 		}
 	}
 }
+
+// ============================================================================
+// BENCHMARK TESTS
+// ============================================================================
+
+// BenchmarkBootstrap benchmarks a single bootstrap operation via NAND gate
+// This is the core operation in TFHE and the main performance bottleneck
+func BenchmarkBootstrap(b *testing.B) {
+	sk := key.NewSecretKey()
+	ck := cloudkey.NewCloudKey(sk)
+
+	// Create input ciphertexts
+	ctA := encrypt(nil, true, sk)
+	ctB := encrypt(nil, false, sk)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = gates.NAND(ctA, ctB, ck)
+	}
+}
+
+// BenchmarkBootstrapNAND benchmarks NAND gate (1 bootstrap)
+func BenchmarkBootstrapNAND(b *testing.B) {
+	sk := key.NewSecretKey()
+	ck := cloudkey.NewCloudKey(sk)
+
+	ctA := encrypt(nil, true, sk)
+	ctB := encrypt(nil, false, sk)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = gates.NAND(ctA, ctB, ck)
+	}
+}
+
+// BenchmarkBootstrapAND benchmarks AND gate (1 bootstrap)
+func BenchmarkBootstrapAND(b *testing.B) {
+	sk := key.NewSecretKey()
+	ck := cloudkey.NewCloudKey(sk)
+
+	ctA := encrypt(nil, true, sk)
+	ctB := encrypt(nil, true, sk)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = gates.AND(ctA, ctB, ck)
+	}
+}
+
+// BenchmarkBootstrapXOR benchmarks XOR gate (1 bootstrap)
+func BenchmarkBootstrapXOR(b *testing.B) {
+	sk := key.NewSecretKey()
+	ck := cloudkey.NewCloudKey(sk)
+
+	ctA := encrypt(nil, true, sk)
+	ctB := encrypt(nil, false, sk)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = gates.XOR(ctA, ctB, ck)
+	}
+}
+
+// BenchmarkBootstrapMUX benchmarks MUX gate (3 bootstraps)
+func BenchmarkBootstrapMUX(b *testing.B) {
+	sk := key.NewSecretKey()
+	ck := cloudkey.NewCloudKey(sk)
+
+	ctSel := encrypt(nil, true, sk)
+	ctA := encrypt(nil, true, sk)
+	ctB := encrypt(nil, false, sk)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = gates.MUX(ctSel, ctA, ctB, ck)
+	}
+}
+
+// BenchmarkBatchBootstrap benchmarks batch bootstrap operations
+func BenchmarkBatchBootstrap(b *testing.B) {
+	sizes := []int{1, 2, 4, 8, 16}
+
+	for _, size := range sizes {
+		b.Run(string(rune(size))+"_ops", func(b *testing.B) {
+			sk := key.NewSecretKey()
+			ck := cloudkey.NewCloudKey(sk)
+
+			// Create batch inputs
+			inputs := make([][2]*gates.Ciphertext, size)
+			for i := 0; i < size; i++ {
+				inputs[i] = [2]*gates.Ciphertext{
+					encrypt(nil, true, sk),
+					encrypt(nil, false, sk),
+				}
+			}
+
+			b.ResetTimer()
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				_ = gates.BatchAND(inputs, ck)
+			}
+		})
+	}
+}
+
+// BenchmarkKeyGeneration benchmarks key generation time
+func BenchmarkKeyGeneration(b *testing.B) {
+	b.Run("SecretKey", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = key.NewSecretKey()
+		}
+	})
+
+	b.Run("CloudKey", func(b *testing.B) {
+		sk := key.NewSecretKey()
+		b.ResetTimer()
+		b.ReportAllocs()
+
+		for i := 0; i < b.N; i++ {
+			_ = cloudkey.NewCloudKey(sk)
+		}
+	})
+}
+
+// BenchmarkEncryption benchmarks encryption operations
+func BenchmarkEncryption(b *testing.B) {
+	sk := key.NewSecretKey()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = encrypt(nil, true, sk)
+	}
+}
+
+// BenchmarkDecryption benchmarks decryption operations
+func BenchmarkDecryption(b *testing.B) {
+	sk := key.NewSecretKey()
+	ct := encrypt(nil, true, sk)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = decrypt(nil, ct, sk)
+	}
+}
