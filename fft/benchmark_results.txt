@@ -1,0 +1,38 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/thedonutfactory/go-tfhe/fft
+cpu: Apple M3 Pro
+BenchmarkIFFT1024-12                          	  375086	      3293 ns/op	       0 B/op	       0 allocs/op
+BenchmarkFFT1024-12                           	  369280	      3295 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPolyMul1024-12                       	  110551	     10850 ns/op	       0 B/op	       0 allocs/op
+BenchmarkFFTRoundtrip-12                      	  180786	      6575 ns/op	       0 B/op	       0 allocs/op
+BenchmarkNewFFTProcessor-12                   	  114928	     10622 ns/op	   62720 B/op	       9 allocs/op
+BenchmarkBatchIFFT1024/01_polys-12            	  315832	      3767 ns/op	    8192 B/op	       1 allocs/op
+BenchmarkBatchIFFT1024/02_polys-12            	  160087	      7358 ns/op	   16384 B/op	       1 allocs/op
+BenchmarkBatchIFFT1024/04_polys-12            	   82970	     14524 ns/op	   32768 B/op	       1 allocs/op
+BenchmarkBatchIFFT1024/08_polys-12            	   41727	     29506 ns/op	   65536 B/op	       1 allocs/op
+BenchmarkBatchIFFT1024/16_polys-12            	   19644	     57515 ns/op	  131072 B/op	       1 allocs/op
+BenchmarkBatchIFFT1024/32_polys-12            	   10000	    116096 ns/op	  262144 B/op	       1 allocs/op
+BenchmarkBatchFFT1024/01_polys-12             	  344042	      3533 ns/op	    4096 B/op	       1 allocs/op
+BenchmarkBatchFFT1024/02_polys-12             	  171460	      6981 ns/op	    8192 B/op	       1 allocs/op
+BenchmarkBatchFFT1024/04_polys-12             	   87132	     14010 ns/op	   16384 B/op	       1 allocs/op
+BenchmarkBatchFFT1024/08_polys-12             	   43767	     27466 ns/op	   32768 B/op	       1 allocs/op
+BenchmarkBatchFFT1024/16_polys-12             	   21625	     65677 ns/op	   65536 B/op	       1 allocs/op
+BenchmarkBatchFFT1024/32_polys-12             	   10000	    114519 ns/op	  131072 B/op	       1 allocs/op
+BenchmarkPolyMulWithDifferentMagnitudes/small_values-12         	  111646	     10805 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPolyMulWithDifferentMagnitudes/medium_values-12        	  110940	     10772 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPolyMulWithDifferentMagnitudes/large_values-12         	  112738	     10799 ns/op	       0 B/op	       0 allocs/op
+BenchmarkIFFT1024WithPatterns/zeros-12                          	  372820	      3432 ns/op	       0 B/op	       0 allocs/op
+BenchmarkIFFT1024WithPatterns/delta-12                          	  376681	      3223 ns/op	       0 B/op	       0 allocs/op
+BenchmarkIFFT1024WithPatterns/sequential-12                     	  367293	      4631 ns/op	       0 B/op	       0 allocs/op
+BenchmarkIFFT1024WithPatterns/random-12                         	  380408	      3193 ns/op	       0 B/op	       0 allocs/op
+BenchmarkFFT1024WithPatterns/zeros-12                           	  374880	      3260 ns/op	       0 B/op	       0 allocs/op
+BenchmarkFFT1024WithPatterns/sequential-12                      	  363475	      4478 ns/op	       0 B/op	       0 allocs/op
+BenchmarkFFT1024WithPatterns/random-12                          	  348520	      3355 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceVsArray/IFFT_array-12                             	  370849	      3260 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceVsArray/IFFT_slice-12                             	  361537	      3348 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceVsArray/PolyMul_array-12                          	  111099	     10752 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSliceVsArray/PolyMul_slice-12                          	  106699	     11304 ns/op	    4096 B/op	       1 allocs/op
+BenchmarkMemoryAllocation/processor_reuse-12                    	  182448	      6584 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemoryAllocation/processor_per_call-12                 	   71232	     17309 ns/op	   62720 B/op	       9 allocs/op
+PASS

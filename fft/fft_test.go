@@ -257,3 +257,354 @@ func TestBatchFFT(t *testing.T) {
 		}
 	}
 }
+
+// BenchmarkIFFT1024 benchmarks the optimized IFFT operation
+func BenchmarkIFFT1024(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+	var input [1024]params.Torus
+	for i := range input {
+		input[i] = params.Torus(i * 1000)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = proc.IFFT1024(&input)
+	}
+}
+
+// BenchmarkFFT1024 benchmarks the optimized FFT operation
+func BenchmarkFFT1024(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+	var input [1024]float64
+	for i := range input {
+		input[i] = float64(i)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = proc.FFT1024(&input)
+	}
+}
+
+// BenchmarkPolyMul1024 benchmarks polynomial multiplication
+func BenchmarkPolyMul1024(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+	var a, bb [1024]params.Torus
+	for i := range a {
+		a[i] = params.Torus(i * 1000)
+		bb[i] = params.Torus(i * 10)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = proc.PolyMul1024(&a, &bb)
+	}
+}
+
+// BenchmarkFFTRoundtrip benchmarks a complete FFT roundtrip
+func BenchmarkFFTRoundtrip(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+	var input [1024]params.Torus
+	for i := range input {
+		input[i] = params.Torus(i * 1000)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		freq := proc.IFFT1024(&input)
+		_ = proc.FFT1024(&freq)
+	}
+}
+
+// BenchmarkNewFFTProcessor benchmarks the initialization overhead
+func BenchmarkNewFFTProcessor(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = fft.NewFFTProcessor(1024)
+	}
+}
+
+// BenchmarkBatchIFFT1024 benchmarks batch IFFT operations
+func BenchmarkBatchIFFT1024(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+
+	// Test with different batch sizes
+	for _, batchSize := range []int{1, 2, 4, 8, 16, 32} {
+		b.Run(string(rune('0'+batchSize/10))+string(rune('0'+batchSize%10))+"_polys", func(b *testing.B) {
+			inputs := make([][1024]params.Torus, batchSize)
+			for i := range inputs {
+				for j := range inputs[i] {
+					inputs[i][j] = params.Torus(j * 1000)
+				}
+			}
+
+			b.ResetTimer()
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_ = proc.BatchIFFT1024(inputs)
+			}
+		})
+	}
+}
+
+// BenchmarkBatchFFT1024 benchmarks batch FFT operations
+func BenchmarkBatchFFT1024(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+
+	// Test with different batch sizes
+	for _, batchSize := range []int{1, 2, 4, 8, 16, 32} {
+		b.Run(string(rune('0'+batchSize/10))+string(rune('0'+batchSize%10))+"_polys", func(b *testing.B) {
+			inputs := make([][1024]float64, batchSize)
+			for i := range inputs {
+				for j := range inputs[i] {
+					inputs[i][j] = float64(j)
+				}
+			}
+
+			b.ResetTimer()
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_ = proc.BatchFFT1024(inputs)
+			}
+		})
+	}
+}
+
+// BenchmarkPolyMulWithDifferentMagnitudes benchmarks polynomial multiplication
+// with different input magnitudes (small vs large values)
+func BenchmarkPolyMulWithDifferentMagnitudes(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+
+	b.Run("small_values", func(b *testing.B) {
+		var a, bb [1024]params.Torus
+		for i := range a {
+			a[i] = params.Torus(i % 64)
+			bb[i] = params.Torus(i % 64)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.PolyMul1024(&a, &bb)
+		}
+	})
+
+	b.Run("medium_values", func(b *testing.B) {
+		var a, bb [1024]params.Torus
+		for i := range a {
+			a[i] = params.Torus(i * 1000)
+			bb[i] = params.Torus(i * 1000)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.PolyMul1024(&a, &bb)
+		}
+	})
+
+	b.Run("large_values", func(b *testing.B) {
+		rng := rand.New(rand.NewSource(42))
+		var a, bb [1024]params.Torus
+		for i := range a {
+			a[i] = params.Torus(rng.Uint32())
+			bb[i] = params.Torus(rng.Uint32())
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.PolyMul1024(&a, &bb)
+		}
+	})
+}
+
+// BenchmarkIFFT1024WithPatterns benchmarks IFFT with different input patterns
+func BenchmarkIFFT1024WithPatterns(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+
+	b.Run("zeros", func(b *testing.B) {
+		var input [1024]params.Torus
+		// All zeros
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.IFFT1024(&input)
+		}
+	})
+
+	b.Run("delta", func(b *testing.B) {
+		var input [1024]params.Torus
+		input[0] = 1000
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.IFFT1024(&input)
+		}
+	})
+
+	b.Run("sequential", func(b *testing.B) {
+		var input [1024]params.Torus
+		for i := range input {
+			input[i] = params.Torus(i)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.IFFT1024(&input)
+		}
+	})
+
+	b.Run("random", func(b *testing.B) {
+		rng := rand.New(rand.NewSource(42))
+		var input [1024]params.Torus
+		for i := range input {
+			input[i] = params.Torus(rng.Uint32())
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.IFFT1024(&input)
+		}
+	})
+}
+
+// BenchmarkFFT1024WithPatterns benchmarks FFT with different input patterns
+func BenchmarkFFT1024WithPatterns(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+
+	b.Run("zeros", func(b *testing.B) {
+		var input [1024]float64
+		// All zeros
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.FFT1024(&input)
+		}
+	})
+
+	b.Run("sequential", func(b *testing.B) {
+		var input [1024]float64
+		for i := range input {
+			input[i] = float64(i)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.FFT1024(&input)
+		}
+	})
+
+	b.Run("random", func(b *testing.B) {
+		rng := rand.New(rand.NewSource(42))
+		var input [1024]float64
+		for i := range input {
+			input[i] = rng.Float64() * 1000
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.FFT1024(&input)
+		}
+	})
+}
+
+// BenchmarkSliceVsArray benchmarks slice-based vs array-based FFT operations
+func BenchmarkSliceVsArray(b *testing.B) {
+	proc := fft.NewFFTProcessor(1024)
+
+	b.Run("IFFT_array", func(b *testing.B) {
+		var input [1024]params.Torus
+		for i := range input {
+			input[i] = params.Torus(i * 1000)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.IFFT1024(&input)
+		}
+	})
+
+	b.Run("IFFT_slice", func(b *testing.B) {
+		input := make([]params.Torus, 1024)
+		for i := range input {
+			input[i] = params.Torus(i * 1000)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.IFFT(input)
+		}
+	})
+
+	b.Run("PolyMul_array", func(b *testing.B) {
+		var a, bb [1024]params.Torus
+		for i := range a {
+			a[i] = params.Torus(i * 1000)
+			bb[i] = params.Torus(i * 10)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.PolyMul1024(&a, &bb)
+		}
+	})
+
+	b.Run("PolyMul_slice", func(b *testing.B) {
+		a := make([]params.Torus, 1024)
+		bb := make([]params.Torus, 1024)
+		for i := range a {
+			a[i] = params.Torus(i * 1000)
+			bb[i] = params.Torus(i * 10)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_ = proc.PolyMul(a, bb)
+		}
+	})
+}
+
+// BenchmarkMemoryAllocation benchmarks memory allocation patterns
+func BenchmarkMemoryAllocation(b *testing.B) {
+	b.Run("processor_reuse", func(b *testing.B) {
+		proc := fft.NewFFTProcessor(1024)
+		var input [1024]params.Torus
+		for i := range input {
+			input[i] = params.Torus(i * 1000)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			freq := proc.IFFT1024(&input)
+			_ = proc.FFT1024(&freq)
+		}
+	})
+
+	b.Run("processor_per_call", func(b *testing.B) {
+		var input [1024]params.Torus
+		for i := range input {
+			input[i] = params.Torus(i * 1000)
+		}
+
+		b.ResetTimer()
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			proc := fft.NewFFTProcessor(1024)
+			freq := proc.IFFT1024(&input)
+			_ = proc.FFT1024(&freq)
+		}
+	})
+}
