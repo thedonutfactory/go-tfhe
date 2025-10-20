@@ -1,7 +1,7 @@
 # go-tfhe: Fully Homomorphic Encryption Library
 A pure Go implementation of TFHE (Torus Fully Homomorphic Encryption) for gophers
 
-<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/15ff84b9-79c6-4cfd-b369-1e78ec502b34" />
+<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/0f22ddfc-26b7-457b-8ed6-6be89e0f5256" />
 
 ## Overview
 
