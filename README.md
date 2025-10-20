@@ -1,7 +1,7 @@
 # go-tfhe: Fully Homomorphic Encryption Library
 A pure Go implementation of TFHE (Torus Fully Homomorphic Encryption) for gophers
 
-<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/15ff84b9-79c6-4cfd-b369-1e78ec502b34" />
+<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/15ff84b9-79c6-4cfd-b369-1e78ec502b34" />
 
 ## Overview
 
@@ -11,15 +11,15 @@ Go-TFHE is a library for performing homomorphic operations on encrypted data. It
 
 ### Features
 
-- ✅ **Multiple Parameter Profiles**: 80-bit, 110-bit, 128-bit security + Uint5 for arithmetic
-- ✅ **Homomorphic Gates**: AND, OR, NAND, NOR, XOR, XNOR, NOT, MUX
-- ✅ **Programmable Bootstrapping**: Evaluate arbitrary functions during bootstrapping
-- ✅ **Fast Arithmetic**: 4-bootstrap nibble addition with messageModulus=32
-- ✅ **N=2048 Support**: Full parity with tfhe-go reference implementation
-- ✅ **Batch Operations**: Parallel processing for multiple gates
-- ✅ **Optimized FFT**: Ported from tfhe-go for best performance
-- ✅ **Pure Go**: No C dependencies, easy to build and deploy
-- ✅ **Concurrent**: Leverages Go's goroutines for parallelization
+- **Multiple Parameter Profiles**: 80-bit, 110-bit, 128-bit security + Uint5 for arithmetic
+- **Homomorphic Gates**: AND, OR, NAND, NOR, XOR, XNOR, NOT, MUX
+- **Programmable Bootstrapping**: Evaluate arbitrary functions during bootstrapping
+- **Fast Arithmetic**: 4-bootstrap nibble addition with messageModulus=32
+- **N=2048 Support**: Full parity with tfhe-go reference implementation
+- **Batch Operations**: Parallel processing for multiple gates
+- **Optimized FFT**: Ported from tfhe-go for best performance
+- **Pure Go**: No C dependencies, easy to build and deploy
+- **Concurrent**: Leverages Go's goroutines for parallelization
 
 ## Installation
 
