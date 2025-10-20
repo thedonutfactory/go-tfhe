@@ -5,21 +5,21 @@ import (
 	"time"
 
 	"github.com/thedonutfactory/go-tfhe/cloudkey"
-	"github.com/thedonutfactory/go-tfhe/gates"
+	"github.com/thedonutfactory/go-tfhe/evaluator"
 	"github.com/thedonutfactory/go-tfhe/key"
+	"github.com/thedonutfactory/go-tfhe/lut"
 	"github.com/thedonutfactory/go-tfhe/params"
 	"github.com/thedonutfactory/go-tfhe/tlwe"
 )
 
 func main() {
 	fmt.Println("╔════════════════════════════════════════════════════════════════╗")
-	fmt.Println("║  Traditional 8-bit Addition (Bit-by-Bit Ripple Carry)         ║")
-	fmt.Println("║  Using Standard Boolean Gates (NO Programmable Bootstrap)     ║")
+	fmt.Println("║  Fast 8-bit Addition Using Programmable Bootstrapping         ║")
 	fmt.Println("╚════════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
-	// Use default 128-bit security for binary operations
-	params.CurrentSecurityLevel = params.Security128Bit
+	// Use Uint5 parameters for messageModulus=32
+	params.CurrentSecurityLevel = params.SecurityUint5
 	fmt.Printf("Security Level: %s\n", params.SecurityInfo())
 	fmt.Println()
 
@@ -28,11 +28,12 @@ func main() {
 	keyStart := time.Now()
 	secretKey := key.NewSecretKey()
 	cloudKey := cloudkey.NewCloudKey(secretKey)
+	eval := evaluator.NewEvaluator(params.GetTRGSWLv1().N)
 	keyDuration := time.Since(keyStart)
 	fmt.Printf("   Key generation completed in %v\n", keyDuration)
 	fmt.Println()
 
-	// Test case: 42 + 137 = 179
+	// Inputs
 	a := uint8(42)
 	b := uint8(137)
 	expected := uint8(179)
@@ -40,139 +41,144 @@ func main() {
 	fmt.Printf("Computing: %d + %d = %d (encrypted)\n", a, b, expected)
 	fmt.Println()
 
-	// Encrypt the two 8-bit numbers as bits
-	fmt.Println("🔒 Encrypting inputs (16 bits total)...")
-	encryptStart := time.Now()
+	// Step 1: Split into nibbles (4-bit chunks)
+	aLow := int(a & 0x0F)         // Low nibble of a (bits 0-3)
+	aHigh := int((a >> 4) & 0x0F) // High nibble of a (bits 4-7)
+	bLow := int(b & 0x0F)         // Low nibble of b
+	bHigh := int((b >> 4) & 0x0F) // High nibble of b
 
-	ctA := make([]*tlwe.TLWELv0, 8)
-	ctB := make([]*tlwe.TLWELv0, 8)
-
-	for i := 0; i < 8; i++ {
-		bitA := (a >> i) & 1
-		bitB := (b >> i) & 1
-
-		ctA[i] = tlwe.NewTLWELv0().EncryptBool(bitA == 1, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
-		ctB[i] = tlwe.NewTLWELv0().EncryptBool(bitB == 1, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
-	}
-
-	encryptDuration := time.Since(encryptStart)
-	fmt.Printf("   Encryption completed in %v\n", encryptDuration)
+	fmt.Printf("Input A: %3d = 0b%04b_%04b (nibbles: high=%d, low=%d)\n", a, aHigh, aLow, aHigh, aLow)
+	fmt.Printf("Input B: %3d = 0b%04b_%04b (nibbles: high=%d, low=%d)\n", b, bHigh, bLow, bHigh, bLow)
 	fmt.Println()
 
-	// Perform 8-bit ripple-carry addition
-	fmt.Println("➕ Computing 8-bit addition using ripple-carry adder...")
-	fmt.Println("   (Using full adders with XOR, AND, OR gates)")
+	// Step 2: Generate lookup tables
+	fmt.Println("📋 Generating lookup tables...")
+	lutStart := time.Now()
+	gen := lut.NewGenerator(32)
+
+	lutSumLow := gen.GenLookUpTable(func(x int) int {
+		return x % 16 // Extract lower 4 bits
+	})
+
+	lutCarryLow := gen.GenLookUpTable(func(x int) int {
+		if x >= 16 {
+			return 1 // Carry out
+		}
+		return 0
+	})
+
+	lutSumHigh := gen.GenLookUpTable(func(x int) int {
+		return x % 16 // Extract lower 4 bits
+	})
+
+	lutDuration := time.Since(lutStart)
+	fmt.Printf("   LUT generation: %v\n", lutDuration)
 	fmt.Println()
 
+	// Step 3: Encrypt nibbles
+	fmt.Println("🔒 Encrypting nibbles...")
+	encStart := time.Now()
+
+	ctALow := tlwe.NewTLWELv0()
+	ctALow.EncryptLWEMessage(aLow, 32, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
+
+	ctAHigh := tlwe.NewTLWELv0()
+	ctAHigh.EncryptLWEMessage(aHigh, 32, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
+
+	ctBLow := tlwe.NewTLWELv0()
+	ctBLow.EncryptLWEMessage(bLow, 32, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
+
+	ctBHigh := tlwe.NewTLWELv0()
+	ctBHigh.EncryptLWEMessage(bHigh, 32, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
+
+	encDuration := time.Since(encStart)
+	fmt.Printf("   Encrypted 4 nibbles in %v\n", encDuration)
+	fmt.Println()
+
+	// Step 4: Homomorphic addition of low nibbles (no bootstrap needed!)
+	fmt.Println("➕ Computing encrypted addition...")
 	addStart := time.Now()
 
-	ctSum := make([]*tlwe.TLWELv0, 8)
-	var ctCarry *tlwe.TLWELv0
-
-	// Initialize carry to 0 (false)
-	ctCarry = tlwe.NewTLWELv0().EncryptBool(false, params.GetTLWELv0().ALPHA, secretKey.KeyLv0)
-
-	gateCount := 0
-
-	// Bit-by-bit addition with full adders
-	for i := 0; i < 8; i++ {
-		fmt.Printf("   Processing bit %d...\n", i)
-
-		// Full Adder:
-		// sum[i] = a[i] XOR b[i] XOR carry
-		// carry_out = (a[i] AND b[i]) OR (carry AND (a[i] XOR b[i]))
-
-		// Step 1: XOR of a and b
-		xorAB := gates.XOR(ctA[i], ctB[i], cloudKey)
-		gateCount++
-
-		// Step 2: Sum bit = xorAB XOR carry
-		ctSum[i] = gates.XOR(xorAB, ctCarry, cloudKey)
-		gateCount++
-
-		// Step 3: Compute carry out
-		// carry_out = (a AND b) OR (carry AND xorAB)
-		andAB := gates.AND(ctA[i], ctB[i], cloudKey)
-		gateCount++
-
-		andCarryXor := gates.AND(ctCarry, xorAB, cloudKey)
-		gateCount++
-
-		ctCarry = gates.OR(andAB, andCarryXor, cloudKey)
-		gateCount++
-
-		fmt.Printf("      (5 gates: 2 XOR, 2 AND, 1 OR)\n")
+	n := params.GetTLWELv0().N
+	ctTempLow := tlwe.NewTLWELv0()
+	for j := 0; j < n+1; j++ {
+		ctTempLow.P[j] = ctALow.P[j] + ctBLow.P[j]
 	}
+	fmt.Println("   Step 1: Low nibbles added (homomorphic add, no bootstrap)")
+
+	// Step 5: Bootstrap 1 - Extract low sum (mod 16)
+	pbs1Start := time.Now()
+	ctSumLow := eval.BootstrapLUT(ctTempLow, lutSumLow,
+		cloudKey.BootstrappingKey, cloudKey.KeySwitchingKey, cloudKey.DecompositionOffset)
+	pbs1Duration := time.Since(pbs1Start)
+	fmt.Printf("   Bootstrap 1: Extract low sum (mod 16) - %v\n", pbs1Duration)
+
+	// Step 6: Bootstrap 2 - Extract carry from low nibbles
+	pbs2Start := time.Now()
+	ctCarry := eval.BootstrapLUT(ctTempLow, lutCarryLow,
+		cloudKey.BootstrappingKey, cloudKey.KeySwitchingKey, cloudKey.DecompositionOffset)
+	pbs2Duration := time.Since(pbs2Start)
+	fmt.Printf("   Bootstrap 2: Extract carry bit - %v\n", pbs2Duration)
+
+	// Step 7: Add high nibbles + carry (homomorphic)
+	ctTempHigh := tlwe.NewTLWELv0()
+	for j := 0; j < n+1; j++ {
+		ctTempHigh.P[j] = ctAHigh.P[j] + ctBHigh.P[j] + ctCarry.P[j]
+	}
+	fmt.Println("   Step 2: High nibbles + carry added (homomorphic add, no bootstrap)")
+
+	// Step 8: Bootstrap 3 - Extract high sum (mod 16)
+	pbs3Start := time.Now()
+	ctSumHigh := eval.BootstrapLUT(ctTempHigh, lutSumHigh,
+		cloudKey.BootstrappingKey, cloudKey.KeySwitchingKey, cloudKey.DecompositionOffset)
+	pbs3Duration := time.Since(pbs3Start)
+	fmt.Printf("   Bootstrap 3: Extract high sum (mod 16) - %v\n", pbs3Duration)
 
 	addDuration := time.Since(addStart)
-
-	fmt.Println()
-	fmt.Printf("   ✅ Addition completed in %v\n", addDuration)
-	fmt.Printf("   📊 Total gates used: %d\n", gateCount)
-	fmt.Printf("   📊 Bootstraps performed: ~%d (approx %d per gate)\n", gateCount, gateCount)
 	fmt.Println()
 
-	// Decrypt and verify
+	// Step 9: Decrypt results
 	fmt.Println("🔓 Decrypting result...")
-	decryptStart := time.Now()
+	decStart := time.Now()
 
-	var result uint8
-	for i := 0; i < 8; i++ {
-		bit := ctSum[i].DecryptBool(secretKey.KeyLv0)
-		if bit {
-			result |= (1 << i)
-		}
-	}
+	sumLow := ctSumLow.DecryptLWEMessage(32, secretKey.KeyLv0)
+	sumHigh := ctSumHigh.DecryptLWEMessage(32, secretKey.KeyLv0)
 
-	decryptDuration := time.Since(decryptStart)
-	fmt.Printf("   Decryption completed in %v\n", decryptDuration)
+	decDuration := time.Since(decStart)
+	fmt.Printf("   Decrypted nibbles in %v\n", decDuration)
 	fmt.Println()
 
-	// Display results
+	// Step 10: Combine nibbles into final result
+	result := uint8(sumLow | (sumHigh << 4))
+
 	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Println("RESULTS:")
+	fmt.Println("RESULTS")
 	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Printf("Input A:        %d (0b%08b)\n", a, a)
-	fmt.Printf("Input B:        %d (0b%08b)\n", b, b)
-	fmt.Printf("Expected Sum:   %d (0b%08b)\n", expected, expected)
-	fmt.Printf("Computed Sum:   %d (0b%08b)\n", result, result)
+	fmt.Printf("Input A:    %3d = 0b%04b_%04b\n", a, aHigh, aLow)
+	fmt.Printf("Input B:    %3d = 0b%04b_%04b\n", b, bHigh, bLow)
+	fmt.Printf("Result:     %3d = 0b%04b_%04b (nibbles: high=%d, low=%d)\n",
+		result, sumHigh, sumLow, sumHigh, sumLow)
+	fmt.Printf("Expected:   %3d\n", expected)
 	fmt.Println()
 
 	if result == expected {
-		fmt.Println("✅ SUCCESS! Result matches expected value!")
+		fmt.Println("✅ SUCCESS! Result is correct!")
 	} else {
-		fmt.Println("❌ FAILURE! Result does not match expected value!")
+		fmt.Printf("❌ FAILURE! Expected %d, got %d\n", expected, result)
 	}
 
 	fmt.Println()
 	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Println("PERFORMANCE SUMMARY:")
+	fmt.Println("PERFORMANCE SUMMARY")
 	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Printf("Key Generation:  %v\n", keyDuration)
-	fmt.Printf("Encryption:      %v (16 bits)\n", encryptDuration)
-	fmt.Printf("Addition:        %v (%d gates)\n", addDuration, gateCount)
-	fmt.Printf("Decryption:      %v (8 bits)\n", decryptDuration)
-	fmt.Printf("Total Time:      %v\n", keyDuration+encryptDuration+addDuration+decryptDuration)
+	fmt.Printf("LUT Generation:  %v\n", lutDuration)
+	fmt.Printf("Encryption:      %v (4 nibbles)\n", encDuration)
+	fmt.Printf("Addition:        %v (3 bootstraps)\n", addDuration)
+	fmt.Printf("  - Bootstrap 1: %v (low sum)\n", pbs1Duration)
+	fmt.Printf("  - Bootstrap 2: %v (carry)\n", pbs2Duration)
+	fmt.Printf("  - Bootstrap 3: %v (high sum)\n", pbs3Duration)
+	fmt.Printf("Decryption:      %v\n", decDuration)
 	fmt.Println()
 
-	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Println("METHOD COMPARISON:")
-	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Printf("Traditional (this example):\n")
-	fmt.Printf("  • Operations: %d boolean gates (XOR, AND, OR)\n", gateCount)
-	fmt.Printf("  • Bootstraps: ~%d (1 per gate)\n", gateCount)
-	fmt.Printf("  • Time: %v\n", addDuration)
-	fmt.Println()
-	fmt.Printf("PBS-based (add_two_numbers_fast):\n")
-	fmt.Printf("  • Operations: 4 programmable bootstraps (nibble-based)\n")
-	fmt.Printf("  • Bootstraps: 4 (processes 4 bits at once)\n")
-	fmt.Printf("  • Time: ~230ms (estimated with Uint5 params)\n")
-	fmt.Println()
-	fmt.Printf("Speedup: ~%.1fx faster with PBS! 🚀\n", float64(addDuration.Milliseconds())/230.0)
-	fmt.Println()
-
-	fmt.Println("💡 KEY INSIGHT:")
-	fmt.Println("   Traditional: 40 operations processing 1 bit at a time")
-	fmt.Println("   PBS Method:   4 operations processing 4 bits at once")
-	fmt.Println("   Result: 10x fewer operations, significantly faster!")
 }
