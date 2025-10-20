@@ -7,7 +7,7 @@ A pure Go implementation of TFHE (Torus Fully Homomorphic Encryption) for gopher
 
 Go-TFHE is a library for performing homomorphic operations on encrypted data. It allows you to compute on encrypted data without decrypting it, enabling privacy-preserving computation in the cloud.
 
-(Looking to build in rust? Check out our [rs-tfhe Sister Project](https://github.com/thedonutfactory/rs-tfhe))
+(Not the language you were looking for? Check out our [rust](https://github.com/thedonutfactory/rs-tfhe) or [zig](https://github.com/thedonutfactory/zig-tfhe) sister projects)
 
 ### Features
 
