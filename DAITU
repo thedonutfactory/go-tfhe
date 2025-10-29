@@ -1,0 +1,80 @@
+SPDX-License-Identifier: DAITU-1.0
+
+Declaration of AI Tooling Usage (DAITU)
+Version 1.0 — October 2025
+
+PREAMBLE
+This Declaration of AI Tooling Usage (“DAITU”) affirms that artificial intelligence (AI)
+technologies were used ethically and transparently during the creation, design, and
+development of this project. It complements the project’s primary software license by
+disclosing the responsible use of AI-assisted systems in its production.
+
+1. PURPOSE
+The DAITU promotes transparency, accountability, and integrity in the use of AI systems
+within software and creative workflows. It is not a software license and does not grant,
+limit, or modify any rights provided by the project’s governing license.
+
+2. SCOPE
+This declaration applies to all instances where AI systems contributed to or informed the
+development process, including but not limited to:
+
+- Code generation, optimization, or review
+- Documentation writing or editing
+- Design or visual asset creation
+- Testing, automation, or deployment processes
+- Research, summarization, or data analysis
+
+All AI-generated or AI-assisted materials were reviewed and approved by human
+contributors prior to inclusion in the project.
+
+3. HUMAN OVERSIGHT
+Human maintainers retained full creative and technical authority throughout the project
+lifecycle. AI systems were used solely as assistive tools, not autonomous agents. All
+outputs were manually inspected for accuracy, quality, and ethical compliance to the best 
+of the maintainers' ability before acceptance.
+
+4. ETHICAL PRINCIPLES
+AI usage in this project adhered to the following principles:
+
+- Transparency: AI involvement is disclosed openly and honestly.
+- Accountability: Final responsibility lies with human maintainers.
+- Privacy: No confidential or proprietary data was exposed to AI systems.
+- Integrity: All outputs were validated for correctness, and legality.
+- Fairness: AI usage respected intellectual property and original human authorship.
+
+5. DATA AND MODEL GOVERNANCE
+AI tools were employed in accordance with applicable data protection and privacy laws.
+Where possible, privacy-preserving or locally hosted models were used to reduce data
+exposure risks and maintain contributor control.
+
+6. LIMITATIONS
+AI systems may generate content that is inaccurate, biased, or incomplete. The maintainers
+acknowledge these limitations and have exercised due diligence in reviewing all AI-
+influenced outputs. No AI system made binding design, policy, or legal decisions on
+behalf of the project.
+
+7. AMENDMENTS
+This declaration may be revised to reflect new ethical standards, tooling changes, or
+project practices. All revisions shall retain version history to ensure traceable
+transparency over time.
+
+8. RELEASE OF LIABILITY
+This declaration is made in good faith to promote transparency and ethical AI use. The
+project authors, maintainers, and contributors make no warranties, express or implied,
+regarding the accuracy, safety, or completeness of AI-generated materials.
+
+In no event shall the authors or copyright holders be liable for any claim, damages, or
+other liability, whether in an action of contract, tort, or otherwise, arising from, out
+of, or in connection with this declaration or the use of AI systems in the development of
+this project.
+
+9. DECLARATION
+By including this document, the maintainers affirm:
+
+"AI technologies were used responsibly, transparently, and with human oversight
+throughout the development of this project."
+
+COPYRIGHT NOTICE
+© 2025 The Project Authors. All rights reserved.
+This declaration is distributed under the DAITU-1.0 terms.
+Redistribution and reuse are permitted with attribution.
