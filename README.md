@@ -13,6 +13,7 @@ Go-TFHE is a library for performing homomorphic operations on encrypted data. It
 
 - **Multiple Parameter Profiles**: 80-bit, 110-bit, 128-bit security + Uint5 for arithmetic
 - **Homomorphic Gates**: AND, OR, NAND, NOR, XOR, XNOR, NOT, MUX
+- **Proxy Reencryption**: LWE-based secure delegation with asymmetric public keys (NEW in v0.2.0)
 - **Programmable Bootstrapping**: Evaluate arbitrary functions during bootstrapping
 - **Fast Arithmetic**: 4-bootstrap nibble addition with messageModulus=32
 - **N=2048 Support**: Full parity with tfhe-go reference implementation
@@ -407,6 +408,7 @@ See the `examples/` directory for complete working examples:
 - `add_two_numbers/` - Homomorphic addition of two 16-bit numbers
 - `simple_gates/` - Test all available homomorphic gates
 - `programmable_bootstrap/` - Demonstrate programmable bootstrapping with various functions
+- `proxy_reencryption/` - LWE proxy reencryption for secure delegation (NEW in v0.2.0)
 
 Run examples:
 
@@ -418,6 +420,9 @@ cd examples/simple_gates
 go run main.go
 
 cd examples/programmable_bootstrap
+go run main.go
+
+cd examples/proxy_reencryption
 go run main.go
 ```
 
