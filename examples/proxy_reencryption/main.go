@@ -19,7 +19,8 @@ import (
 )
 
 func main() {
-	fmt.Println("=== LWE Proxy Reencryption Demo ===\n")
+	fmt.Println("=== LWE Proxy Reencryption Demo ===")
+	fmt.Println()
 
 	// Scenario: Alice wants to share encrypted data with Bob
 	// without decrypting it, using a semi-trusted proxy
@@ -34,7 +35,8 @@ func main() {
 	bobPublicKey := proxyreenc.NewPublicKeyLv0(bobKey.KeyLv0)
 	pubkeyTime := time.Since(start)
 	fmt.Printf("   ✓ Bob's public key generated in %.2fms\n", float64(pubkeyTime.Microseconds())/1000.0)
-	fmt.Println("   ✓ Bob shares his public key (safe to publish)\n")
+	fmt.Println("   ✓ Bob shares his public key (safe to publish)")
+	fmt.Println()
 
 	// Alice encrypts some data
 	fmt.Println("2. Alice encrypts her data...")
@@ -60,7 +62,8 @@ func main() {
 	reencKey := proxyreenc.NewProxyReencryptionKeyAsymmetric(aliceKey.KeyLv0, bobPublicKey)
 	keygenTime := time.Since(start)
 	fmt.Printf("   ✓ Reencryption key generated in %.2fms\n", float64(keygenTime.Microseconds())/1000.0)
-	fmt.Println("   ✓ Alice shares this key with the proxy\n")
+	fmt.Println("   ✓ Alice shares this key with the proxy")
+	fmt.Println()
 
 	// Proxy reencrypts the data (without learning the plaintext)
 	fmt.Println("4. Proxy converts Alice's ciphertexts to Bob's ciphertexts...")
@@ -100,9 +103,12 @@ func main() {
 	fmt.Println()
 
 	// Demonstrate multi-hop reencryption: Alice -> Bob -> Carol
-	fmt.Println("\n=== Multi-Hop Reencryption Demo (Asymmetric) ===\n")
+	fmt.Println()
+	fmt.Println("=== Multi-Hop Reencryption Demo (Asymmetric) ===")
+	fmt.Println()
 	fmt.Println("Demonstrating a chain: Alice -> Bob -> Carol")
-	fmt.Println("Each party only needs the next party's PUBLIC key\n")
+	fmt.Println("Each party only needs the next party's PUBLIC key")
+	fmt.Println()
 
 	carolKey := key.NewSecretKey()
 	carolPublicKey := proxyreenc.NewPublicKeyLv0(carolKey.KeyLv0)
